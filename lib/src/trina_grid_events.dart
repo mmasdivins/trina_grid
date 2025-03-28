@@ -47,6 +47,135 @@ class TrinaGridOnChangedEvent {
   }
 }
 
+class TrinaGridOnRowChangedEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final Map<String,dynamic> oldCellValues;
+
+  const TrinaGridOnRowChangedEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.oldCellValues,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnRowChangedEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: oldCellValues : $oldCellValues\n';
+    out += '::: row : $row';
+    return out;
+  }
+}
+
+class TrinaGridOnLastRowKeyDownEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final bool isRowDefault;
+
+  const TrinaGridOnLastRowKeyDownEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.isRowDefault,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnLastRowKeyDownEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: isRowDefault : $isRowDefault\n';
+    out += '::: row : $row';
+    return out;
+  }
+}
+
+class TrinaGridOnLastRowKeyUpEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final bool isRowDefault;
+
+  const TrinaGridOnLastRowKeyUpEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.isRowDefault,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnLastRowKeyUpEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: isRowDefault : $isRowDefault\n';
+    out += '::: row : $row';
+    return out;
+  }
+}
+
+class TrinaGridOnRightClickCellEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final TrinaCell cell;
+  final TapDownDetails details;
+
+  const TrinaGridOnRightClickCellEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.cell,
+    required this.details,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnRightClickCellEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: cell : $cell\n';
+    out += '::: row : $row';
+    out += '::: details : $details';
+    return out;
+  }
+}
+
+class TrinaGridRightClickCellContextMenuEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final TrinaCell cell;
+  final Widget child;
+
+  const TrinaGridRightClickCellContextMenuEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.cell,
+    required this.child,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridRightClickCellContextMenuEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: cell : $cell\n';
+    out += '::: row : $row';
+    out += '::: child : $child';
+    return out;
+  }
+}
+
+class TrinaGridOnSelectedCellChangedEvent {
+  final TrinaCell? oldCell;
+  final TrinaCell cell;
+
+  const TrinaGridOnSelectedCellChangedEvent({
+    required this.oldCell,
+    required this.cell,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnSelectedCellChangedEvent] ';
+    out += 'oldCell : $oldCell\n';
+    out += 'cell : $cell\n';
+    return out;
+  }
+}
+
 /// This is the argument value of the [TrinaGrid.onSelected] callback
 /// that is called when the [TrinaGrid.mode] value is in select mode.
 ///
@@ -186,6 +315,26 @@ class TrinaGridOnRowsMovedEvent {
   final List<TrinaRow> rows;
 
   const TrinaGridOnRowsMovedEvent({required this.idx, required this.rows});
+}
+
+/// Argument of [TrinaGrid.onColumnTap] callback
+/// to move columns by dragging or receive left or right fixed events.
+///
+/// [TrinaGridStateManager.column].
+class TrinaGridOnColumnTapEvent {
+  final TrinaColumn column;
+
+  const TrinaGridOnColumnTapEvent({
+    required this.column,
+  });
+
+  @override
+  String toString() {
+    String text =
+        '[TrinaGridOnColumnTapEvent] idx: $column\n';
+
+    return text;
+  }
 }
 
 /// Argument of [TrinaGrid.onColumnsMoved] callback

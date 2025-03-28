@@ -532,11 +532,26 @@ class TrinaDualGridProps {
   /// {@macro trina_grid_property_onRowsMoved}
   final TrinaOnRowsMovedEventCallback? onRowsMoved;
 
+  /// {@macro pluto_grid_property_onColumnTap}
+  final TrinaOnColumnTapEventCallback? onColumnTap;
+
   /// {@macro trina_grid_property_onColumnsMoved}
   final TrinaOnColumnsMovedEventCallback? onColumnsMoved;
 
   /// {@macro trina_grid_property_createHeader}
   final CreateHeaderCallBack? createHeader;
+
+  /// {@macro pluto_grid_property_createColumnIndex}
+  final CreateColumnIndexCallBack? createColumnIndex;
+
+  /// {@macro pluto_grid_property_createCornerWidget}
+  final CreateCornerWidgetCallBack? createCornerWidget;
+
+  /// {@macro pluto_grid_property_onDeleteRowEvent}
+  final OnDeleteRowEventCallBack? onDeleteRowEvent;
+
+  /// {@macro pluto_grid_property_isRowDefault}
+  final IsRowDefaultCallback? isRowDefault;
 
   /// {@macro trina_grid_property_createFooter}
   final CreateFooterCallBack? createFooter;
@@ -578,9 +593,14 @@ class TrinaDualGridProps {
     this.onRowDoubleTap,
     this.onRowSecondaryTap,
     this.onRowsMoved,
+    this.onColumnTap,
     this.onColumnsMoved,
     this.createHeader,
     this.createFooter,
+    this.createColumnIndex,
+    this.createCornerWidget,
+    this.onDeleteRowEvent,
+    this.isRowDefault,
     this.noRowsWidget,
     this.rowColorCallback,
     this.columnMenuDelegate,
@@ -600,8 +620,13 @@ class TrinaDualGridProps {
     TrinaOptional<TrinaOnRowDoubleTapEventCallback?>? onRowDoubleTap,
     TrinaOptional<TrinaOnRowSecondaryTapEventCallback?>? onRowSecondaryTap,
     TrinaOptional<TrinaOnRowsMovedEventCallback?>? onRowsMoved,
+    PlutoOptional<TrinaOnColumnTapEventCallback?>? onColumnTap,
     TrinaOptional<TrinaOnColumnsMovedEventCallback?>? onColumnsMoved,
     TrinaOptional<CreateHeaderCallBack?>? createHeader,
+    PlutoOptional<CreateColumnIndexCallBack?>? createColumnIndex,
+    PlutoOptional<CreateCornerWidgetCallBack?>? createCornerWidget,
+    PlutoOptional<OnDeleteRowEventCallBack?>? onDeleteRowEvent,
+    PlutoOptional<IsRowDefaultCallback?>? isRowDefault,
     TrinaOptional<CreateFooterCallBack?>? createFooter,
     TrinaOptional<Widget?>? noRowsWidget,
     TrinaOptional<TrinaRowColorCallback?>? rowColorCallback,
@@ -626,10 +651,21 @@ class TrinaDualGridProps {
           ? this.onRowSecondaryTap
           : onRowSecondaryTap.value,
       onRowsMoved: onRowsMoved == null ? this.onRowsMoved : onRowsMoved.value,
+      onColumnTap:
+        onColumnTap == null ? this.onColumnTap : onColumnTap.value,
       onColumnsMoved:
           onColumnsMoved == null ? this.onColumnsMoved : onColumnsMoved.value,
       createHeader:
           createHeader == null ? this.createHeader : createHeader.value,
+
+      createColumnIndex:
+        createColumnIndex == null ? this.createColumnIndex : createColumnIndex.value,
+      createCornerWidget:
+        createCornerWidget == null ? this.createCornerWidget : createCornerWidget.value,
+      onDeleteRowEvent:
+        onDeleteRowEvent == null ? this.onDeleteRowEvent : onDeleteRowEvent.value,
+      isRowDefault:
+        isRowDefault == null ? this.isRowDefault : isRowDefault.value,
       createFooter:
           createFooter == null ? this.createFooter : createFooter.value,
       noRowsWidget:

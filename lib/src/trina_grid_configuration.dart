@@ -51,6 +51,27 @@ class TrinaGridConfiguration {
   /// {@macro trina_grid_tab_key_action_moveToNextOnEdge}
   final TrinaGridTabKeyAction tabKeyAction;
 
+  /// Last row key down action type.
+  ///
+  /// [TrinaGridLastRowKeyDownAction.none]
+  /// {@macro trina_grid_last_row_key_down_action_none}
+  ///
+  /// [TrinaGridLastRowKeyDownAction.addOne]
+  /// {@macro trina_grid_last_row_key_down_action_addOne}
+  ///
+  /// [TrinaGridLastRowKeyDownAction.addMultiple]
+  /// {@macro trina_grid_last_row_key_down_action_addMultiple}
+  final TrinaGridLastRowKeyDownAction lastRowKeyDownAction;
+
+  /// Last row key up action type.
+  ///
+  /// [PlutoGridLastRowKeyUpAction.none]
+  /// {@macro pluto_grid_last_row_key_up_action_none}
+  ///
+  /// [PlutoGridLastRowKeyUpAction.removeOne]
+  /// {@macro pluto_grid_last_row_key_down_action_removeOne}
+  final TrinaGridLastRowKeyUpAction lastRowKeyUpAction;
+
   /// Set custom shortcut keys.
   ///
   /// Refer to the code below to redefine the action of a specific key
@@ -98,6 +119,8 @@ class TrinaGridConfiguration {
         TrinaGridRowSelectionCheckBoxBehavior.none,
     this.enterKeyAction = TrinaGridEnterKeyAction.editingAndMoveDown,
     this.tabKeyAction = TrinaGridTabKeyAction.normal,
+    this.lastRowKeyDownAction = TrinaGridLastRowKeyDownAction.none,
+    this.lastRowKeyUpAction = TrinaGridLastRowKeyUpAction.none,
     this.shortcut = const TrinaGridShortcut(),
     this.style = const TrinaGridStyleConfig(),
     this.scrollbar = const TrinaGridScrollbarConfig(),
@@ -113,6 +136,8 @@ class TrinaGridConfiguration {
         TrinaGridRowSelectionCheckBoxBehavior.none,
     this.enterKeyAction = TrinaGridEnterKeyAction.editingAndMoveDown,
     this.tabKeyAction = TrinaGridTabKeyAction.normal,
+    this.lastRowKeyDownAction = TrinaGridLastRowKeyDownAction.none,
+    this.lastRowKeyUpAction = TrinaGridLastRowKeyUpAction.none,
     this.shortcut = const TrinaGridShortcut(),
     this.style = const TrinaGridStyleConfig.dark(),
     this.scrollbar = const TrinaGridScrollbarConfig(),
@@ -153,6 +178,8 @@ class TrinaGridConfiguration {
     bool? enableMoveHorizontalInEditing,
     TrinaGridEnterKeyAction? enterKeyAction,
     TrinaGridTabKeyAction? tabKeyAction,
+    TrinaGridLastRowKeyDownAction? lastRowKeyDownAction,
+    TrinaGridLastRowKeyUpAction? lastRowKeyUpAction,
     TrinaGridShortcut? shortcut,
     TrinaGridStyleConfig? style,
     TrinaGridScrollbarConfig? scrollbar,
@@ -167,6 +194,8 @@ class TrinaGridConfiguration {
           enableMoveHorizontalInEditing ?? this.enableMoveHorizontalInEditing,
       enterKeyAction: enterKeyAction ?? this.enterKeyAction,
       tabKeyAction: tabKeyAction ?? this.tabKeyAction,
+      lastRowKeyDownAction: lastRowKeyDownAction ?? this.lastRowKeyDownAction,
+      lastRowKeyUpAction: lastRowKeyUpAction ?? this.lastRowKeyUpAction,
       shortcut: shortcut ?? this.shortcut,
       style: style ?? this.style,
       scrollbar: scrollbar ?? this.scrollbar,
@@ -187,6 +216,8 @@ class TrinaGridConfiguration {
                 other.enableMoveHorizontalInEditing &&
             enterKeyAction == other.enterKeyAction &&
             tabKeyAction == other.tabKeyAction &&
+            lastRowKeyDownAction == other.lastRowKeyDownAction &&
+            lastRowKeyUpAction == other.lastRowKeyUpAction &&
             shortcut == other.shortcut &&
             style == other.style &&
             scrollbar == other.scrollbar &&
@@ -201,6 +232,8 @@ class TrinaGridConfiguration {
         enableMoveHorizontalInEditing,
         enterKeyAction,
         tabKeyAction,
+        lastRowKeyDownAction,
+        lastRowKeyUpAction,
         shortcut,
         style,
         scrollbar,
@@ -250,6 +283,12 @@ class TrinaGridStyleConfig {
     this.defaultColumnFilterPadding = TrinaGridSettings.columnFilterPadding,
     this.defaultCellPadding = TrinaGridSettings.cellPadding,
     this.columnTextStyle = const TextStyle(
+      color: Colors.black,
+      decoration: TextDecoration.none,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    ),
+    this.columnSelectedTextStyle = const TextStyle(
       color: Colors.black,
       decoration: TextDecoration.none,
       fontSize: 14,
@@ -323,6 +362,12 @@ class TrinaGridStyleConfig {
     this.defaultColumnFilterPadding = TrinaGridSettings.columnFilterPadding,
     this.defaultCellPadding = TrinaGridSettings.cellPadding,
     this.columnTextStyle = const TextStyle(
+      color: Colors.white,
+      decoration: TextDecoration.none,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    ),
+    this.columnSelectedTextStyle = const TextStyle(
       color: Colors.white,
       decoration: TextDecoration.none,
       fontSize: 14,
@@ -492,6 +537,9 @@ class TrinaGridStyleConfig {
   /// Column - text style
   final TextStyle columnTextStyle;
 
+  /// Column selected - text style
+  final TextStyle columnSelectedTextStyle;
+
   /// Unselected color of the column.
   final Color columnUnselectedColor;
 
@@ -514,6 +562,10 @@ class TrinaGridStyleConfig {
   /// If enableContextMenu of TrinaColumn is false and enableDropToResize is true,
   /// only the width of the column can be adjusted.
   final IconData columnResizeIcon;
+
+  /// If hideResizeIcon is true, it does not show the icon to resize, but keeps the
+  /// functionality for resizing
+  final bool hideResizeIcon;
 
   /// Ascending icon when sorting a column.
   ///
@@ -585,6 +637,7 @@ class TrinaGridStyleConfig {
     EdgeInsets? defaultColumnFilterPadding,
     EdgeInsets? defaultCellPadding,
     TextStyle? columnTextStyle,
+    TextStyle? columnSelectedTextStyle,
     Color? columnUnselectedColor,
     Color? columnActiveColor,
     Color? cellUnselectedColor,
@@ -592,6 +645,7 @@ class TrinaGridStyleConfig {
     TextStyle? cellTextStyle,
     IconData? columnContextIcon,
     IconData? columnResizeIcon,
+    bool? hideResizeIcon,
     TrinaOptional<Icon?>? columnAscendingIcon,
     TrinaOptional<Icon?>? columnDescendingIcon,
     IconData? rowGroupExpandedIcon,
@@ -651,6 +705,7 @@ class TrinaGridStyleConfig {
           defaultColumnFilterPadding ?? this.defaultColumnFilterPadding,
       defaultCellPadding: defaultCellPadding ?? this.defaultCellPadding,
       columnTextStyle: columnTextStyle ?? this.columnTextStyle,
+      columnSelectedTextStyle: columnSelectedTextStyle ?? this.columnSelectedTextStyle,
       columnUnselectedColor:
           columnUnselectedColor ?? this.columnUnselectedColor,
       columnActiveColor: columnActiveColor ?? this.columnActiveColor,
@@ -659,6 +714,7 @@ class TrinaGridStyleConfig {
       cellTextStyle: cellTextStyle ?? this.cellTextStyle,
       columnContextIcon: columnContextIcon ?? this.columnContextIcon,
       columnResizeIcon: columnResizeIcon ?? this.columnResizeIcon,
+      hideResizeIcon: hideResizeIcon ?? this.hideResizeIcon,
       columnAscendingIcon: columnAscendingIcon == null
           ? this.columnAscendingIcon
           : columnAscendingIcon.value,
@@ -718,6 +774,7 @@ class TrinaGridStyleConfig {
             defaultColumnFilterPadding == other.defaultColumnFilterPadding &&
             defaultCellPadding == other.defaultCellPadding &&
             columnTextStyle == other.columnTextStyle &&
+            columnSelectedTextStyle == other.columnSelectedTextStyle &&
             columnUnselectedColor == other.columnUnselectedColor &&
             columnActiveColor == other.columnActiveColor &&
             cellUnselectedColor == other.cellUnselectedColor &&
@@ -725,6 +782,7 @@ class TrinaGridStyleConfig {
             cellTextStyle == other.cellTextStyle &&
             columnContextIcon == other.columnContextIcon &&
             columnResizeIcon == other.columnResizeIcon &&
+            hideResizeIcon == other.hideResizeIcon &&
             columnAscendingIcon == other.columnAscendingIcon &&
             columnDescendingIcon == other.columnDescendingIcon &&
             rowGroupExpandedIcon == other.rowGroupExpandedIcon &&
@@ -770,6 +828,7 @@ class TrinaGridStyleConfig {
         defaultColumnFilterPadding,
         defaultCellPadding,
         columnTextStyle,
+        columnSelectedTextStyle,
         columnUnselectedColor,
         columnActiveColor,
         cellUnselectedColor,
@@ -777,6 +836,7 @@ class TrinaGridStyleConfig {
         cellTextStyle,
         columnContextIcon,
         columnResizeIcon,
+        hideResizeIcon,
         columnAscendingIcon,
         columnDescendingIcon,
         rowGroupExpandedIcon,
@@ -1883,4 +1943,50 @@ enum TrinaGridTabKeyAction {
   bool get isNormal => this == TrinaGridTabKeyAction.normal;
 
   bool get isMoveToNextOnEdge => this == TrinaGridTabKeyAction.moveToNextOnEdge;
+}
+
+
+/// Down key on last row action type.
+enum TrinaGridLastRowKeyDownAction {
+  /// {@template trina_grid_last_row_key_down_action_none}
+  /// Down key on last row does nothing
+  /// {@endtemplate}
+  none,
+
+  /// {@template trina_grid_last_row_key_down_action_addOne}
+  /// Down key on last row add a new default row if the last
+  /// row was not a default row
+  /// {@endtemplate}
+  addOne,
+
+  /// {@template trina_grid_last_row_key_down_action_addMultiple}
+  /// Down key on last row add a new default row even if the last
+  /// row was a default row
+  /// {@endtemplate}
+  addMultiple;
+
+  bool get isNone => this == TrinaGridLastRowKeyDownAction.none;
+
+  bool get isAddOne => this == TrinaGridLastRowKeyDownAction.addOne;
+
+  bool get isAddMultiple => this == TrinaGridLastRowKeyDownAction.addMultiple;
+}
+
+
+/// Up key on last row action type.
+enum TrinaGridLastRowKeyUpAction {
+  /// {@template trina_grid_last_row_key_up_action_none}
+  /// Up key on last row does nothing
+  /// {@endtemplate}
+  none,
+
+  /// {@template trina_grid_last_row_key_down_action_removeOne}
+  /// Up key on last row removes the row if it's a default row
+  /// {@endtemplate}
+  removeOne;
+
+  bool get isNone => this == TrinaGridLastRowKeyUpAction.none;
+
+  bool get isRemoveOne => this == TrinaGridLastRowKeyUpAction.removeOne;
+
 }
