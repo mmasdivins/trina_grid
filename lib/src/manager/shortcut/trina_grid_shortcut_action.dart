@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 /// Define the action by implementing the [execute] method
@@ -88,8 +89,91 @@ class TrinaGridActionMoveCellFocus extends TrinaGridShortcutAction {
       return;
     }
 
+    var index = stateManager.rows.indexOf(stateManager.currentCell!.row);
+
     stateManager.moveCurrentCell(direction, force: force);
+
+    var isRowDefaultFunction = stateManager.isRowDefault ?? _isRowDefault;
+
+    if (stateManager.mode != TrinaGridMode.readOnly
+        && direction.isDown
+        && stateManager.rows.length == (index + 1)) {
+
+      bool isRowDefault = isRowDefaultFunction(stateManager.currentCell!.row, stateManager);
+
+      // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
+      // lastRowKeyDownAction
+      if (stateManager.onLastRowKeyDown != null){
+        stateManager.onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
+          rowIdx: index,
+          row: stateManager.currentCell!.row,
+          isRowDefault: isRowDefault,
+        ));
+      }
+      else {
+        if (stateManager.configuration.lastRowKeyDownAction.isAddMultiple){
+          // Afegim una nova fila al final
+          stateManager.insertRows(
+            index + 1,
+            [stateManager.getNewRow()],
+          );
+          stateManager.moveCurrentCell(direction, force: force);
+        }
+        else if (stateManager.configuration.lastRowKeyDownAction.isAddOne){
+          if (!isRowDefault){
+            // Afegim una nova fila al final
+            stateManager.insertRows(
+              index + 1,
+              [stateManager.getNewRow()],
+            );
+            stateManager.moveCurrentCell(direction, force: force);
+          }
+        }
+      }
+    }
+
+    if (stateManager.mode != TrinaGridMode.readOnly
+        && direction.isUp
+        && stateManager.rows.length == (index + 1)) {
+
+      var row = stateManager.rows.elementAt(index);
+      bool isRowDefault = isRowDefaultFunction(row, stateManager);
+
+      // Si tenim definit l'event onLastRowKeyUp no fem cas de la configuració
+      // lastRowKeyUpAction
+      if (stateManager.onLastRowKeyUp != null){
+        stateManager.onLastRowKeyUp!.call(TrinaGridOnLastRowKeyUpEvent(
+          rowIdx: index,
+          row: row,
+          isRowDefault: isRowDefault,
+        ));
+      }
+      else {
+        if (stateManager.configuration.lastRowKeyUpAction.isRemoveOne && isRowDefault && stateManager.rows.length > 1){
+          // Esborrem la última fila si s'ha creat i no conté res i hi ha més d'una
+          // fila
+          stateManager.removeRows([row]);
+        }
+      }
+    }
   }
+
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager){
+    for (var element in stateManager.refColumns) {
+      var cell = row.cells[element.field]!;
+
+      var value = element.type.defaultValue;
+      if (element.type.defaultValue is Function){
+        value = element.type.defaultValue.call();
+      }
+
+      if (value != cell.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
 
 /// {@template trina_grid_action_move_selected_cell_focus}
@@ -351,7 +435,7 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
         row: stateManager.currentRow,
         rowIdx: stateManager.currentRowIdx,
         cell: stateManager.currentCell,
-        selectedRows: stateManager.mode.isMultiSelectMode
+        selectedRows: (stateManager.mode.isMultiSelectMode || stateManager.mode.isMultiSelectAlwaysOne)
             ? stateManager.currentSelectingRows
             : null,
       ));
@@ -369,16 +453,53 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
 
     if (stateManager.configuration.enterKeyAction.isToggleEditing) {
       stateManager.toggleEditing(notify: false);
-    } else {
+    }  else {
+
+      bool isReadOnly = false;
+      if (stateManager.currentColumn != null && stateManager.currentRow != null && stateManager.currentCell != null) {
+        isReadOnly = stateManager.currentColumn!.checkReadOnly(stateManager.currentRow!, stateManager.currentCell!);
+      }
+
       if (stateManager.isEditing == true ||
-          stateManager.currentColumn?.enableEditingMode == false) {
-        final saveIsEditing = stateManager.isEditing;
+          stateManager.currentColumn?.enableEditingMode?.call(stateManager.currentCell) == false ||
+          isReadOnly == true
+      ) {
+
+        bool saveIsEditing = stateManager.isEditing;
+
+        // Si la següent cel·la no és editable hem de canviar l'estat
+        // isEditing a false
+        var position = _getNextPosition(keyEvent, stateManager);
+        if (position != null && position.rowIdx != null && position.columnIdx != null) {
+          var nextCell = stateManager.refRows[position.rowIdx!].cells[stateManager.refColumns[position.columnIdx!].field];
+          if (nextCell != null) {
+            bool isReadOnly = nextCell.column.checkReadOnly(stateManager.refRows[position.rowIdx!], nextCell);
+            saveIsEditing = isReadOnly ? false : saveIsEditing;
+          }
+        }
 
         _moveCell(keyEvent, stateManager);
 
         stateManager.setEditing(saveIsEditing, notify: false);
+
+        if (saveIsEditing) {
+
+          // On change editing after enter, select all text in cell
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (stateManager.textEditingController != null) {
+              stateManager.textEditingController!.selection = TextSelection(baseOffset: 0, extentOffset: stateManager.textEditingController!.value.text.length);
+            }
+          });
+        }
       } else {
         stateManager.toggleEditing(notify: false);
+        // On change editing after enter, select all text in cell
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (stateManager.textEditingController != null) {
+            stateManager.textEditingController!.selection = TextSelection(baseOffset: 0, extentOffset: stateManager.textEditingController!.value.text.length);
+          }
+        });
+
       }
     }
 
@@ -435,6 +556,47 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
       }
     }
   }
+
+  TrinaGridCellPosition? _getNextPosition(
+      TrinaKeyManagerEvent keyEvent,
+      TrinaGridStateManager stateManager,
+      ) {
+    final enterKeyAction = stateManager.configuration.enterKeyAction;
+
+    if (enterKeyAction.isNone) {
+      return null;
+    }
+
+    if (enterKeyAction.isEditingAndMoveDown) {
+      if (keyEvent.isShiftPressed) {
+        return stateManager.cellPositionToMove(
+          stateManager.currentCellPosition,
+          TrinaMoveDirection.up,
+        );
+
+      } else {
+        return stateManager.cellPositionToMove(
+          stateManager.currentCellPosition,
+          TrinaMoveDirection.down,
+        );
+      }
+    }
+    else if (enterKeyAction.isEditingAndMoveRight) {
+      if (keyEvent.isShiftPressed) {
+        return stateManager.cellPositionToMove(
+          stateManager.currentCellPosition,
+          TrinaMoveDirection.left,
+        );
+      } else {
+        return stateManager.cellPositionToMove(
+          stateManager.currentCellPosition,
+          TrinaMoveDirection.right,
+        );
+      }
+    }
+    return null;
+  }
+
 }
 
 /// {@template trina_grid_action_default_escape_key}
@@ -685,5 +847,125 @@ class TrinaGridActionSelectAll extends TrinaGridShortcutAction {
     }
 
     stateManager.setAllCurrentSelecting();
+  }
+}
+
+/// {@template trina_grid_action_delete}
+/// Delete selected row.
+/// {@endtemplate}
+class TrinaGridActionDelete extends TrinaGridShortcutAction {
+  const TrinaGridActionDelete();
+
+  @override
+  void execute({
+    required TrinaKeyManagerEvent keyEvent,
+    required TrinaGridStateManager stateManager,
+  }) {
+
+    if (stateManager.isEditing == true
+        || stateManager.mode == TrinaGridMode.readOnly
+        || stateManager.currentCell == null
+        || stateManager.onDeleteRowEvent == null) {
+      return;
+    }
+
+    var row = stateManager.currentCell!.row;
+
+    stateManager.onDeleteRowEvent!.call(row, stateManager);
+  }
+}
+
+/// {@template trina_grid_action_insert}
+/// Inserts a default row.
+/// {@endtemplate}
+class TrinaGridActionInsert extends TrinaGridShortcutAction {
+  const TrinaGridActionInsert();
+
+  @override
+  void execute({
+    required TrinaKeyManagerEvent keyEvent,
+    required TrinaGridStateManager stateManager,
+  }) {
+
+    if (stateManager.isEditing == true
+        || stateManager.showLoading
+        // || stateManager.mode == PlutoGridMode.readOnly
+        || !stateManager.mode.isEditableMode
+        || stateManager.currentCellPosition == null
+        || stateManager.currentCellPosition?.rowIdx == null) {
+      return;
+    }
+
+    int rowIdx = stateManager.currentCellPosition!.rowIdx!;
+    stateManager.insertRows(
+        rowIdx,
+        [stateManager.getNewRow()]
+    );
+
+    var newRow = stateManager.refRows[rowIdx];
+    // Anem a la fila que hem creat
+    var firstVisibleCol = stateManager.columns.firstWhereOrNull((element) => !element.hide);
+    if (firstVisibleCol != null){
+      var cell = newRow.cells[firstVisibleCol.field];
+      stateManager.setCurrentCell(
+        cell,
+        rowIdx,
+        notify: true,
+      );
+    }
+
+
+  }
+}
+
+/// {@template trina_grid_action_search}
+/// Search a string.
+/// {@endtemplate}
+class TrinaGridActionSearch extends TrinaGridShortcutAction {
+  const TrinaGridActionSearch();
+
+  @override
+  void execute({
+    required TrinaKeyManagerEvent keyEvent,
+    required TrinaGridStateManager stateManager,
+  }) {
+
+    if (stateManager.isEditing == true
+        || stateManager.showLoading
+    /*|| stateManager.mode == PlutoGridMode.readOnly
+        || stateManager.currentCellPosition == null
+        || stateManager.currentCellPosition?.rowIdx == null*/) {
+      return;
+    }
+
+    if (stateManager.onSearchCallback != null) {
+      stateManager.onSearchCallback!.call(stateManager);
+    }
+
+  }
+}
+
+/// {@template trina_grid_action_search_next}
+/// Search a string.
+/// {@endtemplate}
+class TrinaGridActionSearchNext extends TrinaGridShortcutAction {
+  const TrinaGridActionSearchNext();
+
+  @override
+  void execute({
+    required TrinaKeyManagerEvent keyEvent,
+    required TrinaGridStateManager stateManager,
+  }) {
+
+    if (stateManager.isEditing == true
+        || stateManager.showLoading
+    /*|| stateManager.mode == PlutoGridMode.readOnly
+        || stateManager.currentCellPosition == null
+        || stateManager.currentCellPosition?.rowIdx == null*/) {
+      return;
+    }
+
+    stateManager.searchNext(notify: true);
+
   }
 }

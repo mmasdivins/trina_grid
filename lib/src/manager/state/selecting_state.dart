@@ -74,6 +74,9 @@ abstract class ISelectingState {
   /// Select or unselect a row.
   void toggleSelectingRow(int rowIdx, {bool notify = true});
 
+  /// Selects always the row and unselects the other rows
+  void toggleMultiSelectRow(int rowIdx, {bool notify = true});
+
   bool isSelectingInteraction();
 
   bool isSelectedRow(Key rowKey);
@@ -121,6 +124,7 @@ mixin SelectingState implements ITrinaGridState {
       case TrinaGridSelectingMode.horizontal:
         return _selectingCellsHorizontally();
       case TrinaGridSelectingMode.row:
+      case TrinaGridSelectingMode.rowCell:
       case TrinaGridSelectingMode.none:
         return [];
     }
@@ -196,6 +200,8 @@ mixin SelectingState implements ITrinaGridState {
       selectingMode = TrinaGridSelectingMode.none;
     } else if (mode.isMultiSelectMode) {
       selectingMode = TrinaGridSelectingMode.row;
+    } else if (mode.isMultiSelectAlwaysOne) {
+      selectingMode = TrinaGridSelectingMode.rowCell;
     }
 
     if (_state._selectingMode == selectingMode) {
@@ -230,6 +236,7 @@ mixin SelectingState implements ITrinaGridState {
         );
         break;
       case TrinaGridSelectingMode.row:
+      case TrinaGridSelectingMode.rowCell:
         if (currentCell == null) {
           _setFistCellAsCurrent();
         }
@@ -262,7 +269,7 @@ mixin SelectingState implements ITrinaGridState {
     _state._currentSelectingPosition =
         isInvalidCellPosition(cellPosition) ? null : cellPosition;
 
-    if (currentSelectingPosition != null && selectingMode.isRow) {
+    if (currentSelectingPosition != null && (selectingMode.isRow || selectingMode.isRowCell)) {
       setCurrentSelectingRowsByRange(
         currentRowIdx,
         currentSelectingPosition!.rowIdx,
@@ -353,7 +360,7 @@ mixin SelectingState implements ITrinaGridState {
     int? to, {
     bool notify = true,
   }) {
-    if (!selectingMode.isRow) {
+    if (!selectingMode.isRow && !selectingMode.isRowCell) {
       return;
     }
 
@@ -381,7 +388,7 @@ mixin SelectingState implements ITrinaGridState {
 
   @override
   void toggleSelectingRow(int? rowIdx, {notify = true}) {
-    if (!selectingMode.isRow) {
+    if (!selectingMode.isRow && !selectingMode.isRowCell) {
       return;
     }
 
@@ -395,11 +402,38 @@ mixin SelectingState implements ITrinaGridState {
 
     if (keys.contains(row.key)) {
       currentSelectingRows.removeWhere((element) => element.key == row.key);
-    } else {
+    } else if (!keys.contains(row.key)) {
+      // If it does not have the row we add it to the selecting list
       currentSelectingRows.add(row);
     }
 
     notifyListeners(notify, toggleSelectingRow.hashCode);
+  }
+
+
+  @override
+  void toggleMultiSelectRow(int rowIdx, {bool notify = true}) {
+    if (!selectingMode.isRow && !selectingMode.isRowCell) {
+      return;
+    }
+
+    if (rowIdx == null || rowIdx < 0 || rowIdx > refRows.length - 1) {
+      return;
+    }
+
+    final TrinaRow row = refRows[rowIdx];
+
+    final keys = Set.from(currentSelectingRows.map((e) => e.key));
+
+    // We delete the rows that are not the selected one
+    currentSelectingRows.removeWhere((element) => element.key != row.key);
+
+    if (!keys.contains(row.key)) {
+      // If it does not have the row we add it to the selecting list
+      currentSelectingRows.add(row);
+    }
+
+    notifyListeners(notify, toggleMultiSelectRow.hashCode);
   }
 
   @override
@@ -412,7 +446,7 @@ mixin SelectingState implements ITrinaGridState {
   @override
   bool isSelectedRow(Key? rowKey) {
     if (rowKey == null ||
-        !selectingMode.isRow ||
+        (!selectingMode.isRow && !selectingMode.isRowCell) ||
         currentSelectingRows.isEmpty) {
       return false;
     }
@@ -528,7 +562,9 @@ mixin SelectingState implements ITrinaGridState {
       return false;
     } else if (selectingMode.isRow) {
       return false;
-    } else {
+    }  else if (selectingMode.isRowCell) {
+      return false;
+    }  else {
       throw Exception('selectingMode is not handled');
     }
   }

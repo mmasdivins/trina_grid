@@ -72,11 +72,17 @@ mixin KeyboardState implements ITrinaGridState {
 
     switch (direction) {
       case TrinaMoveDirection.left:
+        if (cellPosition!.columnIdx! - 1 < 0) {
+          return cellPosition!;
+        }
         return TrinaGridCellPosition(
           columnIdx: columnIndexes[cellPosition!.columnIdx! - 1],
           rowIdx: cellPosition.rowIdx,
         );
       case TrinaMoveDirection.right:
+        if (cellPosition!.columnIdx! + 1 >= columnIndexes.length) {
+          return cellPosition!;
+        }
         return TrinaGridCellPosition(
           columnIdx: columnIndexes[cellPosition!.columnIdx! + 1],
           rowIdx: cellPosition.rowIdx,

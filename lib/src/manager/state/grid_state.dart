@@ -14,6 +14,18 @@ abstract class IGridState {
 
   TrinaOnChangedEventCallback? get onChanged;
 
+  TrinaOnRowChangedEventCallback? get onRowChanged;
+
+  TrinaOnLastRowKeyDownEventCallback? get onLastRowKeyDown;
+
+  TrinaOnLastRowKeyUpEventCallback? get onLastRowKeyUp;
+
+  TrinaOnRightClickCellEventCallback? get onRightClickCell;
+
+  TrinaRightClickCellContextMenuEventCallback? get rightClickCellContextMenu;
+
+  TrinaOnSelectedCellChangedEventCallback? get onSelectedCellChanged;
+
   TrinaOnSelectedEventCallback? get onSelected;
 
   TrinaOnSortedEventCallback? get onSorted;
@@ -38,6 +50,14 @@ abstract class IGridState {
 
   CreateHeaderCallBack? get createHeader;
 
+  CreateColumnIndexCallBack? get createColumnIndex;
+
+  CreateCornerWidgetCallBack? get createCornerWidget;
+
+  OnDeleteRowEventCallBack? get onDeleteRowEvent;
+
+  IsRowDefaultCallback? get isRowDefault;
+
   CreateFooterCallBack? get createFooter;
 
   TrinaSelectDateCallBack? get selectDateCallback;
@@ -45,6 +65,10 @@ abstract class IGridState {
   TrinaGridLocaleText get localeText;
 
   TrinaGridStyleConfig get style;
+
+  TrinaEnableCheckSelectionCallBack? get enableCheckSelection;
+
+  TrinaOnSearchCallBack? get onSearchCallback;
 
   /// To delegate sort handling in the [TrinaInfinityScrollRows] or [TrinaLazyPagination] widget
   /// Whether to override the default sort processing.
@@ -162,6 +186,25 @@ mixin GridState implements ITrinaGridState {
 
     _state._mode = mode;
 
+    if (mode != TrinaGridMode.readOnly && rows.isEmpty) {
+      // SI no hi ha cap fila i estem en edició posem una fila buida
+      removeAllRows(notify: false);
+      appendRows([_createNewRow()]);
+    }
+    else if (mode == TrinaGridMode.readOnly && rows.isNotEmpty) {
+      // Si passem a no edició i tenim files que són default
+      // les esborrem
+      var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
+      List<TrinaRow> rowsRemove = [];
+      for (var row in rows) {
+        if (isRowDefaultFunction(row, this as TrinaGridStateManager)) {
+          rowsRemove.add(row);
+        }
+      }
+      removeRows(rowsRemove);
+
+    }
+
     TrinaGridSelectingMode selectingMode;
 
     switch (mode) {
@@ -184,6 +227,38 @@ mixin GridState implements ITrinaGridState {
     resetCurrentState();
   }
 
+  TrinaRow _createNewRow() {
+    final cells = <String, TrinaCell>{};
+
+    for (var column in refColumns.originalList) {
+      var value = column.type.defaultValue;
+      if (value is Function){
+        value = column.type.defaultValue.call();
+      }
+
+      cells[column.field] = TrinaCell(
+        value: value,
+      );
+    }
+    return TrinaRow(cells: cells);
+  }
+
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager state){
+    for (var element in refColumns) {
+      var cell = row.cells[element.field]!;
+
+      var value = element.type.defaultValue;
+      if (element.type.defaultValue is Function){
+        value = element.type.defaultValue.call();
+      }
+
+      if (value != cell.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   void resetCurrentState({bool notify = true}) {
     clearCurrentCell(notify: false);
@@ -204,7 +279,7 @@ mixin GridState implements ITrinaGridState {
           row: currentRow,
           rowIdx: currentRowIdx,
           cell: currentCell,
-          selectedRows: mode.isMultiSelectMode ? currentSelectingRows : null,
+          selectedRows: (mode.isMultiSelectMode || mode.isMultiSelectAlwaysOne) ? currentSelectingRows : null,
         ),
       );
     }

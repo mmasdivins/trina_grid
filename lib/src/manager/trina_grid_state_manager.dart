@@ -45,7 +45,9 @@ abstract class ITrinaGridState
         IScrollState,
         ISelectingState,
         IVisibilityLayoutState,
-        IHoveringState {}
+        IHoveringState,
+        ISearchState
+        {}
 
 class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     with
@@ -66,16 +68,24 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
         ScrollState,
         SelectingState,
         VisibilityLayoutState,
-        HoveringState {
+        HoveringState,
+        SearchState {
   TrinaGridStateChangeNotifier({
     required List<TrinaColumn> columns,
     required List<TrinaRow> rows,
     required this.gridFocusNode,
     required this.scroll,
+    this.sortOrder = const [],
     List<TrinaColumnGroup>? columnGroups,
     this.rowWrapper,
     this.editCellRenderer,
     this.onChanged,
+    this.onRowChanged,
+    this.onLastRowKeyDown,
+    this.onLastRowKeyUp,
+    this.onRightClickCell,
+    this.rightClickCellContextMenu,
+    this.onSelectedCellChanged,
     this.onSelected,
     this.onSorted,
     this.onRowChecked,
@@ -84,18 +94,26 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     this.onRowEnter,
     this.onRowExit,
     this.onRowsMoved,
+    this.onColumnTap,
     this.onActiveCellChanged,
     this.onColumnsMoved,
     this.rowColorCallback,
     this.selectDateCallback,
     this.createHeader,
     this.createFooter,
+    this.createColumnIndex,
+    this.createCornerWidget,
+    this.onDeleteRowEvent,
+    this.isRowDefault,
+    this.showColumnIndex = false,
     this.onValidationFailed,
     this.onLazyFetchCompleted,
     TrinaColumnMenuDelegate? columnMenuDelegate,
     TrinaChangeNotifierFilterResolver? notifierFilterResolver,
     TrinaGridConfiguration configuration = const TrinaGridConfiguration(),
     TrinaGridMode? mode,
+    this.enableCheckSelection,
+    this.onSearchCallback,
   })  : refColumns = FilteredList(initialList: columns),
         refRows = FilteredList(initialList: rows),
         refColumnGroups = FilteredList<TrinaColumnGroup>(
@@ -132,6 +150,9 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
   final FilteredList<TrinaColumnGroup> refColumnGroups;
 
   @override
+  final List<String> sortOrder;
+
+  @override
   final FilteredList<TrinaRow> refRows;
 
   @override
@@ -139,6 +160,27 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
 
   @override
   final TrinaGridScrollController scroll;
+
+  @override
+  final TrinaOnChangedEventCallback? onChanged;
+
+  @override
+  final TrinaOnRowChangedEventCallback? onRowChanged;
+
+  @override
+  final TrinaOnLastRowKeyDownEventCallback? onLastRowKeyDown;
+
+  @override
+  final TrinaOnLastRowKeyUpEventCallback? onLastRowKeyUp;
+
+  @override
+  final TrinaOnRightClickCellEventCallback? onRightClickCell;
+
+  @override
+  final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
+
+  @override
+  final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
 
   @override
   final TrinaOnChangedEventCallback? onChanged;
@@ -168,6 +210,9 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
   final TrinaOnRowsMovedEventCallback? onRowsMoved;
 
   @override
+  final TrinaOnColumnTapEventCallback? onColumnTap;
+
+  @override
   final TrinaOnActiveCellChangedEventCallback? onActiveCellChanged;
 
   @override
@@ -180,6 +225,21 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
   final CreateHeaderCallBack? createHeader;
 
   @override
+  final CreateColumnIndexCallBack? createColumnIndex;
+
+  @override
+  final CreateCornerWidgetCallBack? createCornerWidget;
+
+  @override
+  final OnDeleteRowEventCallBack? onDeleteRowEvent;
+
+  @override
+  final IsRowDefaultCallback? isRowDefault;
+
+  @override
+  final bool showColumnIndex;
+
+  @override
   final CreateFooterCallBack? createFooter;
 
   @override
@@ -189,6 +249,12 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
   final TrinaColumnMenuDelegate columnMenuDelegate;
 
   final TrinaChangeNotifierFilterResolver notifierFilterResolver;
+
+  @override
+  final TrinaEnableCheckSelectionCallBack? enableCheckSelection;
+
+  @override
+  final TrinaOnSearchCallBack? onSearchCallback;
 
   @override
   final GlobalKey gridKey;
@@ -253,6 +319,7 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     TrinaGridStateManager.initializeRows(
       refColumns.originalList,
       refRows.originalList,
+      eventManager,
     );
 
     refColumns.setFilter((element) => element.hide == false);
@@ -263,6 +330,8 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
       refColumns.originalList.any((e) => e.footerRenderer != null),
       notify: false,
     );
+
+    setShowColumnIndex(showColumnIndex, notify: false);
 
     setGroupToColumn();
   }
@@ -303,10 +372,17 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     required super.rows,
     required super.gridFocusNode,
     required super.scroll,
+    super.sortOrder,
     super.rowWrapper,
     super.editCellRenderer,
     super.columnGroups,
     super.onChanged,
+    super.onRowChanged,
+    super.onLastRowKeyDown,
+    super.onLastRowKeyUp,
+    super.onRightClickCell,
+    super.rightClickCellContextMenu,
+    super.onSelectedCellChanged,
     super.onSelected,
     super.onSorted,
     super.onRowChecked,
@@ -315,18 +391,26 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     super.onRowEnter,
     super.onRowExit,
     super.onRowsMoved,
+    super.onColumnTap,
     super.onActiveCellChanged,
     super.onColumnsMoved,
     super.rowColorCallback,
     super.selectDateCallback,
     super.createHeader,
     super.createFooter,
+    super.createColumnIndex,
+    super.createCornerWidget,
+    super.onDeleteRowEvent,
+    super.isRowDefault,
+    super.showColumnIndex,
     super.onValidationFailed,
     super.onLazyFetchCompleted,
     super.columnMenuDelegate,
     super.notifierFilterResolver,
     super.configuration,
     super.mode,
+    super.enableCheckSelection,
+    super.onSearchCallback,
   });
 
   TrinaChangeNotifierFilter<T> resolveNotifierFilter<T>() {
@@ -401,7 +485,8 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
   /// {@macro initialize_rows_sync_or_async}
   static List<TrinaRow> initializeRows(
     List<TrinaColumn> refColumns,
-    List<TrinaRow> refRows, {
+    List<TrinaRow> refRows,
+    TrinaGridEventManager? eventManager, {
     bool forceApplySortIdx = true,
     bool increase = true,
     int start = 0,
@@ -411,14 +496,14 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     }
 
     _ApplyList applyList = _ApplyList([
-      _ApplyCellForSetColumnRow(refColumns),
+      _ApplyCellForSetColumnRow(refColumns, eventManager),
       _ApplyRowForSortIdx(
         forceApply: forceApplySortIdx,
         increase: increase,
         start: start,
         firstRow: refRows.first,
       ),
-      _ApplyRowGroup(refColumns),
+      _ApplyRowGroup(refColumns, eventManager),
     ]);
 
     if (!applyList.apply) {
@@ -462,7 +547,8 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
   /// {@macro initialize_rows_sync_or_async}
   static Future<List<TrinaRow>> initializeRowsAsync(
     List<TrinaColumn> refColumns,
-    List<TrinaRow> refRows, {
+    List<TrinaRow> refRows,
+    TrinaGridEventManager eventManager,{
     bool forceApplySortIdx = true,
     bool increase = true,
     int start = 0,
@@ -501,6 +587,7 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
         return TrinaGridStateManager.initializeRows(
           refColumns,
           chunk,
+          eventManager,
           forceApplySortIdx: forceApplySortIdx,
           increase: increase,
           start: start + (chunkIndex * chunkSize),
@@ -634,7 +721,9 @@ enum TrinaGridSelectingMode {
   none,
 
   /// using only internal
-  horizontal;
+  horizontal,
+
+  rowCell;
 
   bool get isCell => this == TrinaGridSelectingMode.cell;
 
@@ -644,6 +733,8 @@ enum TrinaGridSelectingMode {
 
   /// using only internal
   bool get isHorizontal => this == TrinaGridSelectingMode.horizontal;
+
+  bool get isRowCell => this == TrinaGridSelectingMode.rowCell;
 }
 
 abstract class _Apply {
@@ -674,8 +765,9 @@ class _ApplyList implements _Apply {
 
 class _ApplyCellForSetColumnRow implements _Apply {
   final List<TrinaColumn> refColumns;
+  final TrinaGridEventManager? eventManager;
 
-  _ApplyCellForSetColumnRow(this.refColumns);
+  _ApplyCellForSetColumnRow(this.refColumns, this.eventManager);
 
   @override
   bool get apply => true;
@@ -687,6 +779,12 @@ class _ApplyCellForSetColumnRow implements _Apply {
     }
 
     for (var element in refColumns) {
+      if (!row.cells.containsKey(element.field)) {
+        debugPrint("Cell does not exist for column ${element.title}");
+        eventManager?.addEvent(TrinaGridCellNotExistEvent(column: element.title));
+        continue;
+      }
+
       row.cells[element.field]!
         ..setColumn(element)
         ..setRow(row);
@@ -729,8 +827,9 @@ class _ApplyRowForSortIdx implements _Apply {
 
 class _ApplyRowGroup implements _Apply {
   final List<TrinaColumn> refColumns;
+  final TrinaGridEventManager? eventManager;
 
-  _ApplyRowGroup(this.refColumns);
+  _ApplyRowGroup(this.refColumns, this.eventManager);
 
   @override
   bool get apply => true;
@@ -742,6 +841,7 @@ class _ApplyRowGroup implements _Apply {
         columns: refColumns,
         rows: row.type.group.children.originalList,
         parent: row,
+        eventManager: eventManager,
       );
     }
   }
@@ -750,12 +850,13 @@ class _ApplyRowGroup implements _Apply {
     required List<TrinaColumn> columns,
     required List<TrinaRow> rows,
     required TrinaRow parent,
+    required PlutoGridEventManager? eventManager,
   }) {
     for (final row in rows) {
       row.setParent(parent);
     }
 
-    TrinaGridStateManager.initializeRows(columns, rows);
+    TrinaGridStateManager.initializeRows(columns, rows, eventManager);
   }
 
   bool _hasChildren(TrinaRow row) {

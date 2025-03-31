@@ -33,6 +33,8 @@ abstract class ILayoutState {
 
   bool get showColumnFooter;
 
+  bool get showColumnIndex;
+
   bool get showColumnFilter;
 
   bool get showHeader;
@@ -110,6 +112,8 @@ abstract class ILayoutState {
 
   void setShowColumnFooter(bool flag, {bool notify = true});
 
+  void setShowColumnIndex(bool flag, {bool notify = true});
+
   void setShowColumnFilter(bool flag, {bool notify = true});
 
   void setShowLoading(
@@ -152,6 +156,8 @@ class _State {
   bool? _showColumnTitle = true;
 
   bool? _showColumnFooter = false;
+
+  bool? _showColumnIndex = false;
 
   bool? _showColumnFilter;
 
@@ -252,6 +258,9 @@ mixin LayoutState implements ITrinaGridState {
 
   @override
   bool get showColumnFooter => _state._showColumnFooter == true;
+
+  @override
+  bool get showColumnIndex => _state._showColumnIndex == true;
 
   @override
   bool get showColumnFilter => _state._showColumnFilter == true;
@@ -455,6 +464,17 @@ mixin LayoutState implements ITrinaGridState {
     _state._showColumnFooter = flag;
 
     notifyListeners(notify, setShowColumnFooter.hashCode);
+  }
+
+  @override
+  void setShowColumnIndex(bool flag, {bool notify = true}) {
+    if (showColumnIndex == flag) {
+      return;
+    }
+
+    _state._showColumnIndex = flag;
+
+    notifyListeners(notify, setShowColumnIndex.hashCode);
   }
 
   @override

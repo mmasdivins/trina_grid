@@ -2,8 +2,17 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
+class RowEditingState {
+  int? indexRow;
+  Map<String, dynamic>? cellValues;
+  TrinaRow? newRow;
+  bool semaphor = false;
+}
+
 abstract class IRowState {
   List<TrinaRow> get rows;
+
+  RowEditingState get rowEditingState;
 
   /// [refRows] is a List&lt;TrinaRow&gt; type and holds the entire row data.
   ///
@@ -106,11 +115,23 @@ abstract class IRowState {
     bool flag, {
     bool notify = true,
   });
+
+
+  void resetRowEditingState();
+
+  void trackRowCell(int idxRow, TrinaRow row);
+
+  Future notifyTrackingRow(int idxRow);
 }
 
 mixin RowState implements ITrinaGridState {
   @override
   List<TrinaRow> get rows => [...refRows];
+
+  RowEditingState _rowEditingState = RowEditingState();
+
+  @override
+  RowEditingState get rowEditingState => _rowEditingState;
 
   @override
   List<TrinaRow> get checkedRows => refRows.where((row) => row.checked!).toList(
@@ -145,25 +166,22 @@ mixin RowState implements ITrinaGridState {
 
     int countFalse = 0;
 
+    int lengthCheckableRows = 0;
     for (var i = 0; i < length; i += 1) {
-      refRows[i].checked == true ? ++countTrue : ++countFalse;
+      var row = refRows[i];
+      var checked =  row.checked == true;
+
+      bool enabledCheckedRow = enableCheckSelection?.call(row) ?? true;
+
+      if (enabledCheckedRow) {
+        checked ? ++countTrue : ++countFalse;
+        ++lengthCheckableRows;
+      }
 
       if (countTrue > 0 && countFalse > 0) return null;
     }
 
-    return countTrue == length;
-  }
-
-  @override
-  int? get currentRowIdx => currentCellPosition?.rowIdx;
-
-  @override
-  TrinaRow? get currentRow {
-    if (currentRowIdx == null) {
-      return null;
-    }
-
-    return refRows[currentRowIdx!];
+    return (countTrue == lengthCheckableRows) && (countTrue > 0);
   }
 
   @override
@@ -201,9 +219,14 @@ mixin RowState implements ITrinaGridState {
   TrinaRow getNewRow() {
     final cells = <String, TrinaCell>{};
 
-    for (var column in refColumns) {
+    for (var column in refColumns.originalList) {
+      var value = column.type.defaultValue;
+      if (value is Function){
+        value = column.type.defaultValue.call();
+      }
+
       cells[column.field] = TrinaCell(
-        value: column.type.defaultValue,
+        value: value,
       );
     }
 
@@ -343,6 +366,12 @@ mixin RowState implements ITrinaGridState {
       refRows.removeAt(currentRowIdx!);
     }
 
+    // Si esborrem la fila que teniem tracking,
+    // reiniciem l'estat
+    if (_rowEditingState.indexRow == currentRowIdx){
+      _rowEditingState = RowEditingState();
+    }
+
     resetCurrentState(notify: false);
 
     notifyListeners(true, removeCurrentRow.hashCode);
@@ -353,6 +382,10 @@ mixin RowState implements ITrinaGridState {
     List<TrinaRow> rows, {
     bool notify = true,
   }) {
+    if (showLoading) {
+      return;
+    }
+
     if (rows.isEmpty) {
       return;
     }
@@ -381,6 +414,12 @@ mixin RowState implements ITrinaGridState {
       refRows.removeWhereFromOriginal((row) => removeKeys.contains(row.key));
     }
 
+    // Si esborrem la fila que teniem tracking,
+    // reiniciem l'estat
+    if (rows.contains(_rowEditingState.newRow)){
+      _rowEditingState = RowEditingState();
+    }
+
     updateCurrentCellPosition(notify: false);
 
     setCurrentSelectingPositionByCellKey(selectingCellKey, notify: false);
@@ -397,6 +436,8 @@ mixin RowState implements ITrinaGridState {
     }
 
     refRows.clearFromOriginal();
+
+    _rowEditingState = RowEditingState();
 
     resetCurrentState(notify: false);
 
@@ -464,7 +505,9 @@ mixin RowState implements ITrinaGridState {
     bool notify = true,
   }) {
     for (final row in iterateRowAndGroup) {
-      row.setChecked(flag == true);
+      if (enableCheckSelection?.call(row) ?? true) {
+        row.setChecked(flag == true);
+      }
     }
 
     notifyListeners(notify, toggleAllRowChecked.hashCode);
@@ -503,16 +546,32 @@ mixin RowState implements ITrinaGridState {
       }
 
       for (final row in rows) {
-        row.setState(TrinaRowState.added);
+        if (isRowDefault?.call(row, this as TrinaGridStateManager) ?? false) {
+          row.setState(TrinaRowState.added);
+        }
+        else {
+          row.setState(TrinaRowState.none);
+        }
       }
 
+      bool wasEmpty = refRows.isEmpty;
       refRows.insertAll(safetyIndex, rows);
 
+      // Initialize the original list without the filter
       TrinaGridStateManager.initializeRows(
-        refColumns,
+        refColumns.originalList,
         rows,
+        eventManager,
         forceApplySortIdx: false,
       );
+
+      // If the rows were empty on initializing new rows we set
+      // the first cell as focused
+      if (wasEmpty){
+        setCurrentCell(firstCell, 0);
+        gridFocusNode.requestFocus();
+      }
+
     }
 
     if (isPaginated) {
@@ -566,4 +625,79 @@ mixin RowState implements ITrinaGridState {
       row.sortIdx += increase;
     }
   }
+
+  @override
+  void trackRowCell(int idxRow, TrinaRow row){
+    if (_rowEditingState.cellValues == null){
+      Map<String,dynamic> cellValues = <String,dynamic>{};
+      row.cells.forEach((key, cell) {
+        cellValues[key] = cell.value;
+      });
+      _rowEditingState.cellValues = cellValues;
+    }
+
+    if (idxRow >= 0 && refRows.length >= idxRow){
+      _rowEditingState.indexRow ??= idxRow;
+      _rowEditingState.newRow ??= refRows[idxRow];
+    }
+  }
+
+  void setRowEditingState(RowEditingState rowEditingState) {
+    _rowEditingState = rowEditingState;
+  }
+
+  @override
+  Future notifyTrackingRow(int idxRow) async {
+
+    // If semaphor don't notify
+    if (_rowEditingState.semaphor) {
+      return;
+    }
+
+
+    if (_rowEditingState.indexRow != null && _rowEditingState.indexRow != idxRow){
+
+      // Primer comprovem si hi s'ha canviat alguna cel·la
+      if (!_compareCells(_rowEditingState.newRow!.cells, _rowEditingState.cellValues!)) {
+        // No s'ha canviat cap cel·la per tant no generem l'event de on row changed
+        // i reïniciem el row editing state
+        resetRowEditingState();
+        return;
+      }
+
+      // S'ha canviat la fila seleccionada enviem els canvis si n'hi havia
+      // de la fila que modificavem
+      bool? result = await onRowChanged?.call(TrinaGridOnRowChangedEvent(
+          rowIdx: _rowEditingState.indexRow!,
+          row: _rowEditingState.newRow!,
+          oldCellValues: _rowEditingState.cellValues!
+      ));
+
+      if (result == null || result == true) {
+        // Reiniciem el row editing state
+        resetRowEditingState();
+      }
+    }
+  }
+
+  ///
+  /// Retorna true si s'ha canviat alguna cell, false altrament
+  bool _compareCells(Map<String, TrinaCell> newCells,  Map<String, dynamic> oldCells){
+    for(var entry in newCells.entries) {
+      if(!oldCells.containsKey(entry.key))
+        return true;
+
+      var oc = oldCells[entry.key];
+      if (oc != entry.value.value)
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  void resetRowEditingState(){
+    // Reiniciem el row editing state
+    _rowEditingState = RowEditingState();
+  }
+
 }

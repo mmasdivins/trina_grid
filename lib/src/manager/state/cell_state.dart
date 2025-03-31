@@ -10,6 +10,8 @@ abstract class ICellState {
 
   TrinaCell? get firstCell;
 
+  TrinaCell? get firstVisibleCell;
+
   void setCurrentCellPosition(
     TrinaGridCellPosition cellPosition, {
     bool notify = true,
@@ -92,6 +94,25 @@ mixin CellState implements ITrinaGridState {
 
     return refRows.first.cells[columnField];
   }
+
+  @override
+  TrinaCell? get firstVisibleCell {
+    if (refRows.isEmpty || refColumns.isEmpty) {
+      return null;
+    }
+
+    final columnIndexes = columnIndexesByShowFrozen;
+    for (var index in columnIndexes) {
+      if (refColumns[columnIndexes.first].hide)
+        continue;
+
+      final columnField = refColumns[columnIndexes.first].field;
+      return refRows.first.cells[columnField];
+    }
+
+    return null;
+  }
+
 
   @override
   void setCurrentCellPosition(
@@ -179,13 +200,46 @@ mixin CellState implements ITrinaGridState {
     notifyListeners(notify, clearCurrentCell.hashCode);
   }
 
+
+  void _selecting(int rowIdx, int? columnIdx) {
+    bool callOnSelected = mode.isMultiSelectMode || mode.isMultiSelectAlwaysOne;
+
+    final bool checkSelectedRow = (selectingMode.isRow || selectingMode.isRowCell) &&
+        isSelectedRow(refRows[rowIdx].key);
+
+    if (keyPressed.shift) {
+      // final int? columnIdx = columnIdx;
+
+      setCurrentSelectingPosition(
+        cellPosition: TrinaGridCellPosition(
+          columnIdx: columnIdx,
+          rowIdx: rowIdx,
+        ),
+      );
+    } else if (keyPressed.ctrl) {
+      toggleSelectingRow(rowIdx);
+    }
+    else if (!checkSelectedRow && mode.isMultiSelectAlwaysOne) {
+      toggleMultiSelectRow(rowIdx);
+    }
+    else {
+      callOnSelected = false;
+    }
+
+    if (callOnSelected) {
+      handleOnSelected();
+    }
+  }
+
   @override
-  void setCurrentCell(TrinaCell? cell, int? rowIdx, {bool notify = true}) {
+  void setCurrentCell(TrinaCell? cell, int? rowIdx, {bool notify = true}) async {
     if (cell == null ||
         rowIdx == null ||
         refRows.isEmpty ||
         rowIdx < 0 ||
-        rowIdx > refRows.length - 1) {
+        rowIdx > refRows.length - 1 ||
+        showLoading
+    ) {
       return;
     }
 
@@ -193,6 +247,8 @@ mixin CellState implements ITrinaGridState {
       return;
     }
 
+    var oldCell = _state._currentCell;
+    var oldRowIdx = _state._currentCellPosition?.rowIdx;
     _state._currentCell = cell;
 
     _state._currentCellPosition = TrinaGridCellPosition(
@@ -200,15 +256,52 @@ mixin CellState implements ITrinaGridState {
       columnIdx: columnIdxByCellKeyAndRowIdx(cell.key, rowIdx),
     );
 
-    clearCurrentSelecting(notify: false);
+    // Clear selection if selecting mode is not rowCell or
+    // old Row and new Row are different
+    if (!selectingMode.isRowCell || oldRowIdx == null || oldRowIdx != rowIdx) {
+      clearCurrentSelecting(notify: false);
+    }
+
+    if (selectingMode.isRowCell && (oldRowIdx == null || oldRowIdx != rowIdx)){
+      _selecting(rowIdx, columnIdxByCellKeyAndRowIdx(cell.key, rowIdx));
+    }
 
     setEditing(autoEditing, notify: false);
 
+    onSelectedCellChanged?.call(TrinaGridOnSelectedCellChangedEvent(
+        oldCell: oldCell,
+        cell: currentCell!
+    ));
+
+    var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
+
+    if (mode != TrinaGridMode.readOnly
+        && oldCell != null
+        && oldCell.row != currentCell!.row
+        && (oldRowIdx ?? 0) > rowIdx
+        && configuration.lastRowKeyUpAction.isRemoveOne) {
+
+      bool isRowDefault = isRowDefaultFunction(oldCell.row, this as TrinaGridStateManager);
+      if (isRowDefault){
+        removeRows([oldCell.row]);
+      }
+    }
+
+    if (mode != TrinaGridMode.readOnly){
+      // If row changed notifiy changed row
+      await notifyTrackingRow(rowIdx);
+    }
+
+    if (oldRowIdx != rowIdx && rowIdx < refRows.length && currentCell != null && currentCell!.row.state == PlutoRowState.added) {
+      trackRowCell(rowIdx, currentCell!.row);
+    }
+
     notifyListeners(notify, setCurrentCell.hashCode);
 
-    onActiveCellChanged?.call(
-      TrinaGridOnActiveCellChangedEvent(idx: rowIdx, cell: _state._currentCell),
-    );
+    onActiveCellChanged?.call(TrinaGridOnActiveCellChangedEvent(
+      idx: rowIdx,
+      cell: _state._currentCell,
+    ));
   }
 
   @override

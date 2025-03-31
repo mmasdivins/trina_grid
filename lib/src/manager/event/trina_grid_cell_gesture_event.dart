@@ -54,7 +54,21 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
 
     if (stateManager.isCurrentCell(cell) && stateManager.isEditing != true) {
       stateManager.setEditing(true);
+
+      // On change editing after click, select all text in cell
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (stateManager.textEditingController != null) {
+          stateManager.textEditingController!.selection = TextSelection(baseOffset: 0, extentOffset: stateManager.textEditingController!.value.text.length);
+        }
+      });
+
     } else {
+      if (stateManager.selectingMode.isRowCell) {
+        stateManager.setCurrentCell(cell, rowIdx);
+        _selecting(stateManager);
+        return;
+      }
+
       stateManager.setCurrentCell(cell, rowIdx);
     }
   }
@@ -64,7 +78,7 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
 
     stateManager.setSelecting(true);
 
-    if (stateManager.selectingMode.isRow) {
+    if (stateManager.selectingMode.isRow || stateManager.selectingMode.isRowCell) {
       stateManager.toggleSelectingRow(rowIdx);
     }
   }
@@ -89,7 +103,7 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
       TrinaGridScrollUpdateDirection.all,
     );
 
-    if (stateManager.mode.isMultiSelectMode) {
+    if (stateManager.mode.isMultiSelectMode || stateManager.mode.isMultiSelectAlwaysOne) {
       stateManager.handleOnSelected();
     }
   }
@@ -126,7 +140,9 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
   }
 
   void _selecting(TrinaGridStateManager stateManager) {
-    bool callOnSelected = stateManager.mode.isMultiSelectMode;
+    bool callOnSelected = stateManager.mode.isMultiSelectMode || stateManager.mode.isMultiSelectAlwaysOne;
+    final bool checkSelectedRow = (stateManager.selectingMode.isRow || stateManager.selectingMode.isRowCell) &&
+        stateManager.isSelectedRow(stateManager.refRows[rowIdx].key);
 
     if (stateManager.keyPressed.shift) {
       final int? columnIdx = stateManager.columnIndex(column);
@@ -139,7 +155,11 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
       );
     } else if (stateManager.keyPressed.ctrl) {
       stateManager.toggleSelectingRow(rowIdx);
-    } else {
+    }
+    else if (!checkSelectedRow && stateManager.mode.isMultiSelectAlwaysOne) {
+      stateManager.toggleSelectingRow(rowIdx);
+    }
+    else {
       callOnSelected = false;
     }
 
@@ -166,6 +186,10 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
         break;
       case TrinaGridMode.multiSelect:
         stateManager.toggleSelectingRow(rowIdx);
+        break;
+      case TrinaGridMode.multiSelectAlwaysOne:
+        stateManager.setCurrentCell(cell, rowIdx);
+        // stateManager.toggleSelectingRow(rowIdx);
         break;
     }
 

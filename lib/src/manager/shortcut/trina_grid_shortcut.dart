@@ -129,5 +129,17 @@ class TrinaGridShortcut {
     // Select all cells or rows
     LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyA):
         const TrinaGridActionSelectAll(),
+      // Deletes the selected row
+    LogicalKeySet(LogicalKeyboardKey.delete):
+      const TrinaGridActionDelete(),
+    // Inserts a default row on the position
+    LogicalKeySet(LogicalKeyboardKey.insert):
+      const TrinaGridActionInsert(),
+    // Search
+    LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
+      const TrinaGridActionSearch(),
+    // Search Next
+    LogicalKeySet(LogicalKeyboardKey.f3):
+      const TrinaGridActionSearchNext(),
   };
 }

@@ -22,6 +22,8 @@ abstract class IColumnState {
   /// Width of the entire column.
   double get columnsWidth;
 
+  List<String> get sortOrder;
+
   /// Left frozen columns.
   List<TrinaColumn> get leftFrozenColumns;
 
@@ -122,6 +124,13 @@ abstract class IColumnState {
     bool notify = true,
   });
 
+  /// Highlights or remove the highlight of the [column] with [highlight] value.
+  void highlightColumn(
+      TrinaColumn column,
+      bool highlight, {
+        bool notify = true,
+      });
+
   /// Hide or show the [columns] with [hide] value.
   ///
   /// When [column.frozen.isFrozen] in [columns] and [hide] is false,
@@ -132,6 +141,13 @@ abstract class IColumnState {
     bool hide, {
     bool notify = true,
   });
+
+  /// Highlight or remove highligths the [columns] with [highlight] value.
+  void highlightColumns(
+      List<TrinaColumn> columns,
+      bool highlight, {
+        bool notify = true,
+      });
 
   void sortAscending(TrinaColumn column, {bool notify = true});
 
@@ -380,6 +396,29 @@ mixin ColumnState implements ITrinaGridState {
     } else if (column.sort.isAscending) {
       sortDescending(column, notify: false);
     } else {
+      // Set the sort of the column to none
+      var col = refColumns.originalList.firstWhereOrNull((x) => x.field == column.field);
+      if (col != null) {
+        col.sort = const TrinaColumnSorting(
+            sortOrder: TrinaColumnSort.none,
+            sortPosition: null
+        );
+      }
+
+      var csort = refColumns.originalList
+          .where((x) => x.sort.sortOrder != TrinaColumnSort.none)
+          .sorted((a,b) {
+        if (a.sort.sortPosition == null && b.sort.sortPosition == null) return 0;
+        if (a.sort.sortPosition == null) return 1;
+        if (b.sort.sortPosition == null) return -1;
+        return a.sort.sortPosition!.compareTo(b.sort.sortPosition!);
+      });
+
+      int i = 0;
+      for (var c in csort) {
+        c.sort = c.sort.copyWith(sortPosition: i);
+      }
+
       sortBySortIdx(column, notify: false);
     }
 
@@ -661,6 +700,22 @@ mixin ColumnState implements ITrinaGridState {
     _updateAfterHideColumn(columns: [column], notify: notify);
   }
 
+
+  @override
+  void highlightColumn(
+      TrinaColumn column,
+      bool highlight, {
+        bool notify = true,
+      }) {
+    if (column.highlight == highlight) {
+      return;
+    }
+
+    column.highlight = highlight;
+
+    _updateAfterHighlightColumn(columns: [column], notify: notify);
+  }
+
   @override
   void hideColumns(
     List<TrinaColumn> columns,
@@ -677,22 +732,97 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   @override
+  void highlightColumns(
+      List<TrinaColumn> columns,
+      bool highlight, {
+        bool notify = true,
+      }) {
+    if (columns.isEmpty) {
+      return;
+    }
+
+    for (final column in columns) {
+      if (highlight == column.highlight) {
+        continue;
+      }
+
+      column.highlight = highlight;
+    }
+
+
+    _updateAfterHighlightColumn(columns: columns, notify: notify);
+  }
+
+  int _getMaxSortPositionPlusOne(List<TrinaColumnSorting> list) {
+    bool hasNonZero = false;
+    bool hasNonNull = false;
+    int? maxValue = null;
+
+    for (var obj in list) {
+      if (obj.sortPosition != null) {
+        hasNonNull = true;
+        if (obj.sortPosition != 0) {
+          hasNonZero = true;
+        }
+        if (maxValue == null || obj.sortPosition! > maxValue) {
+          maxValue = obj.sortPosition;
+        }
+      }
+    }
+
+    if (!hasNonNull) {
+      return 0; // All values are null
+    } else if (!hasNonZero) {
+      return 1; // All non-null values are zero
+    } else {
+      return maxValue! + 1; // Maximum value plus one
+    }
+  }
+
+  @override
   void sortAscending(TrinaColumn column, {bool notify = true}) {
     _updateBeforeColumnSort();
 
-    column.sort = TrinaColumnSort.ascending;
+    // int position = column.sort.sortPosition ?? refColumns.fold(0, (prev, element) => (element.sort.sortPosition ?? 0) > prev ? (element.sort.sortPosition ?? 0) : prev);
+    int? position = column.sort.sortPosition;
+    position ??= _getMaxSortPositionPlusOne(refColumns.map((x) => x.sort).toList());
+
+    column.sort = column.sort.copyWith(
+      sortOrder: TrinaColumnSort.ascending,
+      sortPosition: position,
+    );
 
     if (sortOnlyEvent) return;
 
     compare(a, b) => column.type.compare(
+      a.cells[column.field]!.valueForSorting,
+      b.cells[column.field]!.valueForSorting,
+    );
+
+    int multiColumnCompare(dynamic a, dynamic b) {
+      for (int i = 0; i < columns.length; i++) {
+        final column = columns[i];
+        if (column.sort.sortOrder == TrinaColumnSort.none) {
+          continue;
+        }
+
+        final ascending = column.sort.sortOrder == TrinaColumnSort.ascending;
+        final comparison = column.type.compare(
           a.cells[column.field]!.valueForSorting,
           b.cells[column.field]!.valueForSorting,
         );
+        if (comparison != 0) {
+          return ascending ? comparison : -comparison;
+        }
+      }
+      return 0; // All columns are equal
+    }
+
 
     if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: compare);
+      sortRowGroup(column: column, compare: multiColumnCompare);
     } else {
-      refRows.sort(compare);
+      refRows.sort(multiColumnCompare);
     }
 
     notifyListeners(notify, sortAscending.hashCode);
@@ -702,19 +832,45 @@ mixin ColumnState implements ITrinaGridState {
   void sortDescending(TrinaColumn column, {bool notify = true}) {
     _updateBeforeColumnSort();
 
-    column.sort = TrinaColumnSort.descending;
+    // int position = column.sort.sortPosition ?? refColumns.fold(0, (prev, element) => (element.sort.sortPosition ?? 0) > prev ? (element.sort.sortPosition ?? 0) : prev);
+    int? position = column.sort.sortPosition;
+    position ??= _getMaxSortPositionPlusOne(refColumns.map((x) => x.sort).toList());
+
+    column.sort = column.sort.copyWith(
+      sortOrder: TrinaColumnSort.descending,
+      sortPosition: position,
+    );
 
     if (sortOnlyEvent) return;
 
     compare(b, a) => column.type.compare(
+      a.cells[column.field]!.valueForSorting,
+      b.cells[column.field]!.valueForSorting,
+    );
+
+    int multiColumnCompare(dynamic a, dynamic b) {
+      for (int i = 0; i < columns.length; i++) {
+        final column = columns[i];
+        if (column.sort.sortOrder == TrinaColumnSort.none) {
+          continue;
+        }
+
+        final ascending = column.sort.sortOrder == TrinaColumnSort.ascending;
+        final comparison = column.type.compare(
           a.cells[column.field]!.valueForSorting,
           b.cells[column.field]!.valueForSorting,
         );
+        if (comparison != 0) {
+          return ascending ? comparison : -comparison;
+        }
+      }
+      return 0; // All columns are equal
+    }
 
     if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: compare);
+      sortRowGroup(column: column, compare: multiColumnCompare);
     } else {
-      refRows.sort(compare);
+      refRows.sort(multiColumnCompare);
     }
 
     notifyListeners(notify, sortDescending.hashCode);
@@ -758,7 +914,7 @@ mixin ColumnState implements ITrinaGridState {
           field: titleField,
           type: TrinaColumnType.text(),
           enableRowChecked: true,
-          enableEditingMode: false,
+          enableEditingMode: (c) => false,
           enableDropToResize: true,
           enableContextMenu: false,
           enableColumnDrag: false,
@@ -889,9 +1045,15 @@ mixin ColumnState implements ITrinaGridState {
 
     clearCurrentSelecting(notify: false);
 
-    // Reset column sort to none.
-    for (var i = 0; i < refColumns.originalList.length; i += 1) {
-      refColumns.originalList[i].sort = TrinaColumnSort.none;
+    // If shift is not pressed we set all columns to sort none
+    if (!keyPressed.shift) {
+      // Reset column sort to none.
+      for (var i = 0; i < refColumns.originalList.length; i += 1) {
+        refColumns.originalList[i].sort = const TrinaColumnSorting(
+          sortOrder: TrinaColumnSort.none,
+          sortPosition: null,
+        );
+      }
     }
   }
 
@@ -951,7 +1113,12 @@ mixin ColumnState implements ITrinaGridState {
       final List<MapEntry<String, TrinaCell>> cells = [];
 
       for (var column in columns) {
-        final cell = TrinaCell(value: column.type.defaultValue)
+        var value = column.type.defaultValue;
+        if (column.type.defaultValue is Function){
+          value = column.type.defaultValue.call();
+        }
+
+        final cell = TrinaCell(value: value)
           ..setRow(row)
           ..setColumn(column);
 
@@ -1037,6 +1204,19 @@ mixin ColumnState implements ITrinaGridState {
     updateVisibilityLayout();
 
     notifyListeners(notify, hideColumn.hashCode);
+  }
+
+  void _updateAfterHighlightColumn({
+    required List<TrinaColumn> columns,
+    required bool notify,
+  }) {
+    refColumns.update();
+
+    resetCurrentState(notify: false);
+
+    updateVisibilityLayout();
+
+    notifyListeners(notify, highlightColumn.hashCode);
   }
 
   bool _updateResizeColumns({

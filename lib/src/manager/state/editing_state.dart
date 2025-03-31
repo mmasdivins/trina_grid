@@ -85,13 +85,14 @@ mixin EditingState implements ITrinaGridState {
   TextEditingController? get textEditingController =>
       _state._textEditingController;
 
+
   @override
   TrinaOnValidationFailedCallback? get onValidationFailed =>
       (this as TrinaGridStateManager).onValidationFailed;
 
   @override
   bool isEditableCell(TrinaCell cell) {
-    if (cell.column.enableEditingMode != true) {
+    if (cell.column.enableEditingMode?.call(cell) != true) {
       return false;
     }
 
@@ -309,6 +310,15 @@ mixin EditingState implements ITrinaGridState {
       return;
     }
 
+    currentRow.setState(TrinaRowState.updated);
+
+    // Abans d'actualitzar el cell value notifiquem
+    // de que la fila s'ha modificat
+    trackRowCell(
+        refRows.indexOf(currentRow),
+        currentRow
+    );
+
     // Store the old value if change tracking is enabled
     if ((this as TrinaGridStateManager).enableChangeTracking && !cell.isDirty) {
       cell.trackChange();
@@ -331,7 +341,7 @@ mixin EditingState implements ITrinaGridState {
     }
 
     if (callOnChangedEvent == true && onChanged != null) {
-      onChanged!(changedEvent);
+      onChanged!(changedEvent;
     }
 
     notifyListeners(notify, changeCellValue.hashCode);
