@@ -177,6 +177,18 @@ class TrinaCell {
     return _column!.type.makeCompareValue(_value);
   }
 
+  dynamic _getValueForSearching() {
+    if (_column == null) {
+      return _value;
+    }
+
+    if (_needToApplyFormatOnInit) {
+      _applyFormatOnInit();
+    }
+
+    return _column!.type.makeCompareValue(_value);
+  }
+
   void _applyFormatOnInit() {
     _value = _column!.type.applyFormat(_value);
 

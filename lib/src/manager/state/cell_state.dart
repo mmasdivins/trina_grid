@@ -292,7 +292,7 @@ mixin CellState implements ITrinaGridState {
       await notifyTrackingRow(rowIdx);
     }
 
-    if (oldRowIdx != rowIdx && rowIdx < refRows.length && currentCell != null && currentCell!.row.state == PlutoRowState.added) {
+    if (oldRowIdx != rowIdx && rowIdx < refRows.length && currentCell != null && currentCell!.row.state == TrinaRowState.added) {
       trackRowCell(rowIdx, currentCell!.row);
     }
 
@@ -302,6 +302,22 @@ mixin CellState implements ITrinaGridState {
       idx: rowIdx,
       cell: _state._currentCell,
     ));
+  }
+
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager){
+    for (var element in stateManager.refColumns) {
+      var cell = row.cells[element.field]!;
+
+      var value = element.type.defaultValue;
+      if (element.type.defaultValue is Function){
+        value = element.type.defaultValue.call();
+      }
+
+      if (value != cell.value) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @override

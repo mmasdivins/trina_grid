@@ -115,7 +115,7 @@ class TrinaBodyColumnsState extends TrinaStateWithChange<TrinaBodyColumns> {
       children: [
         Padding(
           padding: EdgeInsets.only(
-            right: scrollbarConfig.scrollbarThickness,
+            right: scrollbarConfig.thickness,
           ),
           child: SingleChildScrollView(
             controller: _scroll,

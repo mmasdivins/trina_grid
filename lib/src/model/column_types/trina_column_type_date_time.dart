@@ -5,13 +5,13 @@ import 'package:trina_grid/src/model/trina_column_type_has_date_format.dart';
 import 'package:trina_grid/src/model/trina_column_type_has_popup_icon.dart';
 import 'package:trina_grid/trina_grid.dart';
 
-class TrinaColumnTypeDate
-  with TrinaColumnTypeDefaultMixin
-  implements
-      TrinaColumnType,
-      TrinaColumnTypeHasFormat<String>,
-      TrinaColumnTypeHasDateFormat,
-      TrinaColumnTypeHasPopupIcon {
+class TrinaColumnTypeDateTime
+    with TrinaColumnTypeDefaultMixin
+    implements
+        TrinaColumnType,
+        TrinaColumnTypeHasFormat<String>,
+        TrinaColumnTypeHasDateFormat,
+        TrinaColumnTypeHasPopupIcon {
   @override
   final dynamic defaultValue;
 
@@ -31,7 +31,7 @@ class TrinaColumnTypeDate
   @override
   final IconData? popupIcon;
 
-  TrinaColumnTypeDate({
+  TrinaColumnTypeDateTime({
     this.defaultValue,
     this.startDate,
     this.endDate,
@@ -50,17 +50,17 @@ class TrinaColumnTypeDate
 
   @override
   bool isValid(dynamic value) {
-    final parsedDate = DateTime.tryParse(value.toString());
+    final parsedDateTime = DateTime.tryParse(value.toString());
 
-    if (parsedDate == null) {
+    if (parsedDateTime == null) {
       return false;
     }
 
-    if (startDate != null && parsedDate.isBefore(startDate!)) {
+    if (startDate != null && parsedDateTime.isBefore(startDate!)) {
       return false;
     }
 
-    if (endDate != null && parsedDate.isAfter(endDate!)) {
+    if (endDate != null && parsedDateTime.isAfter(endDate!)) {
       return false;
     }
 
@@ -72,21 +72,21 @@ class TrinaColumnTypeDate
     return TrinaGeneralHelper.compareWithNull(
       a,
       b,
-      () => a.toString().compareTo(b.toString()),
+          () => a.toString().compareTo(b.toString()),
     );
   }
 
   @override
   dynamic makeCompareValue(dynamic v) {
-    DateTime? dateFormatValue;
+    DateTime? dateTimeFormatValue;
 
     try {
-      dateFormatValue = dateFormat.parse(v.toString());
+      dateTimeFormatValue = dateFormat.parse(v.toString());
     } catch (e) {
-      dateFormatValue = null;
+      dateTimeFormatValue = null;
     }
 
-    return dateFormatValue;
+    return dateTimeFormatValue;
   }
 
   @override

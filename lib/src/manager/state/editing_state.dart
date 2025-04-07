@@ -341,7 +341,7 @@ mixin EditingState implements ITrinaGridState {
     }
 
     if (callOnChangedEvent == true && onChanged != null) {
-      onChanged!(changedEvent;
+      onChanged!(changedEvent);
     }
 
     notifyListeners(notify, changeCellValue.hashCode);

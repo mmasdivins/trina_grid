@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/model/trina_column_sorting.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 typedef TrinaColumnValueFormatter = String Function(dynamic value);
@@ -364,7 +365,7 @@ class TrinaColumn {
     this.enableHideColumnMenuItem = true,
     this.enableSetColumnsMenuItem = true,
     this.enableAutoEditing = false,
-    this.enableEditingMode = true,
+    this.enableEditingMode,
     this.hide = false,
     this.highlight = false,
     this.hintValue,

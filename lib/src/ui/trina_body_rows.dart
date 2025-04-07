@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/widgets/trina_custom_scrollbar.dart';
 import 'package:trina_grid/src/widgets/trina_horizontal_scroll_bar.dart';
 import 'package:trina_grid/src/widgets/trina_vertical_scroll_bar.dart';
 import 'package:trina_grid/trina_grid.dart';
@@ -201,7 +202,7 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
       TrinaDoubleScrollbar(
         horizontalController: _horizontalScroll,
         verticalController: _verticalScroll,
-        trackThickness: scrollbarConfig.scrollbarThickness,
+        trackThickness: scrollbarConfig.thickness,
         // horizontalScrollbarAlwaysVisible: true,
         // verticalScrollbarAlwaysVisible: true,
         child:

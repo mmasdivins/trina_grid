@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:trina_grid/src/ui/cells/hint_triangle_cell.dart';
+import 'package:trina_grid/src/ui/cells/trina_date_time_cell.dart';
+import 'package:trina_grid/src/ui/cells/trina_percentage_cell.dart';
 import 'package:trina_grid/trina_grid.dart';
 import 'package:trina_grid/src/helper/platform_helper.dart';
 import 'package:trina_grid/src/helper/trina_double_tap_detector.dart';
@@ -21,7 +23,7 @@ class TrinaBaseCell extends StatelessWidget
 
   final TrinaGridStateManager stateManager;
 
-  const TrinaBaseCell({
+  TrinaBaseCell({
     super.key,
     required this.cell,
     required this.column,
@@ -72,6 +74,7 @@ class TrinaBaseCell extends StatelessWidget
       _onTapUp(details);
     }
   }
+
 
   void _handleOnLongPressStart(LongPressStartDetails details) {
     if (stateManager.selectingMode.isNone) {
@@ -124,12 +127,6 @@ class TrinaBaseCell extends StatelessWidget
     return stateManager.onRowDoubleTap == null ? null : _handleOnDoubleTap;
   }
 
-  void Function()? _onDoubleTapOrNull() {
-    if (PlatformHelper.isDesktop) {
-      return null;
-    }
-    return stateManager.onRowDoubleTap == null ? null : _handleOnDoubleTap;
-  }
 
   void _onSecondaryTapOrNull(TapDownDetails details) {
     if (stateManager.onRightClickCell != null){
@@ -579,8 +576,22 @@ class _CellState extends TrinaStateWithChange<_Cell> {
           column: widget.column,
           row: widget.row,
         );
+      } else if (widget.column.type.isPercentage) {
+        return TrinaPercentageCell(
+          stateManager: stateManager,
+          cell: widget.cell,
+          column: widget.column,
+          row: widget.row,
+        );
       } else if (widget.column.type.isDate) {
         return TrinaDateCell(
+          stateManager: stateManager,
+          cell: widget.cell,
+          column: widget.column,
+          row: widget.row,
+        );
+      } else if (widget.column.type.isDateTime) {
+        return TrinaDateTimeCell(
           stateManager: stateManager,
           cell: widget.cell,
           column: widget.column,

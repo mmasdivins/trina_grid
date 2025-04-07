@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:trina_grid/src/manager/event/trina_grid_cell_not_exist_event.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 import 'state/cell_state.dart';
@@ -24,6 +25,7 @@ import 'state/scroll_state.dart';
 import 'state/selecting_state.dart';
 import 'state/visibility_layout_state.dart';
 import 'state/hovering_state.dart';
+import 'state/search_state.dart';
 
 abstract class ITrinaGridState
     implements
@@ -181,9 +183,6 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
 
   @override
   final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
-
-  @override
-  final TrinaOnChangedEventCallback? onChanged;
 
   @override
   final TrinaOnSelectedEventCallback? onSelected;
@@ -850,7 +849,7 @@ class _ApplyRowGroup implements _Apply {
     required List<TrinaColumn> columns,
     required List<TrinaRow> rows,
     required TrinaRow parent,
-    required PlutoGridEventManager? eventManager,
+    required TrinaGridEventManager? eventManager,
   }) {
     for (final row in rows) {
       row.setParent(parent);

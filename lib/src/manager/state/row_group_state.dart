@@ -347,6 +347,7 @@ mixin RowGroupState implements ITrinaGridState {
       TrinaGridStateManager.initializeRows(
         refColumns.originalList,
         rows,
+        eventManager,
         forceApplySortIdx: false,
       );
     }

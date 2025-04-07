@@ -1,3 +1,6 @@
+import 'package:trina_grid/src/model/column_types/trina_column_type_custom.dart';
+import 'package:trina_grid/src/model/column_types/trina_column_type_date_time.dart';
+import 'package:trina_grid/src/model/column_types/trina_column_type_percentage.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 extension TrinaColumnTypeExtension on TrinaColumnType {
@@ -13,7 +16,11 @@ extension TrinaColumnTypeExtension on TrinaColumnType {
 
   bool get isTime => this is TrinaColumnTypeTime;
 
+  bool get isDateTime => this is TrinaColumnTypeDateTime;
+
   bool get isBoolean => this is TrinaColumnTypeBoolean;
+
+  bool get isPercentage => this is TrinaColumnTypePercentage;
 
   bool get isCustom => this is TrinaColumnTypeCustom;
 
@@ -65,6 +72,20 @@ extension TrinaColumnTypeExtension on TrinaColumnType {
       throw TypeError();
     }
     return this as TrinaColumnTypeTime;
+  }
+
+  TrinaColumnTypeDateTime get dateTime {
+    if (this is! TrinaColumnTypeDateTime) {
+      throw TypeError();
+    }
+    return this as TrinaColumnTypeDateTime;
+  }
+
+  TrinaColumnTypePercentage get percentage {
+    if (this is! TrinaColumnTypePercentage) {
+      throw TypeError();
+    }
+    return this as TrinaColumnTypePercentage;
   }
 
   TrinaColumnTypeCustom get custom{

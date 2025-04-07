@@ -1,7 +1,9 @@
 import 'dart:collection';
 import 'dart:math' as math;
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/model/trina_column_sorting.dart';
 
 import '../../../trina_grid.dart';
 import '../../ui/cells/trina_default_cell.dart';
@@ -334,7 +336,7 @@ mixin ColumnState implements ITrinaGridState {
   @override
   bool get hasSortedColumn {
     for (final column in refColumns) {
-      if (column.sort.isNone == false) {
+      if (column.sort.sortOrder.isNone == false) {
         return true;
       }
     }
@@ -345,7 +347,7 @@ mixin ColumnState implements ITrinaGridState {
   @override
   TrinaColumn? get getSortedColumn {
     for (final column in refColumns) {
-      if (column.sort.isNone == false) {
+      if (column.sort.sortOrder.isNone == false) {
         return column;
       }
     }
@@ -391,9 +393,9 @@ mixin ColumnState implements ITrinaGridState {
   void toggleSortColumn(TrinaColumn column) {
     final oldSort = column.sort;
 
-    if (column.sort.isNone) {
+    if (column.sort.sortOrder.isNone) {
       sortAscending(column, notify: false);
-    } else if (column.sort.isAscending) {
+    } else if (column.sort.sortOrder.isAscending) {
       sortDescending(column, notify: false);
     } else {
       // Set the sort of the column to none
@@ -1092,7 +1094,7 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   /// [TrinaGrid.onSorted] Called when a callback is registered.
-  void _callOnSorted(TrinaColumn column, TrinaColumnSort oldSort) {
+  void _callOnSorted(TrinaColumn column, TrinaColumnSorting oldSort) {
     if (sortOnlyEvent) {
       eventManager!.addEvent(
         TrinaGridChangeColumnSortEvent(column: column, oldSort: oldSort),

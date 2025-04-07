@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/model/trina_column_sorting.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 /// [TrinaGrid.onLoaded] Argument received by registering callback.
@@ -209,7 +210,7 @@ class TrinaGridOnSelectedEvent {
 class TrinaGridOnSortedEvent {
   final TrinaColumn column;
 
-  final TrinaColumnSort oldSort;
+  final TrinaColumnSorting oldSort;
 
   const TrinaGridOnSortedEvent({required this.column, required this.oldSort});
 

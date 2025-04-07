@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
-class TrinaColumnTypeBoolean implements TrinaColumnType {
+class TrinaColumnTypeBoolean
+    with TrinaColumnTypeDefaultMixin
+    implements TrinaColumnType {
   @override
   final dynamic defaultValue;
   final bool allowEmpty;

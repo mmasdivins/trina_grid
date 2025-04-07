@@ -2,7 +2,7 @@ import 'package:intl/intl.dart' as intl;
 import 'package:trina_grid/trina_grid.dart';
 
 class TrinaColumnTypeNumber
-    with TrinaColumnTypeWithNumberFormat
+    with TrinaColumnTypeDefaultMixin, TrinaColumnTypeWithNumberFormat
     implements TrinaColumnType, TrinaColumnTypeHasFormat<String> {
   @override
   final dynamic defaultValue;

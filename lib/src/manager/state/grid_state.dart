@@ -220,6 +220,9 @@ mixin GridState implements ITrinaGridState {
       case TrinaGridMode.multiSelect:
         selectingMode = TrinaGridSelectingMode.row;
         break;
+      case TrinaGridMode.multiSelectAlwaysOne:
+        selectingMode = TrinaGridSelectingMode.row;
+        break;
     }
 
     setSelectingMode(selectingMode);

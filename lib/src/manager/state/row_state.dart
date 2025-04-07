@@ -185,6 +185,18 @@ mixin RowState implements ITrinaGridState {
   }
 
   @override
+  int? get currentRowIdx => currentCellPosition?.rowIdx;
+
+  @override
+  TrinaRow? get currentRow {
+    if (currentRowIdx == null) {
+      return null;
+    }
+
+    return refRows[currentRowIdx!];
+  }
+
+  @override
   int? getRowIdxByOffset(double offset) {
     offset -= bodyTopOffset - scroll.verticalOffset;
 

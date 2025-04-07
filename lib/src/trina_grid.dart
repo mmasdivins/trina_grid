@@ -15,23 +15,23 @@ typedef TrinaOnLoadedEventCallback = void Function(
 typedef TrinaOnChangedEventCallback = void Function(
     TrinaGridOnChangedEvent event);
 
-typedef PlutoOnRowChangedEventCallback = Future<bool?> Function(
-    PlutoGridOnRowChangedEvent event);
+typedef TrinaOnRowChangedEventCallback = Future<bool?> Function(
+    TrinaGridOnRowChangedEvent event);
 
-typedef PlutoOnLastRowKeyDownEventCallback = void Function(
-    PlutoGridOnLastRowKeyDownEvent event);
+typedef TrinaOnLastRowKeyDownEventCallback = void Function(
+    TrinaGridOnLastRowKeyDownEvent event);
 
-typedef PlutoOnLastRowKeyUpEventCallback = void Function(
-    PlutoGridOnLastRowKeyUpEvent event);
+typedef TrinaOnLastRowKeyUpEventCallback = void Function(
+    TrinaGridOnLastRowKeyUpEvent event);
 
-typedef PlutoOnRightClickCellEventCallback = Widget Function(
-    PlutoGridOnRightClickCellEvent event);
+typedef TrinaOnRightClickCellEventCallback = Widget Function(
+    TrinaGridOnRightClickCellEvent event);
 
-typedef PlutoRightClickCellContextMenuEventCallback = Widget Function(
-    PlutoGridRightClickCellContextMenuEvent event);
+typedef TrinaRightClickCellContextMenuEventCallback = Widget Function(
+    TrinaGridRightClickCellContextMenuEvent event);
 
-typedef PlutoOnSelectedCellChangedEventCallback = void Function(
-    PlutoGridOnSelectedCellChangedEvent event);
+typedef TrinaOnSelectedCellChangedEventCallback = void Function(
+    TrinaGridOnSelectedCellChangedEvent event);
 
 typedef TrinaOnSelectedEventCallback = void Function(
     TrinaGridOnSelectedEvent event);
@@ -119,6 +119,7 @@ class TrinaGrid extends TrinaStatefulWidget {
     super.key,
     required this.columns,
     required this.rows,
+    this.sortOrder = const [],
     this.rowWrapper,
     this.editCellRenderer,
     this.columnGroups,
@@ -289,7 +290,7 @@ class TrinaGrid extends TrinaStatefulWidget {
   final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
 
   /// Event que és crida quan és canvia la cel·la seleccionada
-  final PlutoOnSelectedCellChangedEventCallback? onSelectedCellChanged;
+  final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
 
   /// {@template trina_grid_property_onSelected}
   /// [onSelected] can receive a response only if [TrinaGrid.mode] is set to [TrinaGridMode.select] .
@@ -812,7 +813,7 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
   }
 
   void _getTrinaGridScrollControllers() {
-    // Get the scroll controllers from PlutoGrid once available
+    // Get the scroll controllers from TrinaGrid once available
     setState(() {
       verticalController = _stateManager.scroll.bodyRowsVertical;
       horizontalController = _stateManager.scroll.bodyRowsHorizontal;
@@ -905,11 +906,11 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
                 if (showColumnIndex) ...[
                   LayoutId(
                     id: _StackName.columnsIndex,
-                    child: PlutoColumnIndex(_stateManager),
+                    child: TrinaColumnIndex(_stateManager),
                   ),
                   LayoutId(
                     id: _StackName.columnsIndexBody,
-                    child: PlutoColumnIndexBody(_stateManager),
+                    child: TrinaColumnIndexBody(_stateManager),
                   ),
                 ],
 
@@ -1338,7 +1339,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
 
       final double posX = isLTR
           ? bodyLeftOffset
-          : size.width - bodyRightOffset - PlutoGridSettings.gridBorderWidth;
+          : size.width - bodyRightOffset - TrinaGridSettings.gridBorderWidth;
       positionChild(
         _StackName.columnsIndexBody,
         Offset(posX, bodyRowsTopOffset),

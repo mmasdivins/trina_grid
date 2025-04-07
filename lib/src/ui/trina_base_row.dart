@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/manager/event/trina_grid_cell_not_exist_event.dart';
 import 'package:trina_grid/trina_grid.dart';
 import 'package:trina_grid/src/manager/event/trina_grid_row_hover_event.dart';
 
@@ -59,7 +60,7 @@ class TrinaBaseRow extends StatelessWidget {
   TrinaVisibilityLayoutId _makeCell(TrinaColumn column) {
 
     if (!row.cells.containsKey(column.field)) {
-      stateManager.eventManager?.addEvent(TrinaGridCe llNotExistEvent(column: column.field));
+      stateManager.eventManager?.addEvent(TrinaGridCellNotExistEvent(column: column.field));
       return TrinaVisibilityLayoutId(
         id: column.field,
         child: TrinaBaseCell(

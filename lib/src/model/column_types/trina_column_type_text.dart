@@ -2,7 +2,9 @@ import 'package:trina_grid/src/helper/trina_general_helper.dart';
 import 'package:trina_grid/src/model/trina_column_type.dart';
 import 'package:trina_grid/trina_grid.dart';
 
-class TrinaColumnTypeText implements TrinaColumnType {
+class TrinaColumnTypeText
+    with TrinaColumnTypeDefaultMixin
+    implements TrinaColumnType {
   @override
   final dynamic defaultValue;
 
