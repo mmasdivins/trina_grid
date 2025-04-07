@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 import 'package:trina_grid/src/manager/event/trina_grid_row_hover_event.dart';
@@ -56,6 +57,22 @@ class TrinaBaseRow extends StatelessWidget {
   }
 
   TrinaVisibilityLayoutId _makeCell(TrinaColumn column) {
+
+    if (!row.cells.containsKey(column.field)) {
+      stateManager.eventManager?.addEvent(TrinaGridCe llNotExistEvent(column: column.field));
+      return TrinaVisibilityLayoutId(
+        id: column.field,
+        child: TrinaBaseCell(
+          key: null,
+          cell: TrinaCell(),
+          column: column,
+          rowIdx: rowIdx,
+          row: row,
+          stateManager: stateManager,
+        ),
+      );
+    }
+
     return TrinaVisibilityLayoutId(
       id: column.field,
       child: TrinaBaseCell(
@@ -259,66 +276,106 @@ class _RowContainerWidgetState extends TrinaStateWithChange<_RowContainerWidget>
     );
   }
 
-  BoxDecoration _getBoxDecoration() {
-    final isCurrentRow = stateManager.currentRowIdx == widget.rowIdx;
-    final isCheckedRow = widget.row.checked == true;
-    final isHoveredRow = stateManager.isRowIdxHovered(widget.rowIdx);
-    final isSelectedRow = stateManager.currentSelectingRows.contains(
-      widget.row,
-    );
-    final isTopDragTarget = stateManager.isRowIdxTopDragTarget(widget.rowIdx);
-    final isBottomDragTarget = stateManager.isRowIdxBottomDragTarget(
-      widget.rowIdx,
-    );
+  Color _getRowColor({
+    required bool isDragTarget,
+    required bool isFocusedCurrentRow,
+    required bool isSelecting,
+    required bool hasCurrentSelectingPosition,
+    required bool isCheckedRow,
+    required bool isHovered,
+  }) {
+    Color color = _getDefaultRowColor();
 
-    Color rowColor = _rowColor;
+    if (isDragTarget) {
+      color = stateManager.configuration.style.cellColorInReadOnlyState;
+    } else {
+      final bool checkCurrentRow = !stateManager.selectingMode.isRow &&
+          isFocusedCurrentRow &&
+          (!isSelecting && !hasCurrentSelectingPosition);
 
-    if ((isCurrentRow && stateManager.hasFocus) || isSelectedRow) {
-      rowColor = stateManager.configuration.style.activatedColor;
-    } else if (isCheckedRow) {
-      rowColor = stateManager.configuration.style.rowCheckedColor;
-    } else if (isHoveredRow &&
-        stateManager.configuration.style.enableRowHoverColor) {
-      rowColor = stateManager.configuration.style.rowHoveredColor;
+      final bool checkSelectedRow = stateManager.selectingMode.isRow &&
+          stateManager.isSelectedRow(widget.row.key);
+
+      if (checkCurrentRow || checkSelectedRow) {
+        color = stateManager.configuration.style.activatedColor;
+      } else {
+        // If the row is checked, the hover color is not applied.
+        // If the row is hovered and hover color is enabled,
+        // the configuration hover color is used.
+        bool enableRowHoverColor =
+            stateManager.configuration.style.enableRowHoverColor;
+        if (isHovered && enableRowHoverColor) {
+          color = stateManager.configuration.style.rowHoveredColor;
+        }
+      }
     }
 
-    final frozenBorder = widget.row.frozen != TrinaRowFrozen.none
-        ? Border(
-            top: BorderSide(
-              width: TrinaGridSettings.rowBorderWidth,
-              color: stateManager.configuration.style.frozenRowBorderColor,
-            ),
-            bottom: BorderSide(
-              width: TrinaGridSettings.rowBorderWidth,
-              color: stateManager.configuration.style.frozenRowBorderColor,
-            ),
-          )
-        : null;
+    return isCheckedRow
+        ? Color.alphaBlend(
+        stateManager.configuration.style.rowCheckedColor, color)
+        : color;
+  }
+
+  BoxDecoration _getBoxDecoration() {
+    final bool isCurrentRow = stateManager.currentRowIdx == widget.rowIdx;
+
+    final bool isSelecting = stateManager.isSelecting;
+
+    final bool isCheckedRow = widget.row.checked == true;
+
+    final alreadyTarget = stateManager.dragRows
+        .firstWhereOrNull((element) => element.key == widget.row.key) !=
+        null;
+
+    final isDraggingRow = stateManager.isDraggingRow;
+
+    final bool isDragTarget = isDraggingRow &&
+        !alreadyTarget &&
+        stateManager.isRowIdxDragTarget(widget.rowIdx);
+
+    final bool isTopDragTarget =
+        isDraggingRow && stateManager.isRowIdxTopDragTarget(widget.rowIdx);
+
+    final bool isBottomDragTarget =
+        isDraggingRow && stateManager.isRowIdxBottomDragTarget(widget.rowIdx);
+
+    final bool hasCurrentSelectingPosition =
+        stateManager.hasCurrentSelectingPosition;
+
+    final bool isFocusedCurrentRow = isCurrentRow && stateManager.hasFocus;
+
+    final bool isHovered = stateManager.isRowIdxHovered(widget.rowIdx);
+
+    final Color rowColor = _getRowColor(
+      isDragTarget: isDragTarget,
+      isFocusedCurrentRow: isFocusedCurrentRow,
+      isSelecting: isSelecting,
+      hasCurrentSelectingPosition: hasCurrentSelectingPosition,
+      isCheckedRow: isCheckedRow,
+      isHovered: isHovered,
+    );
 
     return BoxDecoration(
       color: rowColor,
-      border: frozenBorder ??
-          Border(
-            top: isTopDragTarget
-                ? BorderSide(
-                    width: TrinaGridSettings.rowBorderWidth,
-                    color:
-                        stateManager.configuration.style.activatedBorderColor,
-                  )
-                : BorderSide.none,
-            bottom: isBottomDragTarget
-                ? BorderSide(
-                    width: TrinaGridSettings.rowBorderWidth,
-                    color:
-                        stateManager.configuration.style.activatedBorderColor,
-                  )
-                : stateManager.configuration.style.enableCellBorderHorizontal
-                    ? BorderSide(
-                        width: TrinaGridSettings.rowBorderWidth,
-                        color: stateManager.configuration.style.borderColor,
-                      )
-                    : BorderSide.none,
-          ),
+      border: Border(
+        top: isTopDragTarget
+            ? BorderSide(
+          width: TrinaGridSettings.rowBorderWidth,
+          color: stateManager.configuration.style.activatedBorderColor,
+        )
+            : BorderSide.none,
+        bottom: isBottomDragTarget
+            ? BorderSide(
+          width: TrinaGridSettings.rowBorderWidth,
+          color: stateManager.configuration.style.activatedBorderColor,
+        )
+            : stateManager.configuration.style.enableCellBorderHorizontal
+            ? BorderSide(
+          width: TrinaGridSettings.rowBorderWidth,
+          color: stateManager.configuration.style.borderColor,
+        )
+            : BorderSide.none,
+      ),
     );
   }
 

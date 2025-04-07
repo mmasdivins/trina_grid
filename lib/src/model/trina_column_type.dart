@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:trina_grid/trina_grid.dart';
 
 abstract class TrinaColumnType {
@@ -188,4 +189,429 @@ abstract class TrinaColumnType {
   int compare(dynamic a, dynamic b);
 
   dynamic makeCompareValue(dynamic v);
+}
+
+class TrinaColumnTypeText implements TrinaColumnType {
+  @override
+  final dynamic defaultValue;
+
+  const TrinaColumnTypeText({
+    this.defaultValue,
+  });
+
+  @override
+  bool isValid(dynamic value) {
+    return value is String || value is num;
+  }
+
+  @override
+  int compare(dynamic a, dynamic b) {
+    return _compareWithNull(a, b, () => a.toString().compareTo(b.toString()));
+  }
+
+  @override
+  dynamic makeCompareValue(dynamic v) {
+    return v.toString();
+  }
+}
+
+class TrinaColumnTypeNumber
+    with TrinaColumnTypeWithNumberFormat
+    implements TrinaColumnType, TrinaColumnTypeHasFormat<String> {
+  @override
+  final dynamic defaultValue;
+
+  @override
+  final bool negative;
+
+  @override
+  final String format;
+
+  @override
+  final bool applyFormatOnInit;
+
+  @override
+  final bool allowFirstDot;
+
+  @override
+  final String? locale;
+
+  TrinaColumnTypeNumber({
+    this.defaultValue,
+    required this.negative,
+    required this.format,
+    required this.applyFormatOnInit,
+    required this.allowFirstDot,
+    required this.locale,
+  })  : numberFormat = intl.NumberFormat(format, locale),
+        decimalPoint = _getDecimalPoint(format);
+
+  @override
+  final intl.NumberFormat numberFormat;
+
+  @override
+  final int decimalPoint;
+
+  static int _getDecimalPoint(String format) {
+    final int dotIndex = format.indexOf('.');
+
+    return dotIndex < 0 ? 0 : format.substring(dotIndex).length - 1;
+  }
+}
+
+class TrinaColumnTypeCurrency
+    with TrinaColumnTypeWithNumberFormat
+    implements TrinaColumnType, TrinaColumnTypeHasFormat<String?> {
+  @override
+  final dynamic defaultValue;
+
+  @override
+  final bool negative;
+
+  @override
+  final bool applyFormatOnInit;
+
+  @override
+  final bool allowFirstDot;
+
+  @override
+  final String? format;
+
+  @override
+  final String? locale;
+
+  final String? name;
+
+  final String? symbol;
+
+  TrinaColumnTypeCurrency({
+    this.defaultValue,
+    required this.negative,
+    required this.format,
+    required this.applyFormatOnInit,
+    required this.allowFirstDot,
+    required this.locale,
+    this.name,
+    this.symbol,
+    int? decimalDigits,
+  }) : numberFormat = intl.NumberFormat.currency(
+    locale: locale,
+    name: name,
+    symbol: symbol,
+    decimalDigits: decimalDigits,
+    customPattern: format,
+  ) {
+    decimalPoint = numberFormat.decimalDigits ?? 0;
+  }
+
+  @override
+  final intl.NumberFormat numberFormat;
+
+  @override
+  late final int decimalPoint;
+}
+
+class TrinaColumnTypeSelect
+    implements TrinaColumnType, TrinaColumnTypeHasPopupIcon {
+  @override
+  final dynamic defaultValue;
+
+  final List<dynamic> items;
+
+  final Widget Function(dynamic item)? builder;
+
+  final bool enableColumnFilter;
+  final Function(TrinaGridOnSelectedEvent event) onItemSelected;
+
+  @override
+  final IconData? popupIcon;
+
+  const TrinaColumnTypeSelect(
+      {required this.onItemSelected,
+        this.defaultValue,
+        required this.items,
+        required this.enableColumnFilter,
+        this.popupIcon,
+        this.builder});
+
+  @override
+  bool isValid(dynamic value) => items.contains(value) == true;
+
+  @override
+  int compare(dynamic a, dynamic b) {
+    return _compareWithNull(a, b, () {
+      return items.indexOf(a).compareTo(items.indexOf(b));
+    });
+  }
+
+  @override
+  dynamic makeCompareValue(dynamic v) {
+    return v;
+  }
+}
+
+class TrinaColumnTypeDate
+    implements
+        TrinaColumnType,
+        TrinaColumnTypeHasFormat<String>,
+        TrinaColumnTypeHasDateFormat,
+        TrinaColumnTypeHasPopupIcon {
+  @override
+  final dynamic defaultValue;
+
+  final DateTime? startDate;
+
+  final DateTime? endDate;
+
+  @override
+  final String format;
+
+  @override
+  final String headerFormat;
+
+  @override
+  final bool applyFormatOnInit;
+
+  @override
+  final IconData? popupIcon;
+
+  TrinaColumnTypeDate({
+    this.defaultValue,
+    this.startDate,
+    this.endDate,
+    required this.format,
+    required this.headerFormat,
+    required this.applyFormatOnInit,
+    this.popupIcon,
+  })  : dateFormat = intl.DateFormat(format),
+        headerDateFormat = intl.DateFormat(headerFormat);
+
+  @override
+  final intl.DateFormat dateFormat;
+
+  @override
+  final intl.DateFormat headerDateFormat;
+
+  @override
+  bool isValid(dynamic value) {
+    final parsedDate = DateTime.tryParse(value.toString());
+
+    if (parsedDate == null) {
+      return false;
+    }
+
+    if (startDate != null && parsedDate.isBefore(startDate!)) {
+      return false;
+    }
+
+    if (endDate != null && parsedDate.isAfter(endDate!)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @override
+  int compare(dynamic a, dynamic b) {
+    return _compareWithNull(a, b, () => a.toString().compareTo(b.toString()));
+  }
+
+  @override
+  dynamic makeCompareValue(dynamic v) {
+    DateTime? dateFormatValue;
+
+    try {
+      dateFormatValue = dateFormat.parse(v.toString());
+    } catch (e) {
+      dateFormatValue = null;
+    }
+
+    return dateFormatValue;
+  }
+
+  @override
+  String applyFormat(dynamic value) {
+    final parseValue = DateTime.tryParse(value.toString());
+
+    if (parseValue == null) {
+      return '';
+    }
+
+    return dateFormat.format(DateTime.parse(value.toString()));
+  }
+}
+
+class TrinaColumnTypeTime
+    implements TrinaColumnType, TrinaColumnTypeHasPopupIcon {
+  @override
+  final dynamic defaultValue;
+
+  @override
+  final IconData? popupIcon;
+
+  const TrinaColumnTypeTime({
+    this.defaultValue,
+    this.popupIcon,
+  });
+
+  static final _timeFormat = RegExp(r'^([0-1]?\d|2[0-3]):[0-5]\d$');
+
+  @override
+  bool isValid(dynamic value) {
+    return _timeFormat.hasMatch(value.toString());
+  }
+
+  @override
+  int compare(dynamic a, dynamic b) {
+    return _compareWithNull(a, b, () => a.toString().compareTo(b.toString()));
+  }
+
+  @override
+  dynamic makeCompareValue(dynamic v) {
+    return v;
+  }
+}
+
+class TrinaColumnTypeCustom implements TrinaColumnType {
+  @override
+  final dynamic defaultValue;
+
+  const TrinaColumnTypeCustom({
+    this.defaultValue,
+  });
+
+  @override
+  bool isValid(dynamic value) {
+    return true;
+  }
+
+  @override
+  int compare(dynamic a, dynamic b) {
+    return _compareWithNull(a, b, () => a.compareTo(b));
+  }
+
+  @override
+  dynamic makeCompareValue(dynamic v) {
+    return v;
+  }
+}
+
+abstract class TrinaColumnTypeHasFormat<T> {
+  const TrinaColumnTypeHasFormat({
+    required this.format,
+    required this.applyFormatOnInit,
+  });
+
+  final T format;
+
+  final bool applyFormatOnInit;
+
+  dynamic applyFormat(dynamic value);
+}
+
+abstract class TrinaColumnTypeHasDateFormat {
+  const TrinaColumnTypeHasDateFormat({
+    required this.dateFormat,
+    required this.headerFormat,
+    required this.headerDateFormat,
+  });
+
+  final intl.DateFormat dateFormat;
+
+  final String headerFormat;
+
+  final intl.DateFormat headerDateFormat;
+}
+
+abstract class TrinaColumnTypeHasPopupIcon {
+  IconData? get popupIcon;
+}
+
+mixin TrinaColumnTypeWithNumberFormat {
+  intl.NumberFormat get numberFormat;
+
+  bool get negative;
+
+  int get decimalPoint;
+
+  bool get allowFirstDot;
+
+  String? get locale;
+
+  bool isValid(dynamic value) {
+    if (!isNumeric(value)) {
+      return false;
+    }
+
+    if (negative == false && num.parse(value.toString()) < 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  int compare(dynamic a, dynamic b) {
+    return _compareWithNull(
+      a,
+      b,
+          () => toNumber(a.toString()).compareTo(toNumber(b.toString())),
+    );
+  }
+
+  dynamic makeCompareValue(dynamic v) {
+    return v.runtimeType != num ? num.tryParse(v.toString()) ?? 0 : v;
+  }
+
+  String applyFormat(dynamic value) {
+    num number = num.tryParse(
+      value.toString().replaceAll(numberFormat.symbols.DECIMAL_SEP, '.'),
+    ) ??
+        0;
+
+    if (negative == false && number < 0) {
+      number = 0;
+    }
+
+    return numberFormat.format(number);
+  }
+
+  /// Convert [String] converted to [applyFormat] to [number].
+  dynamic toNumber(String formatted) {
+    String match = '0-9\\-${numberFormat.symbols.DECIMAL_SEP}';
+
+    if (negative) {
+      match += numberFormat.symbols.MINUS_SIGN;
+    }
+
+    formatted = formatted
+        .replaceAll(RegExp('[^$match]'), '')
+        .replaceFirst(numberFormat.symbols.DECIMAL_SEP, '.');
+
+    final num formattedNumber = num.tryParse(formatted) ?? 0;
+
+    return formattedNumber.isFinite ? formattedNumber : 0;
+  }
+
+  bool isNumeric(dynamic s) {
+    if (s == null) {
+      return false;
+    }
+    return num.tryParse(s.toString()) != null;
+  }
+}
+
+int _compareWithNull(
+    dynamic a,
+    dynamic b,
+    int Function() resolve,
+    ) {
+  if (a == null || b == null) {
+    return a == b
+        ? 0
+        : a == null
+        ? -1
+        : 1;
+  }
+
+  return resolve();
 }

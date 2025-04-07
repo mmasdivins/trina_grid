@@ -121,13 +121,19 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
     }
 
     if (selection.baseOffset == 0 && keyManager.isLeft) {
-      return true;
+      // No volem mouren's cap a l'esquerra encara que
+      // el cursor estigui al principi de la paraula
+      return false;
+      // return true;
     }
 
     final textLength = _textController.text.length;
 
     if (selection.baseOffset == textLength && keyManager.isRight) {
-      return true;
+      // No volem mouren's cap a la dreta encara que
+      // el cursor estigui al final de la paraula
+      return false;
+      // return true;
     }
 
     return false;
@@ -211,6 +217,12 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
       _restoreText();
     }
 
+    // Quan sortim de la cel·la perquè anem cap a la fila d'amunt o a la fila
+    // d'avall guardem els canvis de la cel·la
+    if (keyManager.isUp || keyManager.isDown) {
+      _handleOnComplete();
+    }
+
     // KeyManager is delegated to handle the event.
     widget.stateManager.keyManager!.subject.add(keyManager);
 
@@ -228,6 +240,11 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
       cellFocus.requestFocus();
     }
 
+    TextStyle textStyle = widget.stateManager.configuration.style.cellTextStyle;
+    if (widget.column.highlight) {
+      textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
+    }
+
     Widget w = TextField(
       focusNode: cellFocus,
       controller: _textController,
@@ -236,7 +253,7 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
       onEditingComplete: _handleOnComplete,
       onSubmitted: (_) => _handleOnComplete(),
       onTap: _handleOnTap,
-      style: widget.stateManager.configuration.style.cellTextStyle,
+      style: textStyle,
       decoration: const InputDecoration(
         border: OutlineInputBorder(borderSide: BorderSide.none),
         contentPadding: EdgeInsets.zero,

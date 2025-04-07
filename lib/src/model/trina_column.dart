@@ -80,7 +80,7 @@ class TrinaColumn {
   TrinaColumnFrozen frozen;
 
   /// Set column sorting.
-  TrinaColumnSort sort;
+  TrinaColumnSorting sort;
 
   /// Formatter for display of cell values.
   TrinaColumnValueFormatter? formatter;
@@ -183,6 +183,27 @@ class TrinaColumn {
   /// Valid only when [enableContextMenu] is activated.
   bool enableFilterMenuItem;
 
+  ///Set hint text for filter field
+  String? filterHintText;
+
+  ///Set hint text color for filter field
+  Color? filterHintTextColor;
+
+  ///Set suffix icon for filter field
+  Icon? filterSuffixIcon;
+
+  ///Set custom widget
+  @Deprecated("Use new filterWidgetBuilder to provide some parameters")
+  Widget? filterWidget;
+
+  Widget Function(
+      FocusNode focusNode,
+      TextEditingController controller,
+      bool enabled,
+      void Function(String changed) handleOnChanged,
+      TrinaGridStateManager stateManager,
+      )? filterWidgetBuilder;
+
   /// Displays Hide column menu in the column context menu.
   /// Valid only when [enableContextMenu] is activated.
   bool enableHideColumnMenuItem;
@@ -194,12 +215,35 @@ class TrinaColumn {
   bool enableAutoEditing;
 
   /// Entering the Enter key or tapping the cell enters the Editing mode.
-  bool? enableEditingMode;
+  bool? Function(TrinaCell?)? enableEditingMode;
 
   /// Hide the column.
   bool hide;
 
   LinearGradient? backgroundGradient;
+
+  /// Highlights the column.
+  bool highlight;
+
+  /// Valor de hint
+  String Function(Map<String, TrinaCell> cells)? hintValue;
+
+  /// Indica si ensenyem el hint
+  bool Function(Map<String, TrinaCell> cells)? showHint;
+
+  /// Color del hint
+  Color? Function(Map<String, TrinaCell> cells)? hintColor;
+
+  /// Color de la cel·la
+  Color? Function(Map<String, TrinaCell> cells)? cellColor;
+
+  ///  Indica si la columna és obligatoria
+  bool required;
+
+  /// Indica si la columna s'exportarà o no
+  bool exportable;
+
+  String? formatExportExcel;
 
   /// The widget of the filter column, this can be customized with the multiple constructors, defaults to a [TrinaFilterColumnWidgetDelegate.initial()]
   TrinaFilterColumnWidgetDelegate? filterWidgetDelegate;
@@ -295,7 +339,7 @@ class TrinaColumn {
     this.textAlign = TrinaColumnTextAlign.start,
     this.titleTextAlign = TrinaColumnTextAlign.start,
     this.frozen = TrinaColumnFrozen.none,
-    this.sort = TrinaColumnSort.none,
+    this.sort = const TrinaColumnSorting(sortOrder: TrinaColumnSort.none, sortPosition: null),
     this.formatter,
     this.applyFormatterInEditing = false,
     this.backgroundColor,
@@ -312,18 +356,38 @@ class TrinaColumn {
     this.enableContextMenu = true,
     this.enableDropToResize = true,
     this.enableFilterMenuItem = true,
+    this.filterHintText,
+    this.filterHintTextColor,
+    this.filterSuffixIcon,
+    @Deprecated("Use new filterWidgetBuilder to provide some parameters")
+    this.filterWidget,
     this.enableHideColumnMenuItem = true,
     this.enableSetColumnsMenuItem = true,
     this.enableAutoEditing = false,
     this.enableEditingMode = true,
     this.hide = false,
+    this.highlight = false,
+    this.hintValue,
+    this.showHint,
+    this.hintColor,
+    this.cellColor,
+    this.required = false,
+    this.exportable = true,
+    this.formatExportExcel,
+    this.backgroundGradient,
+    this.filterWidgetBuilder,
     this.filterWidgetDelegate =
         const TrinaFilterColumnWidgetDelegate.textField(),
     this.disableRowCheckboxWhen,
     this.validator,
     this.editCellRenderer,
   }) : _key = UniqueKey(),
-       _checkReadOnly = checkReadOnly;
+       _checkReadOnly = checkReadOnly
+  {
+    enableEditingMode = enableEditingMode ?? (c) => true;
+    showHint = showHint ?? (c) => false;
+    hintColor = hintColor ?? (c) => Colors.black;
+  }
 
   final Key _key;
 
@@ -349,7 +413,7 @@ class TrinaColumn {
       _defaultFilter ?? const TrinaFilterTypeContains();
 
   bool get isShowRightIcon =>
-      enableContextMenu || enableDropToResize || !sort.isNone;
+      enableContextMenu || enableDropToResize || !sort.sortOrder.isNone;
 
   TrinaColumnGroup? group;
 

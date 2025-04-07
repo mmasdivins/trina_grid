@@ -19,6 +19,7 @@ class TrinaRow<T> {
   })  : type = type ?? TrinaRowTypeNormal.instance,
         _checked = checked,
         _state = TrinaRowState.none,
+        _errorState = TrinaRowErrorState(),
         _key = key ?? UniqueKey(),
         frozen = frozen ?? TrinaRowFrozen.none;
 
@@ -47,6 +48,10 @@ class TrinaRow<T> {
   TrinaRow? _parent;
 
   TrinaRowState _state;
+
+  TrinaRowErrorState _errorState;
+
+  bool _isLoading = false;
 
   Key get key => _key;
 
@@ -138,6 +143,11 @@ class TrinaRow<T> {
   /// Make sure it stays in the list unless you change the filtering again.
   TrinaRowState get state => _state;
 
+  /// State of the row when an error occurs
+  TrinaRowErrorState get errorState => _errorState;
+
+  bool get isLoading => _isLoading;
+
   void setParent(TrinaRow? row) {
     _parent = row;
   }
@@ -156,6 +166,14 @@ class TrinaRow<T> {
 
   void setState(TrinaRowState state) {
     _state = state;
+  }
+
+  void setError(TrinaRowErrorState error) {
+    _errorState = error;
+  }
+
+  void setLoading(bool isLoading) {
+    _isLoading = isLoading;
   }
 
   /// Create TrinaRow in json type.
@@ -331,4 +349,14 @@ enum TrinaRowState {
   bool get isAdded => this == TrinaRowState.added;
 
   bool get isUpdated => this == TrinaRowState.updated;
+}
+
+class TrinaRowErrorState {
+  final bool error;
+  final String msgError;
+
+  TrinaRowErrorState({
+    this.error = false,
+    this.msgError = ""
+  });
 }

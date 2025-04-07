@@ -48,6 +48,8 @@ class TrinaCell {
 
   dynamic _valueForSorting;
 
+  dynamic _valueForSearching;
+
   /// Custom renderer for this specific cell.
   /// If provided, this will be used instead of the column renderer.
   final TrinaCellRenderer? renderer;
@@ -130,11 +132,9 @@ class TrinaCell {
     }
 
     _value = changed;
-  }
 
-  /// Helper method to store the old value when change tracking is enabled
-  void trackChange() {
-    _oldValue ??= _value;
+    _valueForSorting = null;
+    _valueForSearching = null;
   }
 
   dynamic get valueForSorting {
@@ -143,9 +143,21 @@ class TrinaCell {
     return _valueForSorting;
   }
 
+  dynamic get valueForSearching {
+    _valueForSearching ??= _getValueForSearching();
+
+    return _valueForSearching;
+  }
+
+  /// Helper method to store the old value when change tracking is enabled
+  void trackChange() {
+    _oldValue ??= _value;
+  }
+
   void setColumn(TrinaColumn column) {
     _column = column;
     _valueForSorting = _getValueForSorting();
+    _valueForSearching = _getValueForSearching();
     _needToApplyFormatOnInit = _column?.type.applyFormatOnInit == true;
   }
 

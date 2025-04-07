@@ -50,6 +50,22 @@ mixin PopupCellState<T extends PopupCell> on State<T>
   /// Implement a callback function that takes [TrinaGridStateManager] as a parameter.
   CreateFooterCallBack? createFooter;
 
+  /// Callback function that returns Column Index to be inserted at the popup
+  /// Implement a callback function that takes [TrinaGridStateManager] as a parameter.
+  CreateColumnIndexCallBack? createColumnIndex;
+
+  /// Callback function that returns corner widget to be inserted at the popup
+  /// Implement a callback function that takes [TrinaGridStateManager] as a parameter.
+  CreateCornerWidgetCallBack? createCornerWidget;
+
+  /// Callback function that returns the delete event at the popup
+  /// Implement a callback function that takes [TrinaGridStateManager] as a parameter.
+  OnDeleteRowEventCallBack? onDeleteRowEvent;
+
+  /// Callback function that returns is a row is default at the popup
+  /// Implement a callback function that takes [TrinaGridStateManager] as a parameter.
+  IsRowDefaultCallback? isRowDefault;
+
   late final TextEditingController textController;
 
   late final FocusNode textFocus;
@@ -95,6 +111,11 @@ mixin PopupCellState<T extends PopupCell> on State<T>
           1,
       height: popupHeight,
       createHeader: createHeader,
+
+      createColumnIndex: createColumnIndex,
+      createCornerWidget: createCornerWidget,
+      onDeleteRowEvent: onDeleteRowEvent,
+      isRowDefault: isRowDefault,
       createFooter: createFooter,
       configuration: widget.stateManager.configuration.copyWith(
         tabKeyAction: TrinaGridTabKeyAction.normal,
@@ -214,13 +235,18 @@ mixin PopupCellState<T extends PopupCell> on State<T>
       textFocus.requestFocus();
     }
 
+    TextStyle textStyle = widget.stateManager.configuration.style.cellTextStyle;
+    if (widget.column.highlight) {
+      textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
+    }
+
     Widget w = TextField(
       focusNode: textFocus,
       controller: textController,
       readOnly: true,
       textInputAction: TextInputAction.none,
       onTap: openPopup,
-      style: widget.stateManager.configuration.style.cellTextStyle,
+      style: textStyle,
       decoration: InputDecoration(
         border: const OutlineInputBorder(borderSide: BorderSide.none),
         contentPadding: EdgeInsets.zero,

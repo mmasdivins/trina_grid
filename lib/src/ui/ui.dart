@@ -19,6 +19,8 @@ export 'trina_base_row.dart';
 export 'trina_body_columns.dart';
 export 'trina_body_columns_footer.dart';
 export 'trina_body_rows.dart';
+export 'trina_column_index.dart';
+export 'trina_column_index_body.dart';
 export 'trina_left_frozen_columns.dart';
 export 'trina_left_frozen_columns_footer.dart';
 export 'trina_left_frozen_rows.dart';

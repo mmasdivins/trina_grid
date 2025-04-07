@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/src/widgets/trina_horizontal_scroll_bar.dart';
 import 'package:trina_grid/src/widgets/trina_vertical_scroll_bar.dart';
@@ -164,123 +165,200 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
 
   @override
   Widget build(BuildContext context) {
-    final scrollConfig = stateManager.configuration.scrollbar;
+    final scrollbarConfig = stateManager.configuration.scrollbar;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: stateManager.style.rowColor,
-        borderRadius: stateManager.configuration.style.gridBorderRadius,
-      ),
-      child: Column(
-        children: [
-          // Main content with vertical scrollbar
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Main grid content
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _horizontalScroll,
-                    scrollDirection: Axis.horizontal,
-                    physics: const ClampingScrollPhysics(),
-                    child: CustomSingleChildLayout(
-                      delegate: ListResizeDelegate(stateManager, _columns),
-                      child: Column(
-                        children: [
-                          // Frozen top rows
-                          if (_frozenTopRows.isNotEmpty)
-                            Column(
-                              children: _frozenTopRows
-                                  .asMap()
-                                  .entries
-                                  .map(
-                                    (e) => _buildRow(context, e.value, e.key),
-                                  )
-                                  .toList(),
-                            ),
-                          // Scrollable rows
-                          Expanded(
-                            child: ListView.builder(
-                              controller: _verticalScroll,
-                              scrollDirection: Axis.vertical,
-                              physics: const ClampingScrollPhysics(),
-                              itemCount: _scrollableRows.length,
-                              itemExtent: stateManager.rowWrapper != null
-                                  ? null
-                                  : stateManager.rowTotalHeight,
-                              addRepaintBoundaries: false,
-                              itemBuilder: (ctx, i) => _buildRow(
-                                context,
-                                _scrollableRows[i],
-                                i + _frozenTopRows.length,
-                              ),
-                            ),
-                          ),
-                          // Frozen bottom rows
-                          if (_frozenBottomRows.isNotEmpty)
-                            Column(
-                              children: _frozenBottomRows
-                                  .asMap()
-                                  .entries
-                                  .map(
-                                    (e) => _buildRow(
-                                      context,
-                                      e.value,
-                                      e.key +
-                                          _frozenTopRows.length +
-                                          _scrollableRows.length,
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+    return Listener(
+      onPointerSignal: (pointerSignal){
+        if (pointerSignal is PointerScrollEvent){
+          if (stateManager.refRows.isEmpty || stateManager.refColumns.isEmpty){
+            return;
+          }
 
-                // Fake vertical scrollbar
-                if (scrollConfig.showVertical)
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      return TrinaVerticalScrollBar(
-                        stateManager: stateManager,
-                        verticalScrollExtentNotifier:
-                            _verticalScrollExtentNotifier,
-                        verticalViewportExtentNotifier:
-                            _verticalViewportExtentNotifier,
-                        verticalScrollOffsetNotifier:
-                            _verticalScrollOffsetNotifier,
-                        context: context,
-                        height: constraints.maxHeight,
-                      );
-                    },
-                  ),
-              ],
-            ),
-          ),
+          double offset = pointerSignal.scrollDelta.dy;
+          var f = stateManager.currentColumn?.field;
+          if (f?.isEmpty ?? true){
+            f = stateManager.refColumns.first.field;
+          }
+          var ci = stateManager.refRows.first.cells.entries.toList().indexWhere((entry) => entry.key == f);
+          int currentRowIndex = stateManager.currentCellPosition?.rowIdx ?? 0;
+          int offsetRowIndex = (offset / TrinaGridSettings.rowHeight).floor();
+          int rowIndex = currentRowIndex + offsetRowIndex;
+          if (rowIndex < 0){
+            rowIndex = 0;
+          }
+          else if (rowIndex >= stateManager.refRows.length){
+            rowIndex = stateManager.refRows.length - 1;
+          }
 
-          // Fake horizontal scrollbar
-          if (scrollConfig.showHorizontal)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return TrinaHorizontalScrollBar(
+          TrinaCell cell =
+              stateManager.rows[rowIndex].cells.entries.firstWhere((e) => e.key == f).value;
+          stateManager.setCurrentCell(cell, rowIndex);
+          stateManager.gridFocusNode.requestFocus();
+        }
+
+      },
+      child:
+      TrinaDoubleScrollbar(
+        horizontalController: _horizontalScroll,
+        verticalController: _verticalScroll,
+        trackThickness: scrollbarConfig.scrollbarThickness,
+        // horizontalScrollbarAlwaysVisible: true,
+        // verticalScrollbarAlwaysVisible: true,
+        child:
+        SingleChildScrollView(
+          controller: _horizontalScroll,
+          scrollDirection: Axis.horizontal,
+          physics: const ClampingScrollPhysics(),
+          child: CustomSingleChildLayout(
+            delegate: ListResizeDelegate(stateManager, _columns),
+            child: ListView.builder(
+              controller: _verticalScroll,
+              scrollDirection: Axis.vertical,
+              physics: const ClampingScrollPhysics(),
+              itemCount: _rows.length,
+              itemExtent: stateManager.rowWrapper != null
+                  ? null
+                  : stateManager.rowTotalHeight,
+              addRepaintBoundaries: false,
+              itemBuilder: (ctx, i) {
+                Widget w = TrinaBaseRow(
+                  key: ValueKey('body_row_${_rows[i].key}'),
+                  rowIdx: i,
+                  row: _rows[i],
+                  columns: _columns,
                   stateManager: stateManager,
-                  horizontalScrollExtentNotifier:
-                      _horizontalScrollExtentNotifier,
-                  horizontalViewportExtentNotifier:
-                      _horizontalViewportExtentNotifier,
-                  horizontalScrollOffsetNotifier:
-                      _horizontalScrollOffsetNotifier,
-                  context: context,
-                  width: constraints.maxWidth,
+                  visibilityLayout: true,
                 );
+
+                if (stateManager.rowWrapper != null) {
+                  w = stateManager.rowWrapper!(ctx, w, stateManager);
+                }
+
+                return w;
               },
             ),
-        ],
+          ),
+        ),
       ),
     );
+
+    // final scrollConfig = stateManager.configuration.scrollbar;
+    //
+    // return DecoratedBox(
+    //   decoration: BoxDecoration(
+    //     color: stateManager.style.rowColor,
+    //     borderRadius: stateManager.configuration.style.gridBorderRadius,
+    //   ),
+    //   child: Column(
+    //     children: [
+    //       // Main content with vertical scrollbar
+    //       Expanded(
+    //         child: Row(
+    //           crossAxisAlignment: CrossAxisAlignment.stretch,
+    //           children: [
+    //             // Main grid content
+    //             Expanded(
+    //               child: SingleChildScrollView(
+    //                 controller: _horizontalScroll,
+    //                 scrollDirection: Axis.horizontal,
+    //                 physics: const ClampingScrollPhysics(),
+    //                 child: CustomSingleChildLayout(
+    //                   delegate: ListResizeDelegate(stateManager, _columns),
+    //                   child: Column(
+    //                     children: [
+    //                       // Frozen top rows
+    //                       if (_frozenTopRows.isNotEmpty)
+    //                         Column(
+    //                           children: _frozenTopRows
+    //                               .asMap()
+    //                               .entries
+    //                               .map(
+    //                                 (e) => _buildRow(context, e.value, e.key),
+    //                               )
+    //                               .toList(),
+    //                         ),
+    //                       // Scrollable rows
+    //                       Expanded(
+    //                         child: ListView.builder(
+    //                           controller: _verticalScroll,
+    //                           scrollDirection: Axis.vertical,
+    //                           physics: const ClampingScrollPhysics(),
+    //                           itemCount: _scrollableRows.length,
+    //                           itemExtent: stateManager.rowWrapper != null
+    //                               ? null
+    //                               : stateManager.rowTotalHeight,
+    //                           addRepaintBoundaries: false,
+    //                           itemBuilder: (ctx, i) => _buildRow(
+    //                             context,
+    //                             _scrollableRows[i],
+    //                             i + _frozenTopRows.length,
+    //                           ),
+    //                         ),
+    //                       ),
+    //                       // Frozen bottom rows
+    //                       if (_frozenBottomRows.isNotEmpty)
+    //                         Column(
+    //                           children: _frozenBottomRows
+    //                               .asMap()
+    //                               .entries
+    //                               .map(
+    //                                 (e) => _buildRow(
+    //                                   context,
+    //                                   e.value,
+    //                                   e.key +
+    //                                       _frozenTopRows.length +
+    //                                       _scrollableRows.length,
+    //                                 ),
+    //                               )
+    //                               .toList(),
+    //                         ),
+    //                     ],
+    //                   ),
+    //                 ),
+    //               ),
+    //             ),
+    //
+    //             // Fake vertical scrollbar
+    //             if (scrollConfig.showVertical)
+    //               LayoutBuilder(
+    //                 builder: (context, constraints) {
+    //                   return TrinaVerticalScrollBar(
+    //                     stateManager: stateManager,
+    //                     verticalScrollExtentNotifier:
+    //                         _verticalScrollExtentNotifier,
+    //                     verticalViewportExtentNotifier:
+    //                         _verticalViewportExtentNotifier,
+    //                     verticalScrollOffsetNotifier:
+    //                         _verticalScrollOffsetNotifier,
+    //                     context: context,
+    //                     height: constraints.maxHeight,
+    //                   );
+    //                 },
+    //               ),
+    //           ],
+    //         ),
+    //       ),
+    //
+    //       // Fake horizontal scrollbar
+    //       if (scrollConfig.showHorizontal)
+    //         LayoutBuilder(
+    //           builder: (context, constraints) {
+    //             return TrinaHorizontalScrollBar(
+    //               stateManager: stateManager,
+    //               horizontalScrollExtentNotifier:
+    //                   _horizontalScrollExtentNotifier,
+    //               horizontalViewportExtentNotifier:
+    //                   _horizontalViewportExtentNotifier,
+    //               horizontalScrollOffsetNotifier:
+    //                   _horizontalScrollOffsetNotifier,
+    //               context: context,
+    //               width: constraints.maxWidth,
+    //             );
+    //           },
+    //         ),
+    //     ],
+    //   ),
+    // );
   }
 }
 

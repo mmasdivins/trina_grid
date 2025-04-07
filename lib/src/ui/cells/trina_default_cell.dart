@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 import '../ui.dart';
@@ -185,6 +186,11 @@ class _TrinaDefaultCellState extends TrinaStateWithChange<TrinaDefaultCell> {
       );
     }
 
+    TextStyle defaultCellStyle = TrinaDefaultCell.groupCountTextStyle(stateManager.style);
+    if (widget.column.highlight) {
+      defaultCellStyle = defaultCellStyle.copyWith(fontWeight: FontWeight.bold);
+    }
+
     return Row(children: [
       if (_canRowDrag)
         _RowDragIconWidget(
@@ -215,7 +221,7 @@ class _TrinaDefaultCellState extends TrinaStateWithChange<TrinaDefaultCell> {
         Text(
           TrinaDefaultCell.groupCountText(
               stateManager.rowGroupDelegate!, widget.row),
-          style: TrinaDefaultCell.groupCountTextStyle(stateManager.style),
+          style: defaultCellStyle,
         ),
     ]);
   }
@@ -366,6 +372,14 @@ class CheckboxSelectionWidgetState
   @override
   void initState() {
     super.initState();
+
+    stateManager.keyManager!.subject
+        .listen((TrinaKeyManagerEvent value) {
+      if (value.isKeyDownEvent && value.event.logicalKey == LogicalKeyboardKey.space && stateManager!.currentRowIdx == widget.rowIdx) {
+        _checked == null ? _handleOnChanged(null) : _handleOnChanged(!(_checked!));
+      }
+    });
+
     updateState(TrinaNotifierEventForceUpdate.instance);
     _pureValue = widget.row.checked ?? false;
   }
@@ -391,6 +405,12 @@ class CheckboxSelectionWidgetState
   }
 
   void _handleOnChanged(bool? changed) {
+    final disable = widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
+    // bool enabled = stateManager.enableCheckSelection?.call(widget.row) ?? true;
+    if (disable) {
+      return;
+    }
+
     if (changed == _checked) {
       return;
     }
@@ -415,9 +435,13 @@ class CheckboxSelectionWidgetState
       );
     }
 
-    setState(() {
-      _checked = changed;
-    });
+    // We change the value before calling set state, and call
+    // only set state only if it's mounted
+    _checked = changed;
+    if (mounted) {
+      setState(() {
+      });
+    }
   }
 
   @override
@@ -486,6 +510,16 @@ class _DefaultCellWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    TextStyle style = stateManager.configuration.style.cellTextStyle.copyWith(
+      decoration: TextDecoration.none,
+      fontWeight: FontWeight.normal,
+    );
+
+    if (column.highlight) {
+      style = style.copyWith(fontWeight: FontWeight.bold);
+    }
+
     // Check for cell renderer first
     if (cell.hasRenderer) {
       return cell.renderer!(TrinaCellRendererContext(
@@ -510,10 +544,7 @@ class _DefaultCellWidget extends StatelessWidget {
 
     return Text(
       _text,
-      style: stateManager.configuration.style.cellTextStyle.copyWith(
-        decoration: TextDecoration.none,
-        fontWeight: FontWeight.normal,
-      ),
+      style: style,
       overflow: TextOverflow.ellipsis,
       textAlign: column.textAlign.value,
     );

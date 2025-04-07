@@ -15,6 +15,9 @@ extension TrinaColumnTypeExtension on TrinaColumnType {
 
   bool get isBoolean => this is TrinaColumnTypeBoolean;
 
+  bool get isCustom => this is TrinaColumnTypeCustom;
+
+
   TrinaColumnTypeText get text {
     if (this is! TrinaColumnTypeText) {
       throw TypeError();
@@ -62,6 +65,14 @@ extension TrinaColumnTypeExtension on TrinaColumnType {
       throw TypeError();
     }
     return this as TrinaColumnTypeTime;
+  }
+
+  TrinaColumnTypeCustom get custom{
+    if (this is! TrinaColumnTypeCustom) {
+      throw TypeError();
+    }
+
+    return this as TrinaColumnTypeCustom;
   }
 
   bool get hasFormat => this is TrinaColumnTypeHasFormat;
