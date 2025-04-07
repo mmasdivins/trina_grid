@@ -23,6 +23,8 @@ export './src/manager/event/trina_grid_event.dart';
 export './src/manager/event/trina_grid_scroll_update_event.dart';
 export './src/manager/event/trina_grid_set_column_filter_event.dart';
 export './src/manager/event/trina_grid_change_lazy_page_event.dart';
+export './src/manager/event/trina_grid_cell_not_exist_event.dart';
+export './src/manager/event/trina_grid_error_event.dart';
 export './src/manager/trina_change_notifier.dart';
 export './src/manager/trina_change_notifier_filter.dart';
 export './src/manager/trina_grid_event_manager.dart';
@@ -71,5 +73,6 @@ export './src/export/trina_grid_export.dart';
 export './src/export/trina_grid_export_pdf.dart';
 export './src/export/trina_grid_export_csv.dart';
 export './src/export/trina_grid_export_json.dart';
+export './src/export/trina_grid_export_excel.dart';
 // Export pdf package types needed for export
 export 'package:pdf/pdf.dart' show PdfPageFormat;
