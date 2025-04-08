@@ -1261,14 +1261,14 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
         _StackName.bodyColumns,
         BoxConstraints.loose(
           Size(
-            _safe(size.width - bodyLeftOffset - bodyRightOffset),
+            _safe(size.width - bodyLeftOffset - bodyRightOffset - cornerOffset),
             size.height,
           ),
         ),
       );
 
       final double posX =
-          isLTR ? bodyLeftOffset : size.width - s.width - bodyRightOffset;
+          isLTR ? bodyLeftOffset + cornerOffset : size.width - s.width - bodyRightOffset;
 
       positionChild(_StackName.bodyColumns, Offset(posX, columnsTopOffset));
 
