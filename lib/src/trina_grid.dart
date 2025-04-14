@@ -1082,6 +1082,10 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
     if (widthIndexColumn < 35) {
       widthIndexColumn = 35;
     }
+    // If there is no columnsIndex the width is 0
+    if (!hasChild(_StackName.columnsIndex)) {
+      widthIndexColumn = 0;
+    }
 
     // first layout header and footer and see what remains for the scrolling part
     if (hasChild(_StackName.header)) {
@@ -1145,7 +1149,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
         BoxConstraints.loose(size),
       );
 
-      final double posX = isLTR ? 0 : size.width - s.width;
+      final double posX = isLTR ? widthIndexColumn : size.width - s.width + widthIndexColumn;
 
       positionChild(
         _StackName.leftFrozenColumns,
@@ -1171,7 +1175,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       );
 
       final double posX = isLTR
-          ? bodyLeftOffset
+          ? bodyLeftOffset + widthIndexColumn
           : size.width - bodyRightOffset - gridBorderWidth;
 
       positionChild(
@@ -1338,7 +1342,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       );
 
       final double posX = isLTR
-          ? bodyLeftOffset
+          ? 0//bodyLeftOffset
           : size.width - bodyRightOffset - TrinaGridSettings.gridBorderWidth;
       positionChild(
         _StackName.columnsIndexBody,
@@ -1355,13 +1359,13 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
     if (hasChild(_StackName.leftFrozenRows)) {
       final double offset = isLTR ? bodyLeftOffset : bodyRightOffset;
       final double posX =
-          isLTR ? 0 : size.width - bodyRightOffset + gridBorderWidth;
+          isLTR ? widthIndexColumn : size.width - bodyRightOffset + gridBorderWidth;
 
       layoutChild(
         _StackName.leftFrozenRows,
         BoxConstraints.loose(
           Size(
-            offset,
+            offset - widthIndexColumn,
             _safe(size.height - bodyRowsTopOffset - bodyRowsBottomOffset),
           ),
         ),
