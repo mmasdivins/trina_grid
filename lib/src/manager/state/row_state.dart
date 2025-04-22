@@ -581,7 +581,9 @@ mixin RowState implements ITrinaGridState {
       // the first cell as focused
       if (wasEmpty){
         setCurrentCell(firstCell, 0);
-        gridFocusNode.requestFocus();
+        if (configuration.focusFirstCellOnRowsLoaded) {
+          gridFocusNode.requestFocus();
+        }
       }
 
     }

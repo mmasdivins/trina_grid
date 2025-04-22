@@ -11,6 +11,9 @@ class TrinaGridConfiguration {
   /// Moves the current cell when focus reaches the left or right edge in the edit state.
   final bool enableMoveHorizontalInEditing;
 
+  /// Focus to the first cell when loading rows when there was no rows previously.
+  final bool focusFirstCellOnRowsLoaded;
+
   /// [TrinaGridRowSelectionCheckBoxBehavior.none]
   /// Selecting a row does nothing to its checkbox
   ///
@@ -115,6 +118,7 @@ class TrinaGridConfiguration {
   const TrinaGridConfiguration({
     this.enableMoveDownAfterSelecting = false,
     this.enableMoveHorizontalInEditing = false,
+    this.focusFirstCellOnRowsLoaded = true,
     this.rowSelectionCheckBoxBehavior =
         TrinaGridRowSelectionCheckBoxBehavior.none,
     this.enterKeyAction = TrinaGridEnterKeyAction.editingAndMoveDown,
@@ -132,6 +136,7 @@ class TrinaGridConfiguration {
   const TrinaGridConfiguration.dark({
     this.enableMoveDownAfterSelecting = false,
     this.enableMoveHorizontalInEditing = false,
+    this.focusFirstCellOnRowsLoaded = true,
     this.rowSelectionCheckBoxBehavior =
         TrinaGridRowSelectionCheckBoxBehavior.none,
     this.enterKeyAction = TrinaGridEnterKeyAction.editingAndMoveDown,
