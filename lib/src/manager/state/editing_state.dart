@@ -419,6 +419,11 @@ mixin EditingState implements ITrinaGridState {
 
         dynamic newValue = textList[textRowIdx][textColumnIdx];
 
+        Map<String,dynamic> oldCellValues = <String,dynamic>{};
+        refRows[rowIdx].cells.forEach((key, cell) {
+          oldCellValues[key] = cell.value;
+        });
+
         final dynamic oldValue = currentCell.value;
 
         newValue = filteredCellValue(
@@ -439,6 +444,13 @@ mixin EditingState implements ITrinaGridState {
         }
 
         refRows[rowIdx].setState(TrinaRowState.updated);
+
+        // Abans d'actualitzar el cell value notifiquem
+        // de que la fila s'ha modificat
+        trackRowCell(
+          refRows.indexOf(currentRow),
+          refRows[rowIdx],
+        );
 
         currentCell.value = newValue;
 

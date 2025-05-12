@@ -81,7 +81,7 @@ class TrinaGridActionMoveCellFocus extends TrinaGridShortcutAction {
   void execute({
     required TrinaKeyManagerEvent keyEvent,
     required TrinaGridStateManager stateManager,
-  }) {
+  }) async {
     bool force = keyEvent.isHorizontal &&
         stateManager.configuration.enableMoveHorizontalInEditing == true;
 
@@ -101,6 +101,10 @@ class TrinaGridActionMoveCellFocus extends TrinaGridShortcutAction {
         && stateManager.rows.length == (index + 1)) {
 
       bool isRowDefault = isRowDefaultFunction(stateManager.currentCell!.row, stateManager);
+
+      // If row changed notifiy changed row
+      // Put index + 1 so it detects it that we are changing the row
+      await stateManager.notifyTrackingRow(index + 1);
 
       // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
       // lastRowKeyDownAction
@@ -132,8 +136,7 @@ class TrinaGridActionMoveCellFocus extends TrinaGridShortcutAction {
         }
       }
     }
-
-    if (stateManager.mode != TrinaGridMode.readOnly
+    else if (stateManager.mode != TrinaGridMode.readOnly
         && direction.isUp
         && stateManager.rows.length == (index + 1)) {
 
@@ -156,6 +159,13 @@ class TrinaGridActionMoveCellFocus extends TrinaGridShortcutAction {
           stateManager.removeRows([row]);
         }
       }
+    }
+    else if (stateManager.mode != TrinaGridMode.readOnly
+        && direction.isUp
+        && index == 0) {
+      // If row changed notifiy changed row
+      // Put -1 so it detects it that we are changing the row
+      await stateManager.notifyTrackingRow(-1);
     }
   }
 
