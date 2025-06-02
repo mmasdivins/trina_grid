@@ -20,8 +20,10 @@ class TrinaGridDefaultExportExcel extends TrinaGridExport {
     var TrinaColumns = exportableColumns(stateManager);
 
     List<CellValue?> columns = [];
+    int i = 0;
     for (var col in TrinaColumns/*getColumnTitles(state)*/) {
       columns.add(TextCellValue(col.title));
+      sheet.setColumnWidth(i++, pixelsToExcelWidth(col.width));
     }
 
     sheet.appendRow(columns);
@@ -102,6 +104,14 @@ class TrinaGridDefaultExportExcel extends TrinaGridExport {
     // return toCsv;
   }
 
+
+  /// Les columns trina tenen el width amb pixels,
+  /// excel fa servir com ha width l'espai que ocupen els caràcters
+  /// de la lletra de la cel·la (normalment és calibri 11) llavors
+  /// segons aquesta caligrafia hem de dividir per 7 aproximadament
+  double pixelsToExcelWidth(double pixels) {
+    return pixels / 7.0;
+  }
 
   /// Returns the titles of the active column of TrinaGrid.
   List<String> getColumnTitles(TrinaGridStateManager state) =>
