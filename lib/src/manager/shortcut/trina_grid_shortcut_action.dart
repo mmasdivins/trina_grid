@@ -559,11 +559,29 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
           notify: false,
         );
       } else {
-        stateManager.moveCurrentCell(
-          TrinaMoveDirection.right,
-          force: true,
-          notify: false,
-        );
+        // Check if we're on the last cell of the row
+        final position = stateManager.currentCellPosition;
+        if (position != null &&
+            position.columnIdx == stateManager.refColumns.length - 1 &&
+            position.rowIdx! < stateManager.refRows.length - 1) {
+          // Move to first cell of next row
+          stateManager.moveCurrentCell(
+            TrinaMoveDirection.down,
+            force: true,
+            notify: false,
+          );
+          stateManager.moveCurrentCellToEdgeOfColumns(
+            TrinaMoveDirection.left,
+            force: true,
+            notify: false,
+          );
+        } else {
+          stateManager.moveCurrentCell(
+            TrinaMoveDirection.right,
+            force: true,
+            notify: false,
+          );
+        }
       }
     }
   }

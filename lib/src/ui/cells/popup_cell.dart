@@ -217,15 +217,15 @@ mixin PopupCellState<T extends PopupCell> on State<T>
       }
     }
 
-    // 엔터키는 그리드 포커스 핸들러로 전파 한다.
+// The Enter key is propagated to the grid focus handler.
     if (keyManager.isEnter) {
       return KeyEventResult.ignored;
     }
 
-    // KeyManager 로 이벤트 처리를 위임 한다.
+    // Delegate event processing to KeyManager.
     widget.stateManager.keyManager!.subject.add(keyManager);
 
-    // 모든 이벤트를 처리 하고 이벤트 전파를 중단한다.
+    // Process all events and stop event propagation.
     return KeyEventResult.handled;
   }
 

@@ -119,10 +119,20 @@ abstract class IRowGroupState {
   });
 
   /// Collapse or expand the group row.
+  ///
+  /// If [expanded] is provided, the group will be set to that state.
+  /// If [expanded] is null, the group state will be toggled.
   void toggleExpandedRowGroup({
     required TrinaRow rowGroup,
     bool notify = true,
+    bool? expanded,
   });
+
+  /// Expand all group rows.
+  void expandAllRowGroups({bool notify = true});
+
+  /// Collapse all group rows.
+  void collapseAllRowGroups({bool notify = true});
 
   @protected
   void setRowGroupFilter(FilteredListFilter<TrinaRow>? filter);
@@ -261,11 +271,18 @@ mixin RowGroupState implements ITrinaGridState {
   void toggleExpandedRowGroup({
     required TrinaRow rowGroup,
     bool notify = true,
+    bool? expanded,
   }) {
     assert(enabledRowGroups);
 
     if (!rowGroup.type.isGroup ||
         rowGroup.type.group.children.originalList.isEmpty) {
+      return;
+    }
+
+    if (expanded == true && rowGroup.type.group.expanded) {
+      return;
+    } else if (expanded == false && !rowGroup.type.group.expanded) {
       return;
     }
 
@@ -291,7 +308,7 @@ mixin RowGroupState implements ITrinaGridState {
       refRows.insertAll(idx + 1, children);
     }
 
-    rowGroup.type.group.setExpanded(!rowGroup.type.group.expanded);
+    rowGroup.type.group.setExpanded(expanded ?? !rowGroup.type.group.expanded);
 
     if (isPaginated) {
       resetPage(resetCurrentState: false, notify: false);
@@ -309,6 +326,83 @@ mixin RowGroupState implements ITrinaGridState {
     clearCurrentSelecting(notify: false);
 
     notifyListeners(notify, toggleExpandedRowGroup.hashCode);
+  }
+
+  @override
+  void expandAllRowGroups({bool notify = true}) {
+    if (!enabledRowGroups) {
+      return;
+    }
+
+    final List<TrinaRow> collapsedGroups = [];
+    //check all children recursive
+    void checkChildrenRecursive(TrinaRow row) {
+      if (row.type.isGroup && !row.type.group.expanded) {
+        collapsedGroups.add(row);
+        for (final child in row.type.group.children.originalList) {
+          if (!child.type.isGroup) {
+            continue;
+          }
+
+          if (child.type.group.expanded) {
+            continue;
+          }
+
+          collapsedGroups.add(child);
+
+          checkChildrenRecursive(child);
+        }
+      }
+    }
+
+    for (final row in refRows.originalList) {
+      checkChildrenRecursive(row);
+    }
+
+    for (final groupRow in collapsedGroups) {
+      toggleExpandedRowGroup(rowGroup: groupRow, expanded: true, notify: false);
+    }
+
+    notifyListeners(notify);
+  }
+
+  @override
+  void collapseAllRowGroups({bool notify = true}) {
+    if (!enabledRowGroups) {
+      return;
+    }
+
+    final List<TrinaRow> expandedGroups = [];
+    //check all children recursive
+    void checkChildrenRecursive(TrinaRow row) {
+      if (row.type.isGroup && row.type.group.expanded) {
+        expandedGroups.add(row);
+        for (final child in row.type.group.children.originalList) {
+          if (!child.type.isGroup) {
+            continue;
+          }
+
+          if (!child.type.group.expanded) {
+            continue;
+          }
+
+          expandedGroups.add(child);
+
+          checkChildrenRecursive(child);
+        }
+      }
+    }
+
+    for (final row in refRows.originalList) {
+      checkChildrenRecursive(row);
+    }
+
+    for (final groupRow in expandedGroups) {
+      toggleExpandedRowGroup(
+          rowGroup: groupRow, expanded: false, notify: false);
+    }
+
+    notifyListeners(notify);
   }
 
   @override

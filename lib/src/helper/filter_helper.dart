@@ -31,6 +31,7 @@ class FilterHelper {
     TrinaFilterTypeGreaterThanOrEqualTo(),
     TrinaFilterTypeLessThan(),
     TrinaFilterTypeLessThanOrEqualTo(),
+    TrinaFilterTypeRegex(),
   ];
 
   /// Create a row to contain filter information.
@@ -324,6 +325,44 @@ class FilterHelper {
     bool caseSensitive = false,
   }) {
     return RegExp(pattern, caseSensitive: caseSensitive).hasMatch(value);
+  }
+
+  /// Compare [base] with raw regex [search].
+  static bool compareRegex({
+    required String? base,
+    required String? search,
+    required TrinaColumn column,
+  }) {
+    if (base == null || search == null || search.isEmpty) {
+      return false;
+    }
+
+    try {
+      return RegExp(search).hasMatch(base);
+    } catch (e) {
+      // Return false if the regex pattern is invalid
+      return false;
+    }
+  }
+
+  static bool compareMultiItems({
+    required String? base,
+    required String? search,
+    required TrinaColumn column,
+    bool caseSensitive = true,
+  }) {
+    if (base == null || search == null) return false;
+    final items = search
+        .split(RegExp(r'[\n,]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (caseSensitive) {
+      return items.contains(base.trim());
+    } else {
+      final baseLower = base.trim().toLowerCase();
+      return items.any((item) => item.toLowerCase() == baseLower);
+    }
   }
 }
 
@@ -660,4 +699,40 @@ class TrinaFilterTypeLessThanOrEqualTo implements TrinaFilterType {
   TrinaCompareFunction get compare => FilterHelper.compareLessThanOrEqualTo;
 
   const TrinaFilterTypeLessThanOrEqualTo();
+}
+
+class TrinaFilterTypeRegex implements TrinaFilterType {
+  static String name = 'Regex';
+
+  @override
+  String get title => TrinaFilterTypeRegex.name;
+
+  @override
+  TrinaCompareFunction get compare => FilterHelper.compareRegex;
+
+  const TrinaFilterTypeRegex();
+}
+
+class TrinaFilterTypeMultiItems implements TrinaFilterType {
+  static String name = 'MultiItems';
+
+  final bool caseSensitive;
+
+  const TrinaFilterTypeMultiItems({this.caseSensitive = true});
+
+  @override
+  String get title => TrinaFilterTypeMultiItems.name;
+
+  @override
+  TrinaCompareFunction get compare => ({
+        required String? base,
+        required String? search,
+        required TrinaColumn column,
+      }) =>
+          FilterHelper.compareMultiItems(
+            base: base,
+            search: search,
+            column: column,
+            caseSensitive: caseSensitive,
+          );
 }

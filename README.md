@@ -118,6 +118,14 @@ class _MyHomePageState extends State<MyHomePage> {
       field: 'role',
       type: TrinaColumnType.select(['Developer', 'Designer', 'Manager']),
     ),
+    TrinaColumn(
+      title: 'Completion',
+      field: 'completion',
+      type: TrinaColumnType.percentage(
+        decimalDigits: 1,
+        showSymbol: true,
+      ),
+    ),
   ];
 
   final List<TrinaRow> rows = [
@@ -127,6 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'name': TrinaCell(value: 'John Doe'),
         'age': TrinaCell(value: 28),
         'role': TrinaCell(value: 'Developer'),
+        'completion': TrinaCell(value: 0.75),
       },
     ),
     TrinaRow(
@@ -135,6 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'name': TrinaCell(value: 'Jane Smith'),
         'age': TrinaCell(value: 32),
         'role': TrinaCell(value: 'Designer'),
+        'completion': TrinaCell(value: 0.5),
       },
     ),
     TrinaRow(
@@ -143,6 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'name': TrinaCell(value: 'Mike Johnson'),
         'age': TrinaCell(value: 45),
         'role': TrinaCell(value: 'Manager'),
+        'completion': TrinaCell(value: 0.9),
       },
     ),
   ];
@@ -176,7 +187,7 @@ TrinaGrid offers a comprehensive set of features for handling tabular data:
 
 ### Column Features
 
-- **Column Types**: Support for various data types (text, number, select, date, time, currency)
+- **Column Types**: Support for various data types (text, number, select, date, time, currency, percentage)
 - **Column Freezing**: Freeze columns to the left or right
 - **Column Resizing**: Adjust column width by dragging
 - **Column Moving**: Change column order by drag and drop

@@ -2,6 +2,9 @@ import 'package:demo/screen/feature/boolean_type_column_screen.dart';
 import 'package:demo/screen/feature/change_tracking_screen.dart';
 import 'package:demo/screen/feature/check_view_port_visible_columns_screen.dart';
 import 'package:demo/screen/feature/column_title_renderer_screen.dart';
+import 'package:demo/screen/feature/date_time_column_screen.dart';
+import 'package:demo/screen/feature/percentage_type_column_screen.dart';
+import 'package:demo/screen/feature/rtl_scrollbar_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'constants/trina_grid_example_colors.dart';
@@ -27,6 +30,7 @@ import 'screen/feature/date_type_column_screen.dart';
 import 'screen/feature/dual_mode_screen.dart';
 import 'screen/feature/edit_cell_renderer_screen.dart';
 import 'screen/feature/editing_state_screen.dart';
+import 'screen/feature/filter_icon_customization_screen.dart';
 import 'screen/feature/grid_as_popup_screen.dart';
 import 'screen/feature/grid_export_screen.dart';
 import 'screen/feature/loading_options_screen.dart';
@@ -50,6 +54,8 @@ import 'screen/home_screen.dart';
 import 'screen/feature/pages_list_screen.dart';
 import 'screen/feature/frozen_rows_screen.dart';
 import 'screen/feature/scrollbars.dart';
+import 'screen/feature/row_wrapper_screen.dart';
+import 'screen/feature/multiitems_delegate_demo_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -81,6 +87,8 @@ class MyApp extends StatelessWidget {
             const BooleanTypeColumnScreen(),
         CheckViewPortVisibleColumnsScreen.routeName: (context) =>
             const CheckViewPortVisibleColumnsScreen(),
+        DateTimeColumnScreen.routeName: (context) =>
+            const DateTimeColumnScreen(),
         EditCellRendererScreen.routeName: (context) =>
             const EditCellRendererScreen(),
         RTLScreen.routeName: (context) => const RTLScreen(),
@@ -104,12 +112,16 @@ class MyApp extends StatelessWidget {
             const DateTypeColumnScreen(),
         DualModeScreen.routeName: (context) => const DualModeScreen(),
         EditingStateScreen.routeName: (context) => const EditingStateScreen(),
+        FilterIconCustomizationScreen.routeName: (context) =>
+            const FilterIconCustomizationScreen(),
         GridAsPopupScreen.routeName: (context) => const GridAsPopupScreen(),
         GridExportScreen.routeName: (context) => const GridExportScreen(),
         ListingModeScreen.routeName: (context) => const ListingModeScreen(),
         MovingScreen.routeName: (context) => const MovingScreen(),
         NumberTypeColumnScreen.routeName: (context) =>
             const NumberTypeColumnScreen(),
+        PercentageTypeColumnScreen.routeName: (context) =>
+            const PercentageTypeColumnScreen(),
         RowColorScreen.routeName: (context) => const RowColorScreen(),
         RowGroupScreen.routeName: (context) => const RowGroupScreen(),
         RowInfinityScrollScreen.routeName: (context) =>
@@ -136,6 +148,10 @@ class MyApp extends StatelessWidget {
         ScrollbarsScreen.routeName: (context) => const ScrollbarsScreen(),
         LoadingOptionsScreen.routeName: (context) =>
             const LoadingOptionsScreen(),
+        RowWrapperScreen.routeName: (context) => const RowWrapperScreen(),
+        MultiItemsDelegateDemoScreen.routeName: (context) =>
+            const MultiItemsDelegateDemoScreen(),
+        RTLScrollbarScreen.routeName: (context) => const RTLScrollbarScreen(),
       },
       theme: ThemeData(
         primaryColor: TrinaGridExampleColors.primaryColor,

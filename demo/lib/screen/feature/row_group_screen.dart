@@ -22,7 +22,8 @@ class _RowGroupScreenState extends State<RowGroupScreen> {
 
   final List<TrinaRow> rowsB = [];
 
-  late TrinaGridStateManager stateManager;
+  late TrinaGridStateManager stateManagerA;
+  late TrinaGridStateManager stateManagerB;
 
   @override
   void initState() {
@@ -127,6 +128,46 @@ class _RowGroupScreenState extends State<RowGroupScreen> {
       topContents: const [
         Text('Grouping rows in a column or tree structure.'),
       ],
+      topButtons: [
+        ElevatedButton.icon(
+          onPressed: () {
+            if (mounted) {
+              stateManagerA.expandAllRowGroups();
+              stateManagerB.expandAllRowGroups();
+            }
+          },
+          icon: Icon(Icons.unfold_more),
+          label: const Text('Expand All'),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
+          onPressed: () {
+            if (mounted) {
+              stateManagerA.collapseAllRowGroups();
+              stateManagerB.collapseAllRowGroups();
+            }
+          },
+          icon: Icon(Icons.unfold_less),
+          label: const Text('Collapse All'),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
+          onPressed: () {
+            if (mounted) {
+              if (stateManagerA.currentRow != null) {
+                stateManagerA.toggleExpandedRowGroup(
+                    rowGroup: stateManagerA.currentRow!);
+              }
+              if (stateManagerB.currentRow != null) {
+                stateManagerB.toggleExpandedRowGroup(
+                    rowGroup: stateManagerB.currentRow!);
+              }
+            }
+          },
+          icon: Icon(Icons.unfold_less),
+          label: const Text('Toggle Selected'),
+        ),
+      ],
       body: TrinaDualGrid(
         gridPropsA: TrinaDualGridProps(
           columns: columnsA,
@@ -136,15 +177,18 @@ class _RowGroupScreenState extends State<RowGroupScreen> {
               cellColorGroupedRow: Color(0x80F6F6F6),
             ),
           ),
-          onLoaded: (e) => e.stateManager.setRowGroup(
-            TrinaRowGroupByColumnDelegate(
-              columns: [
-                columnsA[0],
-                columnsA[1],
-              ],
-              showFirstExpandableIcon: false,
-            ),
-          ),
+          onLoaded: (e) {
+            stateManagerA = e.stateManager;
+            e.stateManager.setRowGroup(
+              TrinaRowGroupByColumnDelegate(
+                columns: [
+                  columnsA[0],
+                  columnsA[1],
+                ],
+                showFirstExpandableIcon: false,
+              ),
+            );
+          },
         ),
         gridPropsB: TrinaDualGridProps(
           columns: columnsB,
@@ -158,6 +202,7 @@ class _RowGroupScreenState extends State<RowGroupScreen> {
             ),
           ),
           onLoaded: (e) {
+            stateManagerB = e.stateManager;
             e.stateManager.setRowGroup(TrinaRowGroupTreeDelegate(
               resolveColumnDepth: (column) =>
                   e.stateManager.columnIndex(column),

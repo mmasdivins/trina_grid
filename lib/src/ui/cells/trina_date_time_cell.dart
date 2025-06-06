@@ -106,9 +106,9 @@ class TrinaDateTimeCellState extends State<TrinaDateTimeCell>
 
     // Get current date and time parts
     final DateTime currentDateTime =
-    widget.cell.value != null && widget.cell.value.toString().isNotEmpty
-        ? columnType.dateFormat.parse(widget.cell.value.toString())
-        : DateTime.now();
+        widget.cell.value != null && widget.cell.value.toString().isNotEmpty
+            ? columnType.dateFormat.parse(widget.cell.value.toString())
+            : DateTime.now();
 
     // Open time picker dialog
     final localeText = widget.stateManager.configuration.localeText;
@@ -175,11 +175,11 @@ class TrinaDateTimeCellState extends State<TrinaDateTimeCell>
         rows: Iterable<int>.generate(24)
             .map(
               (hour) => TrinaRow(
-            cells: {
-              'hour': TrinaCell(value: hour.toString().padLeft(2, '0')),
-            },
-          ),
-        )
+                cells: {
+                  'hour': TrinaCell(value: hour.toString().padLeft(2, '0')),
+                },
+              ),
+            )
             .toList(growable: false),
         onLoaded: (TrinaGridOnLoadedEvent event) {
           final stateManager = event.stateManager;
@@ -225,11 +225,11 @@ class TrinaDateTimeCellState extends State<TrinaDateTimeCell>
         rows: Iterable<int>.generate(60)
             .map(
               (minute) => TrinaRow(
-            cells: {
-              'minute': TrinaCell(value: minute.toString().padLeft(2, '0')),
-            },
-          ),
-        )
+                cells: {
+                  'minute': TrinaCell(value: minute.toString().padLeft(2, '0')),
+                },
+              ),
+            )
             .toList(growable: false),
         onLoaded: (TrinaGridOnLoadedEvent event) {
           final stateManager = event.stateManager;
@@ -239,7 +239,7 @@ class TrinaDateTimeCellState extends State<TrinaDateTimeCell>
           stateManager.setSelectingMode(TrinaGridSelectingMode.none);
 
           final currentMinute =
-          currentDateTime.minute.toString().padLeft(2, '0');
+              currentDateTime.minute.toString().padLeft(2, '0');
 
           for (var i = 0; i < length; i += 1) {
             if (rows[i].cells['minute']!.value == currentMinute) {
@@ -309,11 +309,11 @@ class TrinaDateTimeCellState extends State<TrinaDateTimeCell>
         border: !isCurrentCell
             ? null
             : !renderContext.stateManager.hasFocus
-            ? Border.all(
-          color: widget.stateManager.style.activatedBorderColor,
-          width: 1,
-        )
-            : null,
+                ? Border.all(
+                    color: widget.stateManager.style.activatedBorderColor,
+                    width: 1,
+                  )
+                : null,
       ),
       child: Padding(
         padding: const EdgeInsets.all(5),

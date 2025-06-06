@@ -5,10 +5,13 @@ import 'package:demo/screen/feature/boolean_type_column_screen.dart';
 import 'package:demo/screen/feature/change_tracking_screen.dart';
 import 'package:demo/screen/feature/check_view_port_visible_columns_screen.dart';
 import 'package:demo/screen/feature/column_title_renderer_screen.dart';
+import 'package:demo/screen/feature/filter_icon_customization_screen.dart';
 import 'package:demo/screen/feature/loading_options_screen.dart';
 import 'package:demo/screen/feature/edit_cell_renderer_screen.dart';
 import 'package:demo/screen/feature/frozen_rows_screen.dart';
 import 'package:demo/screen/feature/grid_export_screen.dart';
+import 'package:demo/screen/feature/percentage_type_column_screen.dart';
+import 'package:demo/screen/feature/rtl_scrollbar_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -57,6 +60,9 @@ import 'feature/time_type_column_screen.dart';
 import 'feature/value_formatter_screen.dart';
 import 'feature/pages_list_screen.dart';
 import 'feature/scrollbars.dart';
+import 'feature/date_time_column_screen.dart';
+import 'feature/row_wrapper_screen.dart';
+import 'feature/multiitems_delegate_demo_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   static const routeName = '/';
@@ -253,10 +259,28 @@ class _TrinaFeaturesState extends State<TrinaFeatures> {
         },
       ),
       TrinaListTile(
-        title: 'Column filtering',
-        description: 'Filter rows by setting filters on columns.',
+        title: 'Column Filtering',
+        description: 'Column filtering allows to filter all data.',
         onTapLiveDemo: () {
           Navigator.pushNamed(context, ColumnFilteringScreen.routeName);
+        },
+      ),
+      TrinaListTile(
+        title: 'Filter Icon Customization',
+        description:
+            'Customize or hide the filter icon that appears in column titles after filtering.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, FilterIconCustomizationScreen.routeName);
+        },
+        trailing: newIcon,
+      ),
+      TrinaListTile(
+        title: 'Column Footer',
+        description: 'Column footer allows to display footer cell. '
+            'The default built-in footer is aggregate. '
+            'But you can also customize it.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, ColumnFooterScreen.routeName);
         },
       ),
       TrinaListTile(
@@ -274,15 +298,6 @@ class _TrinaFeaturesState extends State<TrinaFeatures> {
         },
       ),
       TrinaListTile(
-        title: 'Column footer',
-        description:
-            'Display each column fixed at the bottom. (For outputting data sum, average, etc.)',
-        onTapLiveDemo: () {
-          Navigator.pushNamed(context, ColumnFooterScreen.routeName);
-        },
-        trailing: newIcon,
-      ),
-      TrinaListTile(
         title: 'Text type column',
         description: 'A column to enter a character value.',
         onTapLiveDemo: () {
@@ -295,6 +310,14 @@ class _TrinaFeaturesState extends State<TrinaFeatures> {
         onTapLiveDemo: () {
           Navigator.pushNamed(context, NumberTypeColumnScreen.routeName);
         },
+      ),
+      TrinaListTile(
+        title: 'Percentage type column',
+        description: 'A column to display and edit percentage values.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, PercentageTypeColumnScreen.routeName);
+        },
+        trailing: newIcon,
       ),
       TrinaListTile(
         title: 'Currency type column',
@@ -310,6 +333,15 @@ class _TrinaFeaturesState extends State<TrinaFeatures> {
         onTapLiveDemo: () {
           Navigator.pushNamed(context, DateTypeColumnScreen.routeName);
         },
+      ),
+      TrinaListTile(
+        title: 'DateTime type column',
+        description:
+            'A column to enter both date and time values in a single field.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, DateTimeColumnScreen.routeName);
+        },
+        trailing: newIcon,
       ),
       TrinaListTile(
         title: 'Time type column',
@@ -486,6 +518,15 @@ class _TrinaFeaturesState extends State<TrinaFeatures> {
         },
       ),
       TrinaListTile(
+        title: 'RTL Scrollbar Demo',
+        description:
+            'Demo showing proper scrollbar positioning in RTL mode for Arabic and other RTL languages.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, RTLScrollbarScreen.routeName);
+        },
+        trailing: newIcon,
+      ),
+      TrinaListTile(
         title: 'Add and Remove Columns, Rows',
         description: 'You can add or delete columns, rows.',
         onTapLiveDemo: () {
@@ -554,6 +595,23 @@ class _TrinaFeaturesState extends State<TrinaFeatures> {
           Navigator.pushNamed(context, LoadingOptionsScreen.routeName);
         },
         trailing: newIcon,
+      ),
+      TrinaListTile(
+        title: 'Row Wrapper',
+        description:
+            'Wrap each row with your own widget for custom styling or interactivity.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, RowWrapperScreen.routeName);
+        },
+        trailing: newIcon,
+      ),
+      TrinaListTile(
+        title: 'MultiItems Filter Delegate',
+        description:
+            'Demonstrates the use of TrinaFilterColumnWidgetDelegate.multiItems for multi-line or multi-item column filtering.',
+        onTapLiveDemo: () {
+          Navigator.pushNamed(context, MultiItemsDelegateDemoScreen.routeName);
+        },
       ),
     ];
     return allItems;

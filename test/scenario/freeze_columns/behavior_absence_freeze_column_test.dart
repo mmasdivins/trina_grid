@@ -70,25 +70,25 @@ void main() {
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pumpAndSettle();
-        // 우측 이동으로 columnIdx 가 1 증가
+        // When moving to the right, columnIdx increases by 1
         expect(stateManager!.currentCellPosition!.columnIdx, 1);
         expect(stateManager!.currentCellPosition!.rowIdx, 0);
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pumpAndSettle();
-        // 하단 이동시 rowIdx 가 1 증가
+        // When moving down, rowIdx increases by 1
         expect(stateManager!.currentCellPosition!.columnIdx, 1);
         expect(stateManager!.currentCellPosition!.rowIdx, 1);
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pumpAndSettle();
-        // 상단 이동시 rowIdx 가 1 감소
+        // When moving up, rowIdx decreases by 1
         expect(stateManager!.currentCellPosition!.columnIdx, 1);
         expect(stateManager!.currentCellPosition!.rowIdx, 0);
 
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pumpAndSettle();
-        // 탭키 이동시 columnIdx 가 1 증가
+        // When the tab key is pressed, columnIdx increases by 1
         expect(stateManager!.currentCellPosition!.columnIdx, 2);
         expect(stateManager!.currentCellPosition!.rowIdx, 0);
 
@@ -98,7 +98,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
         await tester.pumpAndSettle();
-        // 쉬프트 + 탭키 이동시 columnIdx 가 1 감소
+        // When the shift + tab key is pressed, columnIdx decreases by 1
         expect(stateManager!.currentCellPosition!.columnIdx, 1);
         expect(stateManager!.currentCellPosition!.rowIdx, 0);
       },

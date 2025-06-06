@@ -103,7 +103,7 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         expect(stateManager!.isEditing, isTrue);
 
-        // select 팝업 호출
+        // Call the select popup
         await tester.pumpAndSettle(const Duration(milliseconds: 300));
         await tester.sendKeyEvent(LogicalKeyboardKey.f2);
         await tester.pumpAndSettle(const Duration(milliseconds: 300));
@@ -114,7 +114,7 @@ void main() {
             .descendant(of: popupGrid, matching: find.byType(TrinaBaseCell))
             .first);
 
-        // select 팝업 높이 확인
+        // Check the height of the select popup 
         expect(cellPopupSize.height, rowHeight);
       },
     );
@@ -125,12 +125,12 @@ void main() {
     ).test(
       'When row height is set, date column popup cell height should be equal to the set row height',
       (tester) async {
-        // Editing 상태로 설정
+        // Set to editing state
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         expect(stateManager!.isEditing, isTrue);
 
-        // date 팝업 호출
+        // Call the date popup
         await tester.pumpAndSettle(const Duration(milliseconds: 300));
         await tester.sendKeyEvent(LogicalKeyboardKey.f2);
         await tester.pumpAndSettle(const Duration(milliseconds: 300));
@@ -143,7 +143,7 @@ void main() {
           findsOneWidget,
         );
 
-        // date 팝업의 CellWidget 높이 확인
+        // Check the height of the date popup's CellWidget
         final parent =
             find.ancestor(of: sundayColumn, matching: find.byType(TrinaGrid));
 
@@ -179,7 +179,7 @@ void main() {
           findsOneWidget,
         );
 
-        // time 팝업의 CellWidget 높이 확인
+        // Check the height of the time popup's CellWidget
         final parent =
             find.ancestor(of: hourColumn, matching: find.byType(TrinaGrid));
 

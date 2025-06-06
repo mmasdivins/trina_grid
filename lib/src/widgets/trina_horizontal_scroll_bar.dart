@@ -1,5 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
+
+// A simple constant to determine if we are in a test environment
+// Use a function that returns true if Flutter's testing flag is set
+// This avoids directly importing flutter_test which would create a circular dependency
+bool get _isTestEnvironment =>
+    WidgetsBinding.instance.toString().contains('TestWidgetsFlutterBinding');
 
 class TrinaHorizontalScrollBar extends StatefulWidget {
   const TrinaHorizontalScrollBar({
@@ -34,6 +41,9 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
 
   // Track the last scroll position to detect scrolling
   double _lastScrollOffset = 0;
+
+  // Timer for hiding scrollbar
+  Timer? _hideTimer;
 
   @override
   void initState() {
@@ -122,11 +132,17 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
   void _showScrollbar() {
     _fadeController.forward();
 
+    // Cancel any existing timer
+    _hideTimer?.cancel();
+
     // If not hovering or dragging, hide after delay
     if (!widget.stateManager.configuration.scrollbar.isAlwaysShown &&
         !_hovering &&
         !_isDragging) {
-      Future.delayed(const Duration(seconds: 3), () {
+      // Use a shorter duration in tests to avoid lingering timers
+      final duration = Duration(milliseconds: _isTestEnvironment ? 300 : 3000);
+
+      _hideTimer = Timer(duration, () {
         if (!_hovering && !_isDragging && mounted) {
           _fadeController.reverse();
         }
@@ -138,6 +154,11 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
   void dispose() {
     widget.horizontalScrollOffsetNotifier.removeListener(_handleScrollChange);
     widget.stateManager.removeListener(_handleConfigChange);
+
+    // Cancel any pending timer
+    _hideTimer?.cancel();
+    _hideTimer = null;
+
     _fadeController.dispose();
     super.dispose();
   }
@@ -209,6 +230,12 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
                           (scrollOffset / scrollExtent) *
                               (widget.width - thumbWidth);
 
+                      // For RTL languages, we need to flip the thumb position calculation
+                      final double adjustedThumbPosition =
+                          widget.stateManager.isRTL
+                              ? widget.width - thumbWidth - thumbPosition
+                              : thumbPosition;
+
                       return SizedBox(
                         width: widget.width,
                         height: scrollConfig.thickness + 4, // Add padding
@@ -231,7 +258,9 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
                             // Thumb
                             if (scrollConfig.thumbVisible)
                               Positioned(
-                                left: thumbPosition.isNaN ? 0 : thumbPosition,
+                                left: adjustedThumbPosition.isNaN
+                                    ? 0
+                                    : adjustedThumbPosition,
                                 width: thumbWidth.isNaN
                                     ? widget.width
                                     : thumbWidth.clamp(

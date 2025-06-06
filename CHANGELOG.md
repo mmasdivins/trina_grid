@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.6.10] - 2025. 06. 01
+
+* Add selecting mode configuration to TrinaGrid
+
+## [1.6.9] - 2025. 05. 28
+
+* Fix text input bug where the first character is replaced when typing the second character ( by @doonfrs )
+* Add enableAutoSelectFirstRow option to automatically select the first row when in selection mode ( by @doonfrs )
+* Add TrinaFilterTypeRegex for filtering using regular expressions (#64) ( by @doonfrs )
+* Fix row color bug when activatedColor is transparent ( by @doonfrs )
+* Add expandAllRowGroups and collapseAllRowGroups methods to TrinaGridStateManager ( by @doonfrs )
+* Add expand flag to toggleExpandedRowGroup method ( by @doonfrs )
+* Remove Smooth scrolling, it is not ready in the flutter stable version yet ( by @doonfrs )
+
+## [1.6.8] - 2025. 04. 15
+
+* Fix focus issue when header is a TextField or TextFormField ( by @doonfrs )
+* Add RowWrapperScreen to navigation and home screen; update demo with new feature tile ( by @doonfrs )
+* Introduce Multi-Items Filter ( by @doonfrs )
+* Enhance moving to next row when enter key action is editingAndMoveRight ( by @doonfrs )
+* Enhance RTL support by fixing scrollbar positioning and adding RTL scrollbar demo ( by @doonfrs )
+
+## [1.6.7] - 2025. 04. 14
+
+* Introduce date time column type, add example & documentation ( by @doonfrs )
+* Add filterEnterKeyAction to TrinaColumn for controlling keyboard navigation in column filters ( by @doonfrs )
+* Update row color example ( by @doonfrs )
+* Fix horizontal scrollbar calculation issue for the header & footer ( by @doonfrs )
+* Added filterIcon option to TrinaGridStyleConfig ( by @doonfrs )
+
 ## [1.6.6] - 2025. 03. 22
 
 * Fix lazy pagination rebuild issue for simple pagination & refresh
@@ -7,6 +37,9 @@
 * Flutter 3.27 compatibility ( by @slavap )
 * Introduce TitleRenderer for customizable column titles ( by @doonfrs )
 * Implement custom loading widget support and add Loading Options feature to documentation and demo ( by @doonfrs )
+* Introduce Percentage Column Type ( by @doonfrs )
+* add decimalInput option to percentage column type ( by @doonfrs )
+* fix unit tests, all tests working, remove skipped tests, translate Korean comments to English ( by @doonfrs )
 
 ## [1.6.5] - 2025. 03. 22
 

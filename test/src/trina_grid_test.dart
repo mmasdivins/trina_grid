@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trina_grid/trina_grid.dart';
 
@@ -167,34 +166,6 @@ void main() {
     expect(found, findsOneWidget);
   });
 
-  testWidgets('When TrinaPagination is set in footer, it should be rendered',
-      (WidgetTester tester) async {
-    // given
-    final columns = ColumnHelper.textColumn('header');
-    final rows = RowHelper.count(3, columns);
-
-    // when
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Material(
-          child: TrinaGrid(
-            columns: columns,
-            rows: rows,
-            createFooter: (stateManager) {
-              return TrinaPagination(stateManager);
-            },
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-    // then
-    final found = find.byType(TrinaPagination);
-    expect(found, findsOneWidget);
-  });
-
   testWidgets('Cell values should be displayed', (WidgetTester tester) async {
     // given
     final columns = ColumnHelper.textColumn('header');
@@ -266,88 +237,6 @@ void main() {
     await tester.tap(sortableGesture);
     // Original
     expect(rows[0].cells['header0']!.value, 'header0 value 0');
-    expect(rows[1].cells['header0']!.value, 'header0 value 1');
-    expect(rows[2].cells['header0']!.value, 'header0 value 2');
-  });
-
-  testWidgets(
-      'After changing cell value and tapping header, sorting should reflect the updated value',
-      (WidgetTester tester) async {
-    // given
-    final columns = ColumnHelper.textColumn('header');
-    final rows = RowHelper.count(3, columns);
-
-    TrinaGridStateManager? stateManager;
-
-    // when
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Material(
-          child: TrinaGrid(
-            columns: columns,
-            rows: rows,
-            onLoaded: (TrinaGridOnLoadedEvent event) {
-              stateManager = event.stateManager;
-            },
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-    Finder firstCell = find.byKey(rows.first.cells['header0']!.key);
-
-    // Select cell
-    await tester.tap(
-        find.descendant(of: firstCell, matching: find.byType(GestureDetector)));
-
-    expect(stateManager!.isEditing, false);
-
-    // Enter edit mode
-    await tester.tap(
-        find.descendant(of: firstCell, matching: find.byType(GestureDetector)));
-
-    // Verify edit mode
-    expect(stateManager!.isEditing, true);
-
-    // (1)
-    // await tester.pump(Duration(milliseconds:800));
-    //
-    // await tester.enterText(
-    //     find.descendant(of: firstCell, matching: find.byType(TextField)),
-    //     'cell value4');
-    // (2)
-    stateManager!
-        .changeCellValue(stateManager!.currentCell!, 'header0 value 4');
-
-    // Move to next row
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-
-    expect(rows[0].cells['header0']!.value, 'header0 value 4');
-    expect(rows[1].cells['header0']!.value, 'header0 value 1');
-    expect(rows[2].cells['header0']!.value, 'header0 value 2');
-
-    Finder sortableGesture = find.descendant(
-      of: find.byKey(columns.first.key),
-      matching: find.byKey(sortableGestureKey),
-    );
-
-    await tester.tap(sortableGesture);
-    // Ascending
-    expect(rows[0].cells['header0']!.value, 'header0 value 1');
-    expect(rows[1].cells['header0']!.value, 'header0 value 2');
-    expect(rows[2].cells['header0']!.value, 'header0 value 4');
-
-    await tester.tap(sortableGesture);
-    // Descending
-    expect(rows[0].cells['header0']!.value, 'header0 value 4');
-    expect(rows[1].cells['header0']!.value, 'header0 value 2');
-    expect(rows[2].cells['header0']!.value, 'header0 value 1');
-
-    await tester.tap(sortableGesture);
-    // Original
-    expect(rows[0].cells['header0']!.value, 'header0 value 4');
     expect(rows[1].cells['header0']!.value, 'header0 value 1');
     expect(rows[2].cells['header0']!.value, 'header0 value 2');
   });

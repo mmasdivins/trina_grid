@@ -3,6 +3,7 @@ export 'cells/trina_currency_cell.dart';
 export 'cells/trina_date_cell.dart';
 export 'cells/trina_default_cell.dart';
 export 'cells/trina_number_cell.dart';
+export 'cells/trina_percentage_cell.dart';
 export 'cells/trina_select_cell.dart';
 export 'cells/trina_text_cell.dart';
 export 'cells/trina_time_cell.dart';

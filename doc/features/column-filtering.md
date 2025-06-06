@@ -33,6 +33,25 @@ TrinaGrid includes several built-in filter types that can be used to filter data
 - **Equals** (`TrinaFilterTypeEquals`): Matches rows where the cell value exactly matches the search text
 - **Starts With** (`TrinaFilterTypeStartsWith`): Matches rows where the cell value starts with the search text
 - **Ends With** (`TrinaFilterTypeEndsWith`): Matches rows where the cell value ends with the search text
+- **Regex** (`TrinaFilterTypeRegex`): Matches rows where the cell value matches the regular expression pattern
+
+#### Regular Expression (Regex) Filter Example
+
+The Regex filter allows more advanced pattern matching:
+
+```dart
+// Example: Filter for email addresses
+// Pattern: .+@.+\..+
+// Matches: user@example.com, info@domain.co.uk
+
+// Example: Filter for numbers
+// Pattern: ^\d+$
+// Matches: 123, 456789
+
+// Example: Filter for specific patterns like product codes
+// Pattern: ^[A-Z]{3}\d{4}$
+// Matches: ABC1234, XYZ5678
+```
 
 ### Numeric Filters
 
@@ -70,34 +89,36 @@ Users can apply multiple filters to different columns simultaneously. When multi
 You can customize the column filtering behavior through the `columnFilter` configuration:
 
 ```dart
-TrinaGrid(
-  columns: columns,
-  rows: rows,
-  configuration: TrinaGridConfiguration(
-    columnFilter: TrinaGridColumnFilterConfig(
-      // Specify which filter types are available
-      filters: const [
-        ...FilterHelper.defaultFilters,
-        // Add custom filters if needed
-        CustomFilter(),
-      ],
-      // Set default filter types for specific columns
-      resolveDefaultColumnFilter: (column, resolver) {
-        if (column.field == 'text') {
-          return resolver<TrinaFilterTypeContains>() as TrinaFilterType;
-        } else if (column.field == 'number') {
-          return resolver<TrinaFilterTypeGreaterThan>() as TrinaFilterType;
-        } else if (column.field == 'date') {
-          return resolver<TrinaFilterTypeLessThan>() as TrinaFilterType;
-        }
-        
-        // Default filter type for other columns
-        return resolver<TrinaFilterTypeContains>() as TrinaFilterType;
-      },
-    ),
+TrinaGridConfiguration(
+  columnFilter: TrinaGridColumnFilterConfig(
+    // Configuration options for filtering
+  ),
+  style: TrinaGridStyleConfig(
+    // Control visibility and appearance of filter icons
+    filterIcon: Icon(Icons.filter_list), // Custom filter icon
+    // or
+    filterIcon: null, // Hide filter icons
   ),
 )
 ```
+
+### Filter Icon Customization
+
+By default, when a filter is applied to a column, a filter icon appears next to the column title. You can customize or hide this icon with the `filterIcon` property in the style configuration:
+
+```dart
+TrinaGridConfiguration(
+  style: TrinaGridStyleConfig(
+    // Use a custom icon
+    filterIcon: Icon(Icons.search),
+    
+    // Or hide filter icons completely
+    filterIcon: null,
+  ),
+)
+```
+
+When `filterIcon` is set to `null`, filter icons will not be displayed in column titles, even when filters are applied. You can also provide a custom icon to change the appearance.
 
 ### Disabling Filtering for Specific Columns
 
@@ -137,6 +158,67 @@ class CustomFilter implements TrinaFilterType {
 ```
 
 Then add your custom filter to the `filters` list in the `columnFilter` configuration.
+
+## Multi-Items Filter (Multi-line/Comma-separated)
+
+![Multi-Items Filter Demo](https://raw.githubusercontent.com/doonfrs/trina_grid/master/doc/assets/multi-items-filter.gif)
+
+TrinaGrid provides a built-in multi-items filter type for columns, allowing users to filter rows by matching any value from a list of items. This is useful for scenarios where you want to filter by multiple possible values at once, using either comma-separated or multi-line input.
+
+- **Filter type:** `TrinaFilterTypeMultiItems`
+- **Widget delegate:** `TrinaFilterColumnWidgetDelegate.multiItems`
+- **Case sensitivity:** Configurable (default: true)
+
+### How it works
+
+- The filter value is split by commas or newlines.
+- Each item is trimmed.
+- The cell value is compared to each item (case-sensitive by default).
+- If any item matches, the row is included.
+
+### Example: Case-insensitive multi-items filter
+
+```dart
+TrinaColumn(
+  title: 'Tags',
+  field: 'tags',
+  type: TrinaColumnType.text(),
+  filterWidgetDelegate: const TrinaFilterColumnWidgetDelegate.multiItems(caseSensitive: false),
+)
+
+// In your grid configuration:
+TrinaGridConfiguration(
+  columnFilter: TrinaGridColumnFilterConfig(
+    filters: const [
+      ...FilterHelper.defaultFilters,
+      TrinaFilterTypeMultiItems(caseSensitive: false),
+    ],
+    resolveDefaultColumnFilter: (column, resolver) {
+      if (column.field == 'tags') {
+        return const TrinaFilterTypeMultiItems(caseSensitive: false);
+      }
+      return resolver<TrinaFilterTypeContains>();
+    },
+  ),
+)
+```
+
+### Setting case sensitivity
+
+- Pass `caseSensitive: false` to make the filter ignore case.
+- The option is available both in the filter type and the widget delegate.
+
+### UI
+
+- The multi-items filter uses a multi-line text field by default.
+- Users can enter values separated by commas or new lines.
+
+### When to use
+
+- When you want to allow users to filter by multiple possible values in a single column.
+- For tag, category, or label columns, or any scenario where multi-value matching is needed.
+
+See also: [Column Types](column-types.md), [Custom Filters](#custom-filters)
 
 ## Programmatic Filtering
 
@@ -346,6 +428,71 @@ class _ColumnFilteringExampleState extends State<ColumnFilteringExample> {
   }
 }
 ```
+
+## Controlling Keyboard Navigation in Column Filters
+
+By default, when users press the Enter key in a column filter, the focus moves to the next field (usually the grid cell below). This behavior follows the grid's global `enterKeyAction` configuration.
+
+However, in some scenarios you might want to prevent this behavior for specific columns. For example, when a column filter needs to capture the Enter key for submitting a search or when working with multi-line filters.
+
+### Column-Specific Enter Key Behavior
+
+TrinaGrid allows you to override the default Enter key behavior for individual column filters using the `filterEnterKeyAction` property:
+
+```dart
+TrinaColumn(
+  title: 'Description',
+  field: 'description',
+  type: TrinaColumnType.text(),
+  // Prevent Enter key from moving focus in this column's filter
+  filterEnterKeyAction: TrinaGridEnterKeyAction.none,
+)
+```
+
+### Available Options
+
+The `filterEnterKeyAction` property accepts the same values as the grid-level `enterKeyAction` configuration:
+
+- **`TrinaGridEnterKeyAction.editingAndMoveDown`**: (Default) Moves focus to the cell below when Enter is pressed
+- **`TrinaGridEnterKeyAction.editingAndMoveRight`**: Moves focus to the cell to the right when Enter is pressed
+- **`TrinaGridEnterKeyAction.toggleEditing`**: Toggles editing state without moving focus
+- **`TrinaGridEnterKeyAction.none`**: Disables Enter key navigation, allowing the key press to be handled by other listeners
+
+### Example: Preventing Enter Key Navigation for a Specific Column
+
+```dart
+List<TrinaColumn> columns = [
+  TrinaColumn(
+    title: 'ID',
+    field: 'id',
+    type: TrinaColumnType.number(),
+    // Uses the default Enter key behavior from grid configuration
+  ),
+  TrinaColumn(
+    title: 'Name',
+    field: 'name',
+    type: TrinaColumnType.text(),
+    // Uses the default Enter key behavior from grid configuration
+  ),
+  TrinaColumn(
+    title: 'Description',
+    field: 'description',
+    type: TrinaColumnType.text(),
+    // Override Enter key behavior for this column's filter only
+    filterEnterKeyAction: TrinaGridEnterKeyAction.none,
+    // This allows the filter to handle the Enter key internally
+    // without moving focus to the next field
+  ),
+];
+
+// Grid configuration with default Enter key behavior
+TrinaGridConfiguration configuration = TrinaGridConfiguration(
+  enterKeyAction: TrinaGridEnterKeyAction.editingAndMoveDown,
+  // Other configuration options...
+);
+```
+
+In this example, pressing Enter in the ID or Name column filters will move focus to the cell below, following the grid's default configuration. However, pressing Enter in the Description column filter will not move focus, allowing for custom handling of the Enter key.
 
 ## Best Practices
 

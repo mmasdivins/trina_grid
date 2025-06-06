@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/src/widgets/trina_custom_scrollbar.dart';
+import 'dart:async';
 import 'package:trina_grid/src/widgets/trina_horizontal_scroll_bar.dart';
 import 'package:trina_grid/src/widgets/trina_vertical_scroll_bar.dart';
 import 'package:trina_grid/trina_grid.dart';
@@ -26,6 +27,10 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
 
   late final ScrollController _verticalScroll;
   late final ScrollController _horizontalScroll;
+
+  // Timers for scroll update
+  Timer? _verticalScrollTimer;
+  Timer? _horizontalScrollTimer;
 
   // Value notifiers for scroll info to avoid rebuilding the entire widget
   final ValueNotifier<double> _verticalScrollOffsetNotifier =
@@ -99,6 +104,11 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
   void dispose() {
     _verticalScroll.removeListener(_updateVerticalScrollInfo);
     _horizontalScroll.removeListener(_updateHorizontalScrollInfo);
+
+    // Cancel pending timers
+    _verticalScrollTimer?.cancel();
+    _horizontalScrollTimer?.cancel();
+
     _verticalScroll.dispose();
     _horizontalScroll.dispose();
     _verticalScrollOffsetNotifier.dispose();
@@ -129,16 +139,29 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
     _scrollableRows =
         _rows.where((row) => row.frozen == TrinaRowFrozen.none).toList();
 
+    // Cancel existing timers before creating new ones
+    _verticalScrollTimer?.cancel();
+    _horizontalScrollTimer?.cancel();
+
     if (_verticalScroll.hasClients) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _updateVerticalScrollInfo();
-      });
+      // Use a sync update if possible, otherwise schedule a short timer
+      if (mounted) {
+        _verticalScrollTimer = Timer(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _updateVerticalScrollInfo();
+          }
+        });
+      }
     }
 
     if (_horizontalScroll.hasClients) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _updateHorizontalScrollInfo();
-      });
+      if (mounted) {
+        _horizontalScrollTimer = Timer(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _updateHorizontalScrollInfo();
+          }
+        });
+      }
     }
   }
 
@@ -174,6 +197,82 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
           if (stateManager.refRows.isEmpty || stateManager.refColumns.isEmpty){
             return;
           }
+
+
+    // return DecoratedBox(
+    //   decoration: BoxDecoration(
+    //     color: stateManager.style.rowColor,
+    //     borderRadius: stateManager.configuration.style.gridBorderRadius,
+    //   ),
+    //   child: Column(
+    //     children: [
+    //       // Main content with vertical scrollbar
+    //       Expanded(
+    //         child: Row(
+    //           crossAxisAlignment: CrossAxisAlignment.stretch,
+    //           children: [
+    //             // Main grid content
+    //             Expanded(
+    //               child: SingleChildScrollView(
+    //                 controller: _horizontalScroll,
+    //                 scrollDirection: Axis.horizontal,
+    //                 physics: const ClampingScrollPhysics(),
+    //                 child: CustomSingleChildLayout(
+    //                   delegate: ListResizeDelegate(stateManager, _columns),
+    //                   child: Column(
+    //                     children: [
+    //                       // Frozen top rows
+    //                       if (_frozenTopRows.isNotEmpty)
+    //                         Column(
+    //                           children: _frozenTopRows
+    //                               .asMap()
+    //                               .entries
+    //                               .map(
+    //                                 (e) => _buildRow(context, e.value, e.key),
+    //                               )
+    //                               .toList(),
+    //                         ),
+    //                       // Scrollable rows
+    //                       Expanded(
+    //                         child: ListView.builder(
+    //                           cacheExtent: stateManager.rowsCacheExtent,
+    //                           controller: _verticalScroll,
+    //                           scrollDirection: Axis.vertical,
+    //                           physics: const ClampingScrollPhysics(),
+    //                           itemCount: _scrollableRows.length,
+    //                           itemExtent: stateManager.rowWrapper != null
+    //                               ? null
+    //                               : stateManager.rowTotalHeight,
+    //                           addRepaintBoundaries: false,
+    //                           itemBuilder: (ctx, i) => _buildRow(
+    //                             context,
+    //                             _scrollableRows[i],
+    //                             i + _frozenTopRows.length,
+    //                           ),
+    //                         ),
+    //                       ),
+    //                       // Frozen bottom rows
+    //                       if (_frozenBottomRows.isNotEmpty)
+    //                         Column(
+    //                           children: _frozenBottomRows
+    //                               .asMap()
+    //                               .entries
+    //                               .map(
+    //                                 (e) => _buildRow(
+    //                                   context,
+    //                                   e.value,
+    //                                   e.key +
+    //                                       _frozenTopRows.length +
+    //                                       _scrollableRows.length,
+    //                                 ),
+    //                               )
+    //                               .toList(),
+    //                         ),
+    //                     ],
+    //                   ),
+    //                 ),
+    //               ),
+    //             ),
 
           double offset = pointerSignal.scrollDelta.dy;
           var f = stateManager.currentColumn?.field;

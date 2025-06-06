@@ -30,6 +30,8 @@ class _DualModeScreenState extends State<DualModeScreen> {
 
   late TrinaGridStateManager gridBStateManager;
 
+  bool isVertical = false;
+
   Key? currentRowKey;
 
   Timer? _debounce;
@@ -132,12 +134,24 @@ class _DualModeScreenState extends State<DualModeScreen> {
     return TrinaExampleScreen(
       title: 'Dual mode',
       topTitle: 'Dual mode',
-      topContents: const [
+      topContents: [
         Text(
             'Place the grid on the left and right and move or edit with the keyboard.'),
         Text('Refer to the display property for the width of the grid.'),
         Text(
             'This is an example in which the right list is randomly generated whenever the current row of the left grid changes.'),
+        Row(
+          children: [
+            Switch(
+                value: isVertical,
+                onChanged: (bool value) {
+                  setState(() {
+                    isVertical = value;
+                  });
+                }),
+            Text('Toggle to switch between vertical and horizontal mode')
+          ],
+        )
       ],
       topButtons: [
         TrinaExampleButton(
@@ -146,6 +160,7 @@ class _DualModeScreenState extends State<DualModeScreen> {
         ),
       ],
       body: TrinaDualGrid(
+        isVertical: isVertical,
         gridPropsA: TrinaDualGridProps(
           columns: gridAColumns,
           rows: gridARows,

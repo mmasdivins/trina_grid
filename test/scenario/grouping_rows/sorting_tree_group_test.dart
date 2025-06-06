@@ -41,7 +41,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  group('3 뎁스로 그룹핑.', () {
+  group('Grouping by 3 depths.', () {
     late List<TrinaColumn> columns;
 
     late List<TrinaRow> rows;

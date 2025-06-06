@@ -28,6 +28,9 @@ class TrinaBodyColumnsState extends TrinaStateWithChange<TrinaBodyColumns> {
 
   late final ScrollController _scroll;
 
+  // Track the end padding needed to account for vertical scrollbar
+  double _verticalScrollbarWidth = 0;
+
   @override
   TrinaGridStateManager get stateManager => widget.stateManager;
 
@@ -37,12 +40,34 @@ class TrinaBodyColumnsState extends TrinaStateWithChange<TrinaBodyColumns> {
 
     _scroll = stateManager.scroll.horizontal!.addAndGet();
 
+    // Calculate vertical scrollbar width when needed
+    _updateVerticalScrollbarWidth();
+
+    // Listen for configuration changes that might affect scrollbar visibility
+    stateManager.addListener(_handleConfigChange);
+
     updateState(TrinaNotifierEventForceUpdate.instance);
+  }
+
+  void _handleConfigChange() {
+    _updateVerticalScrollbarWidth();
+  }
+
+  void _updateVerticalScrollbarWidth() {
+    final scrollConfig = stateManager.configuration.scrollbar;
+    // Only account for vertical scrollbar width if it's shown
+    if (scrollConfig.showVertical && scrollConfig.columnShowScrollWidth) {
+      _verticalScrollbarWidth = scrollConfig.thickness +
+          4; // Add padding as in TrinaVerticalScrollBar
+    } else {
+      _verticalScrollbarWidth = 0;
+    }
   }
 
   @override
   void dispose() {
     _scroll.dispose();
+    stateManager.removeListener(_handleConfigChange);
 
     super.dispose();
   }
@@ -69,6 +94,9 @@ class TrinaBodyColumnsState extends TrinaStateWithChange<TrinaBodyColumns> {
     );
 
     _itemCount = update<int>(_itemCount, _getItemCount());
+
+    // Update scrollbar width on state changes
+    _updateVerticalScrollbarWidth();
   }
 
   List<TrinaColumn> _getColumns() {
@@ -141,24 +169,30 @@ class TrinaBodyColumnsState extends TrinaStateWithChange<TrinaBodyColumns> {
       ],
     );
 
-
     // return SingleChildScrollView(
     //   controller: _scroll,
     //   scrollDirection: Axis.horizontal,
     //   physics: const ClampingScrollPhysics(),
-    //   child: TrinaVisibilityLayout(
-    //     delegate: MainColumnLayoutDelegate(
-    //       stateManager: stateManager,
-    //       columns: _columns,
-    //       columnGroups: _columnGroups,
-    //       frozen: TrinaColumnFrozen.none,
-    //       textDirection: stateManager.textDirection,
-    //     ),
-    //     scrollController: _scroll,
-    //     initialViewportDimension: MediaQuery.of(context).size.width,
-    //     children: _showColumnGroups == true
-    //         ? _columnGroups.map(_makeColumnGroup).toList(growable: false)
-    //         : _columns.map(_makeColumn).toList(growable: false),
+    //   child: Row(
+    //     children: [
+    //       TrinaVisibilityLayout(
+    //         delegate: MainColumnLayoutDelegate(
+    //           stateManager: stateManager,
+    //           columns: _columns,
+    //           columnGroups: _columnGroups,
+    //           frozen: TrinaColumnFrozen.none,
+    //           textDirection: stateManager.textDirection,
+    //         ),
+    //         scrollController: _scroll,
+    //         initialViewportDimension:
+    //             MediaQuery.of(context).size.width - _verticalScrollbarWidth,
+    //         children: _showColumnGroups == true
+    //             ? _columnGroups.map(_makeColumnGroup).toList(growable: false)
+    //             : _columns.map(_makeColumn).toList(growable: false),
+    //       ),
+    //       // Add a spacer with the same width as the vertical scrollbar
+    //       SizedBox(width: _verticalScrollbarWidth),
+    //     ],
     //   ),
     // );
   }

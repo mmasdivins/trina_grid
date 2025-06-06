@@ -14,6 +14,9 @@ class TrinaGridConfiguration {
   /// Focus to the first cell when loading rows when there was no rows previously.
   final bool focusFirstCellOnRowsLoaded;
 
+  /// Automatically selects the first row when in selection mode.
+  final bool enableAutoSelectFirstRow;
+
   /// [TrinaGridRowSelectionCheckBoxBehavior.none]
   /// Selecting a row does nothing to its checkbox
   ///
@@ -75,6 +78,18 @@ class TrinaGridConfiguration {
   /// {@macro pluto_grid_last_row_key_down_action_removeOne}
   final TrinaGridLastRowKeyUpAction lastRowKeyUpAction;
 
+  /// Set the mode to select cells or rows.
+  ///
+  /// [TrinaGridSelectingMode.cell] selects each cell.
+  /// [TrinaGridSelectingMode.row] selects row by row.
+  /// [TrinaGridSelectingMode.none] does nothing.
+  ///
+  /// Note: This setting may be overridden by the grid mode:
+  /// - In [TrinaGridMode.select] or [TrinaGridMode.selectWithOneTap],
+  ///   it's forced to [TrinaGridSelectingMode.none]
+  /// - In [TrinaGridMode.multiSelect], it's forced to [TrinaGridSelectingMode.row]
+  final TrinaGridSelectingMode selectingMode;
+
   /// Set custom shortcut keys.
   ///
   /// Refer to the code below to redefine the action of a specific key
@@ -119,12 +134,14 @@ class TrinaGridConfiguration {
     this.enableMoveDownAfterSelecting = false,
     this.enableMoveHorizontalInEditing = false,
     this.focusFirstCellOnRowsLoaded = true,
+    this.enableAutoSelectFirstRow = true,
     this.rowSelectionCheckBoxBehavior =
         TrinaGridRowSelectionCheckBoxBehavior.none,
     this.enterKeyAction = TrinaGridEnterKeyAction.editingAndMoveDown,
     this.tabKeyAction = TrinaGridTabKeyAction.normal,
     this.lastRowKeyDownAction = TrinaGridLastRowKeyDownAction.none,
     this.lastRowKeyUpAction = TrinaGridLastRowKeyUpAction.none,
+    this.selectingMode = TrinaGridSelectingMode.cell,
     this.shortcut = const TrinaGridShortcut(),
     this.style = const TrinaGridStyleConfig(),
     this.scrollbar = const TrinaGridScrollbarConfig(),
@@ -137,12 +154,14 @@ class TrinaGridConfiguration {
     this.enableMoveDownAfterSelecting = false,
     this.enableMoveHorizontalInEditing = false,
     this.focusFirstCellOnRowsLoaded = true,
+    this.enableAutoSelectFirstRow = true,
     this.rowSelectionCheckBoxBehavior =
         TrinaGridRowSelectionCheckBoxBehavior.none,
     this.enterKeyAction = TrinaGridEnterKeyAction.editingAndMoveDown,
     this.tabKeyAction = TrinaGridTabKeyAction.normal,
     this.lastRowKeyDownAction = TrinaGridLastRowKeyDownAction.none,
     this.lastRowKeyUpAction = TrinaGridLastRowKeyUpAction.none,
+    this.selectingMode = TrinaGridSelectingMode.cell,
     this.shortcut = const TrinaGridShortcut(),
     this.style = const TrinaGridStyleConfig.dark(),
     this.scrollbar = const TrinaGridScrollbarConfig(),
@@ -181,10 +200,13 @@ class TrinaGridConfiguration {
   TrinaGridConfiguration copyWith({
     bool? enableMoveDownAfterSelecting,
     bool? enableMoveHorizontalInEditing,
+    bool? enableAutoSelectFirstRow,
+    TrinaGridRowSelectionCheckBoxBehavior? rowSelectionCheckBoxBehavior,
     TrinaGridEnterKeyAction? enterKeyAction,
     TrinaGridTabKeyAction? tabKeyAction,
     TrinaGridLastRowKeyDownAction? lastRowKeyDownAction,
     TrinaGridLastRowKeyUpAction? lastRowKeyUpAction,
+    TrinaGridSelectingMode? selectingMode,
     TrinaGridShortcut? shortcut,
     TrinaGridStyleConfig? style,
     TrinaGridScrollbarConfig? scrollbar,
@@ -197,10 +219,15 @@ class TrinaGridConfiguration {
           enableMoveDownAfterSelecting ?? this.enableMoveDownAfterSelecting,
       enableMoveHorizontalInEditing:
           enableMoveHorizontalInEditing ?? this.enableMoveHorizontalInEditing,
+      enableAutoSelectFirstRow:
+          enableAutoSelectFirstRow ?? this.enableAutoSelectFirstRow,
+      rowSelectionCheckBoxBehavior:
+          rowSelectionCheckBoxBehavior ?? this.rowSelectionCheckBoxBehavior,
       enterKeyAction: enterKeyAction ?? this.enterKeyAction,
       tabKeyAction: tabKeyAction ?? this.tabKeyAction,
       lastRowKeyDownAction: lastRowKeyDownAction ?? this.lastRowKeyDownAction,
       lastRowKeyUpAction: lastRowKeyUpAction ?? this.lastRowKeyUpAction,
+      selectingMode: selectingMode ?? this.selectingMode,
       shortcut: shortcut ?? this.shortcut,
       style: style ?? this.style,
       scrollbar: scrollbar ?? this.scrollbar,
@@ -219,10 +246,14 @@ class TrinaGridConfiguration {
                 other.enableMoveDownAfterSelecting &&
             enableMoveHorizontalInEditing ==
                 other.enableMoveHorizontalInEditing &&
+            enableAutoSelectFirstRow == other.enableAutoSelectFirstRow &&
+            rowSelectionCheckBoxBehavior ==
+                other.rowSelectionCheckBoxBehavior &&
             enterKeyAction == other.enterKeyAction &&
             tabKeyAction == other.tabKeyAction &&
             lastRowKeyDownAction == other.lastRowKeyDownAction &&
             lastRowKeyUpAction == other.lastRowKeyUpAction &&
+            selectingMode == other.selectingMode &&
             shortcut == other.shortcut &&
             style == other.style &&
             scrollbar == other.scrollbar &&
@@ -235,10 +266,13 @@ class TrinaGridConfiguration {
   int get hashCode => Object.hash(
         enableMoveDownAfterSelecting,
         enableMoveHorizontalInEditing,
+        enableAutoSelectFirstRow,
+        rowSelectionCheckBoxBehavior,
         enterKeyAction,
         tabKeyAction,
         lastRowKeyDownAction,
         lastRowKeyUpAction,
+        selectingMode,
         shortcut,
         style,
         scrollbar,
@@ -249,6 +283,12 @@ class TrinaGridConfiguration {
 }
 
 class TrinaGridStyleConfig {
+  static const TextStyle defaultLightCellTextStyle =
+      TextStyle(fontSize: 14, color: Colors.black);
+
+  static const TextStyle defaultDarkCellTextStyle =
+      TextStyle(fontSize: 14, color: Colors.white);
+
   const TrinaGridStyleConfig({
     this.enableGridBorderShadow = false,
     this.enableColumnBorderVertical = true,
@@ -257,13 +297,16 @@ class TrinaGridStyleConfig {
     this.enableCellBorderHorizontal = true,
     this.enableRowColorAnimation = false,
     this.enableRowHoverColor = false,
+    this.filterIcon = const Icon(Icons.filter_alt_outlined),
     this.gridBackgroundColor = Colors.white,
     this.rowColor = Colors.white,
     this.oddRowColor,
     this.evenRowColor,
     this.activatedColor = const Color(0xFFDCF5FF),
     Color? columnCheckedColor,
+    this.columnCheckedSide,
     Color? cellCheckedColor,
+    this.cellCheckedSide,
     this.rowCheckedColor = const Color(0x11757575),
     this.rowHoveredColor = const Color(0xFFB1B3B7),
     this.cellColorInEditState = Colors.white,
@@ -303,7 +346,7 @@ class TrinaGridStyleConfig {
     Color? columnActiveColor,
     Color? cellUnselectedColor,
     Color? cellActiveColor,
-    this.cellTextStyle = const TextStyle(color: Colors.black, fontSize: 14),
+    this.cellTextStyle = defaultLightCellTextStyle,
     this.columnContextIcon = Icons.dehaze,
     this.columnResizeIcon = Icons.code_sharp,
     this.hideResizeIcon = false,
@@ -327,7 +370,8 @@ class TrinaGridStyleConfig {
         columnUnselectedColor = (columnUnselectedColor ?? iconColor),
         columnActiveColor = (columnActiveColor ?? activatedBorderColor),
         cellUnselectedColor = (cellUnselectedColor ?? iconColor),
-        cellActiveColor = (cellActiveColor ?? activatedBorderColor);
+        cellActiveColor = (cellActiveColor ?? activatedBorderColor),
+        isDarkStyle = false;
 
   const TrinaGridStyleConfig.dark({
     this.enableGridBorderShadow = false,
@@ -337,13 +381,16 @@ class TrinaGridStyleConfig {
     this.enableCellBorderHorizontal = true,
     this.enableRowColorAnimation = false,
     this.enableRowHoverColor = false,
+    this.filterIcon = const Icon(Icons.filter_alt_outlined),
     this.gridBackgroundColor = const Color(0xFF111111),
     this.rowColor = const Color(0xFF111111),
     this.oddRowColor,
     this.evenRowColor,
     this.activatedColor = const Color(0xFF313131),
     Color? columnCheckedColor,
+    this.columnCheckedSide,
     Color? cellCheckedColor,
+    this.cellCheckedSide,
     this.rowCheckedColor = const Color(0x11202020),
     this.rowHoveredColor = const Color(0xFF3D3D3D),
     this.cellColorInEditState = const Color(0xFF666666),
@@ -383,7 +430,7 @@ class TrinaGridStyleConfig {
     Color? columnActiveColor,
     Color? cellUnselectedColor,
     Color? cellActiveColor,
-    this.cellTextStyle = const TextStyle(color: Colors.white, fontSize: 14),
+    this.cellTextStyle = defaultDarkCellTextStyle,
     this.columnContextIcon = Icons.dehaze,
     this.columnResizeIcon = Icons.code_sharp,
     this.hideResizeIcon = false,
@@ -407,7 +454,8 @@ class TrinaGridStyleConfig {
         columnUnselectedColor = (columnUnselectedColor ?? iconColor),
         columnActiveColor = (columnActiveColor ?? activatedBorderColor),
         cellUnselectedColor = (cellUnselectedColor ?? iconColor),
-        cellActiveColor = (cellActiveColor ?? activatedBorderColor);
+        cellActiveColor = (cellActiveColor ?? activatedBorderColor),
+        isDarkStyle = true;
 
   /// Enable borderShadow in [TrinaGrid].
   final bool enableGridBorderShadow;
@@ -436,6 +484,10 @@ class TrinaGridStyleConfig {
   /// [rowHoveredColor] is therefore not used.
   final bool enableRowHoverColor;
 
+  /// Filter icon shown in column titles when columns are filtered.
+  /// Set to null to hide filter icons. Customize by providing a different icon.
+  final Icon? filterIcon;
+
   final Color gridBackgroundColor;
 
   /// Default row background color
@@ -461,8 +513,14 @@ class TrinaGridStyleConfig {
   /// Checked Color for the column title. (Checked rows)
   final Color columnCheckedColor;
 
+  /// Checked side for the column title.
+  final BorderSide? columnCheckedSide;
+
   /// Checked Color for the cell. (Checked rows)
   final Color cellCheckedColor;
+
+  /// Checked side for the cell.
+  final BorderSide? cellCheckedSide;
 
   /// Checked Color for the row. (Checked rows)
   final Color rowCheckedColor;
@@ -611,6 +669,9 @@ class TrinaGridStyleConfig {
   /// Set color of filter popup header icon
   final Color? filterHeaderIconColor;
 
+  /// A flag indicating whether the style is dark or not
+  final bool isDarkStyle;
+
   TrinaGridStyleConfig copyWith({
     bool? enableGridBorderShadow,
     bool? enableColumnBorderVertical,
@@ -618,13 +679,16 @@ class TrinaGridStyleConfig {
     bool? enableCellBorderVertical,
     bool? enableCellBorderHorizontal,
     bool? enableRowColorAnimation,
+    Icon? filterIcon,
     Color? gridBackgroundColor,
     Color? rowColor,
     TrinaOptional<Color?>? oddRowColor,
     TrinaOptional<Color?>? evenRowColor,
     Color? activatedColor,
     Color? columnCheckedColor,
+    BorderSide? columnCheckedSide,
     Color? cellCheckedColor,
+    BorderSide? cellCheckedSide,
     Color? cellColorInEditState,
     Color? cellColorInReadOnlyState,
     TrinaOptional<Color?>? cellColorGroupedRow,
@@ -678,6 +742,7 @@ class TrinaGridStyleConfig {
           enableCellBorderHorizontal ?? this.enableCellBorderHorizontal,
       enableRowColorAnimation:
           enableRowColorAnimation ?? this.enableRowColorAnimation,
+      filterIcon: filterIcon ?? this.filterIcon,
       gridBackgroundColor: gridBackgroundColor ?? this.gridBackgroundColor,
       rowColor: rowColor ?? this.rowColor,
       oddRowColor: oddRowColor == null ? this.oddRowColor : oddRowColor.value,
@@ -685,7 +750,9 @@ class TrinaGridStyleConfig {
           evenRowColor == null ? this.evenRowColor : evenRowColor.value,
       activatedColor: activatedColor ?? this.activatedColor,
       columnCheckedColor: columnCheckedColor ?? this.columnCheckedColor,
+      columnCheckedSide: columnCheckedSide ?? this.columnCheckedSide,
       cellCheckedColor: cellCheckedColor ?? this.cellCheckedColor,
+      cellCheckedSide: cellCheckedSide ?? this.cellCheckedSide,
       cellColorInEditState: cellColorInEditState ?? this.cellColorInEditState,
       cellColorInReadOnlyState:
           cellColorInReadOnlyState ?? this.cellColorInReadOnlyState,
@@ -755,13 +822,16 @@ class TrinaGridStyleConfig {
             enableCellBorderVertical == other.enableCellBorderVertical &&
             enableCellBorderHorizontal == other.enableCellBorderHorizontal &&
             enableRowColorAnimation == other.enableRowColorAnimation &&
+            filterIcon == other.filterIcon &&
             gridBackgroundColor == other.gridBackgroundColor &&
             rowColor == other.rowColor &&
             oddRowColor == other.oddRowColor &&
             evenRowColor == other.evenRowColor &&
             activatedColor == other.activatedColor &&
             columnCheckedColor == other.columnCheckedColor &&
+            columnCheckedSide == other.columnCheckedSide &&
             cellCheckedColor == other.cellCheckedColor &&
+            cellCheckedSide == other.cellCheckedSide &&
             cellColorInEditState == other.cellColorInEditState &&
             cellColorInReadOnlyState == other.cellColorInReadOnlyState &&
             cellColorGroupedRow == other.cellColorGroupedRow &&
@@ -798,7 +868,8 @@ class TrinaGridStyleConfig {
             gridBorderRadius == other.gridBorderRadius &&
             gridPopupBorderRadius == other.gridPopupBorderRadius &&
             gridPadding == other.gridPadding &&
-            gridBorderWidth == other.gridBorderWidth;
+            gridBorderWidth == other.gridBorderWidth &&
+            isDarkStyle == other.isDarkStyle;
   }
 
   @override
@@ -809,13 +880,16 @@ class TrinaGridStyleConfig {
         enableCellBorderVertical,
         enableCellBorderHorizontal,
         enableRowColorAnimation,
+        filterIcon,
         gridBackgroundColor,
         rowColor,
         oddRowColor,
         evenRowColor,
         activatedColor,
         columnCheckedColor,
+        columnCheckedSide,
         cellCheckedColor,
+        cellCheckedSide,
         cellColorInEditState,
         cellColorInReadOnlyState,
         cellColorGroupedRow,
@@ -855,6 +929,7 @@ class TrinaGridStyleConfig {
         gridBorderWidth,
         filterHeaderColor,
         filterHeaderIconColor,
+        isDarkStyle
       ]);
 }
 
@@ -888,6 +963,7 @@ class TrinaGridScrollbarConfig {
     this.trackColor,
     this.thumbHoverColor,
     this.trackHoverColor,
+    this.columnShowScrollWidth = true,
   });
 
   /// Whether the scrollbar is always visible
@@ -932,6 +1008,9 @@ class TrinaGridScrollbarConfig {
   /// Color of the scrollbar track when hovered
   final Color? trackHoverColor;
 
+  /// Whether to show the scrollbar width in the column header
+  final bool columnShowScrollWidth;
+
   /// Get effective thumb color
   Color get effectiveThumbColor =>
       thumbColor ?? Colors.grey.withAlpha((153).toInt());
@@ -968,7 +1047,8 @@ class TrinaGridScrollbarConfig {
             thumbColor == other.thumbColor &&
             trackColor == other.trackColor &&
             thumbHoverColor == other.thumbHoverColor &&
-            trackHoverColor == other.trackHoverColor;
+            trackHoverColor == other.trackHoverColor &&
+            columnShowScrollWidth == other.columnShowScrollWidth;
   }
 
   @override
@@ -987,6 +1067,7 @@ class TrinaGridScrollbarConfig {
         trackColor,
         thumbHoverColor,
         trackHoverColor,
+        columnShowScrollWidth
       ]);
 }
 
@@ -1256,6 +1337,10 @@ class TrinaGridLocaleText {
   // Common
   final String loadingText;
 
+  final String multiLineFilterHint;
+  final String multiLineFilterEditTitle;
+  final String multiLineFilterOkButton;
+
   const TrinaGridLocaleText({
     // Column menu
     this.unfreezeColumn = 'Unfreeze',
@@ -1294,6 +1379,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minute',
     // Common
     this.loadingText = 'Loading',
+    this.multiLineFilterHint = 'Filter',
+    this.multiLineFilterEditTitle = 'Edit Filter',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.french({
@@ -1334,6 +1422,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minute',
     // Common
     this.loadingText = 'Chargement',
+    this.multiLineFilterHint = 'Filtrer',
+    this.multiLineFilterEditTitle = 'Modifier le filtre',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.china({
@@ -1374,6 +1465,9 @@ class TrinaGridLocaleText {
     this.minute = '分',
     // Common
     this.loadingText = '加载中',
+    this.multiLineFilterHint = '筛选',
+    this.multiLineFilterEditTitle = '编辑筛选',
+    this.multiLineFilterOkButton = '确定',
   });
 
   const TrinaGridLocaleText.korean({
@@ -1414,6 +1508,9 @@ class TrinaGridLocaleText {
     this.minute = '분',
     // Common
     this.loadingText = '로딩중',
+    this.multiLineFilterHint = '필터',
+    this.multiLineFilterEditTitle = '필터 편집',
+    this.multiLineFilterOkButton = '확인',
   });
 
   const TrinaGridLocaleText.russian({
@@ -1454,6 +1551,9 @@ class TrinaGridLocaleText {
     this.minute = 'Минуты',
     // Common
     this.loadingText = 'Загрузка',
+    this.multiLineFilterHint = 'Фильтр',
+    this.multiLineFilterEditTitle = 'Редактировать фильтр',
+    this.multiLineFilterOkButton = 'Ок',
   });
 
   const TrinaGridLocaleText.czech({
@@ -1494,6 +1594,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minuta',
     // Common
     this.loadingText = 'Načítání',
+    this.multiLineFilterHint = 'Filtr',
+    this.multiLineFilterEditTitle = 'Upravit filtr',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.brazilianPortuguese({
@@ -1534,6 +1637,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minuto',
     // Common
     this.loadingText = 'Carregando',
+    this.multiLineFilterHint = 'Filtro',
+    this.multiLineFilterEditTitle = 'Editar filtro',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.spanish({
@@ -1574,6 +1680,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minuto',
     // Common
     this.loadingText = 'Cargando',
+    this.multiLineFilterHint = 'Filtro',
+    this.multiLineFilterEditTitle = 'Editar filtro',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.persian({
@@ -1614,6 +1723,9 @@ class TrinaGridLocaleText {
     this.minute = 'دقیقه',
     // Common
     this.loadingText = 'در حال بارگیری',
+    this.multiLineFilterHint = 'فیلتر',
+    this.multiLineFilterEditTitle = 'ویرایش فیلتر',
+    this.multiLineFilterOkButton = 'تأیید',
   });
 
   const TrinaGridLocaleText.arabic({
@@ -1654,6 +1766,9 @@ class TrinaGridLocaleText {
     this.minute = 'دقيقي',
     // Common
     this.loadingText = 'جاري التحميل',
+    this.multiLineFilterHint = 'تصفية',
+    this.multiLineFilterEditTitle = 'تعديل التصفية',
+    this.multiLineFilterOkButton = 'موافق',
   });
 
   const TrinaGridLocaleText.norway({
@@ -1694,6 +1809,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minutt',
     // Common
     this.loadingText = 'Laster',
+    this.multiLineFilterHint = 'Filter',
+    this.multiLineFilterEditTitle = 'Rediger filter',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.german({
@@ -1734,6 +1852,9 @@ class TrinaGridLocaleText {
     this.minute = 'Minute',
     // Common
     this.loadingText = 'Lädt',
+    this.multiLineFilterHint = 'Filter',
+    this.multiLineFilterEditTitle = 'Filter bearbeiten',
+    this.multiLineFilterOkButton = 'Ok',
   });
 
   const TrinaGridLocaleText.turkish({
@@ -1774,6 +1895,9 @@ class TrinaGridLocaleText {
     this.minute = 'Dakika',
     // Common
     this.loadingText = 'Yükleniyor',
+    this.multiLineFilterHint = 'Filtre',
+    this.multiLineFilterEditTitle = 'Filtreyi Düzenle',
+    this.multiLineFilterOkButton = 'Tamam',
   });
 
   const TrinaGridLocaleText.japanese({
@@ -1814,6 +1938,9 @@ class TrinaGridLocaleText {
     this.minute = '分',
     // Common
     this.loadingText = 'にゃ〜',
+    this.multiLineFilterHint = 'フィルター',
+    this.multiLineFilterEditTitle = 'フィルターを編集',
+    this.multiLineFilterOkButton = 'OK',
   });
 
   @override
@@ -1851,7 +1978,10 @@ class TrinaGridLocaleText {
             saturday == other.saturday &&
             hour == other.hour &&
             minute == other.minute &&
-            loadingText == other.loadingText;
+            loadingText == other.loadingText &&
+            multiLineFilterHint == other.multiLineFilterHint &&
+            multiLineFilterEditTitle == other.multiLineFilterEditTitle &&
+            multiLineFilterOkButton == other.multiLineFilterOkButton;
   }
 
   @override
@@ -1887,6 +2017,9 @@ class TrinaGridLocaleText {
         hour,
         minute,
         loadingText,
+        multiLineFilterHint,
+        multiLineFilterEditTitle,
+        multiLineFilterOkButton,
       ]);
 }
 

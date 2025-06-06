@@ -257,7 +257,7 @@ TrinaCell(
 
 When validation fails, you can provide feedback to users through:
 
-1. The `onValidationFailed` callback:
+#### Method 1: Using the onValidationFailed callback
 
 ```dart
 onValidationFailed: (event) {
@@ -269,7 +269,7 @@ onValidationFailed: (event) {
 }
 ```
 
-2. Custom cell rendering:
+#### Method 2: Using custom cell rendering
 
 ```dart
 TrinaColumn(

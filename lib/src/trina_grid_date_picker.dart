@@ -153,7 +153,10 @@ class TrinaGridDatePicker {
     if (initDate != null) {
       final rows = datePickerStateManager.rows;
 
-      final initDateString = dateFormat.format(initDate!);
+      //only get date only from initDate
+      final initDateString = dateFormat.format(
+        DateTime(initDate!.year, initDate!.month, initDate!.day),
+      );
 
       for (var i = 0; i < rows.length; i += 1) {
         for (var entry in rows[i].cells.entries) {

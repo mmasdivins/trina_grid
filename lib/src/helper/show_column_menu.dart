@@ -111,7 +111,12 @@ List<PopupMenuEntry<dynamic>> _getDefaultColumnMenuItems({
   required TrinaGridStateManager stateManager,
   required TrinaColumn column,
 }) {
-  final Color textColor = stateManager.style.cellTextStyle.color!;
+  final defaultTextStyle = stateManager.style.isDarkStyle
+      ? TrinaGridStyleConfig.defaultDarkCellTextStyle
+      : TrinaGridStyleConfig.defaultLightCellTextStyle;
+
+  final textTheme = defaultTextStyle.merge(stateManager.style.cellTextStyle);
+  final Color textColor = textTheme.color!;
 
   final Color disableTextColor = textColor.withAlpha((0.5 * 255).toInt());
 

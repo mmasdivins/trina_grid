@@ -155,7 +155,7 @@ void main() {
       TrinaDualGridDisplay? display,
       TextDirection textDirection = TextDirection.ltr,
     }) {
-      return TrinaWidgetTestHelper('그리드 생성.', (tester) async {
+      return TrinaWidgetTestHelper('Create Grid.', (tester) async {
         final gridAColumns = ColumnHelper.textColumn('headerA', count: 3);
         final gridARows = RowHelper.count(3, gridAColumns);
 

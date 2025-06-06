@@ -120,6 +120,7 @@ class TrinaGrid extends TrinaStatefulWidget {
     required this.columns,
     required this.rows,
     this.sortOrder = const [],
+    this.rowsCacheExtent,
     this.rowWrapper,
     this.editCellRenderer,
     this.columnGroups,
@@ -161,6 +162,8 @@ class TrinaGrid extends TrinaStatefulWidget {
     this.onValidationFailed,
     this.onLazyFetchCompleted,
   });
+
+  final double? rowsCacheExtent;
 
   /// {@macro trina_grid_row_wrapper}
   final RowWrapper? rowWrapper;
@@ -731,6 +734,7 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
         vertical: _verticalScroll,
         horizontal: _horizontalScroll,
       ),
+      rowsCacheExtent: widget.rowsCacheExtent,
       rowWrapper: widget.rowWrapper,
       editCellRenderer: widget.editCellRenderer,
       columnGroups: widget.columnGroups,
@@ -824,7 +828,8 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
     if (!widget.mode.isSelectMode) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_stateManager.currentCell == null) {
+      if (_stateManager.configuration.enableAutoSelectFirstRow &&
+          _stateManager.currentCell == null) {
         _stateManager.setCurrentCell(_stateManager.firstCell, 0);
       }
 
@@ -851,6 +856,19 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
   }
 
   KeyEventResult _handleGridFocusOnKey(FocusNode focusNode, KeyEvent event) {
+    // Check if the focus is within a header widget - if so, don't capture the keyboard event
+    if (_header != null) {
+      // Get the current primary focus
+      final FocusNode? primaryFocus = FocusManager.instance.primaryFocus;
+
+      // If the primary focus is not the grid's focus node, don't handle the event
+      // This allows TextFields and other input widgets in the header to receive keyboard events
+      if (primaryFocus != null && primaryFocus != _stateManager.gridFocusNode) {
+        // Skip handling this event if it's not focused on the grid
+        return KeyEventResult.ignored;
+      }
+    }
+
     if (_keyManager.eventResult.isSkip == false) {
       _keyManager.subject.add(
         TrinaKeyManagerEvent(focusNode: focusNode, event: event),

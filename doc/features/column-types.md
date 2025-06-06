@@ -27,7 +27,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Text Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -52,7 +52,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Number Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -71,22 +71,23 @@ For displaying and editing date values.
 
 ```dart
 TrinaColumn(
-  title: 'Birth Date',
-  field: 'birthDate',
+  title: 'Birthday',
+  field: 'birthday',
   type: TrinaColumnType.date(
     format: 'yyyy-MM-dd',
   ),
 )
 ```
 
-#### Properties
+#### Date Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `format` | `String` | Date format pattern |
 | `startDate` | `DateTime?` | Minimum selectable date |
 | `endDate` | `DateTime?` | Maximum selectable date |
-| `datePickerTheme` | `DatePickerThemeData?` | Theme for the date picker |
+| `firstDate` | `DateTime?` | First date visible in calendar |
+| `lastDate` | `DateTime?` | Last date visible in calendar |
 
 ### Time Column
 
@@ -102,7 +103,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Time Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -112,28 +113,42 @@ TrinaColumn(
 
 ### DateTime Column
 
-Combines date and time functionality.
+For displaying and editing both date and time values in a single field.
 
 ```dart
 TrinaColumn(
   title: 'Created At',
   field: 'createdAt',
   type: TrinaColumnType.dateTime(
-    dateFormat: 'yyyy-MM-dd',
-    timeFormat: 'HH:mm:ss',
+    format: 'yyyy-MM-dd HH:mm',
+    headerFormat: 'MMMM yyyy',
+    startDate: DateTime(2023, 1, 1),
+    endDate: DateTime(2025, 12, 31),
+    popupIcon: Icons.event_available,
   ),
 )
 ```
 
-#### Properties
+#### DateTime Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `dateFormat` | `String` | Date format pattern |
-| `timeFormat` | `String` | Time format pattern |
-| `startDate` | `DateTime?` | Minimum selectable date |
-| `endDate` | `DateTime?` | Maximum selectable date |
-| `use24HourFormat` | `bool` | Whether to use 24-hour format |
+| `format` | `String` | DateTime format pattern (defaults to 'yyyy-MM-dd HH:mm') |
+| `headerFormat` | `String` | Format for the header in date picker (defaults to 'yyyy-MM') |
+| `startDate` | `DateTime?` | Minimum selectable date (optional) |
+| `endDate` | `DateTime?` | Maximum selectable date (optional) |
+| `applyFormatOnInit` | `bool` | Whether to apply format when initializing (defaults to `true`) |
+| `popupIcon` | `IconData?` | Custom icon for the popup button (defaults to calendar icon) |
+
+#### DateTime Selection Process
+
+The DateTime column opens a two-step selection process:
+
+1. First, a date picker appears where the user can select a date
+2. After selecting a date, a time picker appears with hour and minute selection
+3. The combined date and time value is then set in the cell
+
+This approach provides a more intuitive way to select both date and time components compared to separate columns.
 
 ### Select Column
 
@@ -154,7 +169,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Select Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -186,7 +201,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Boolean Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -214,7 +229,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Currency Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -240,14 +255,45 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Percentage Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `decimalDigits` | `int` | Number of decimal places |
-| `showSymbol` | `bool` | Whether to show the % symbol |
-| `symbolPosition` | `PercentageSymbolPosition` | Position of % symbol (before/after) |
-| `inputAsDecimal` | `bool` | Whether to input as decimal (0.5) or percentage (50) |
+| `defaultValue` | `dynamic` | Default value for new cells (defaults to `0`) |
+| `decimalDigits` | `int` | Number of decimal places (defaults to `2`) |
+| `showSymbol` | `bool` | Whether to show the % symbol (defaults to `true`) |
+| `symbolPosition` | `PercentageSymbolPosition` | Position of % symbol (before/after, defaults to `after`) |
+| `negative` | `bool` | Whether to allow negative values (defaults to `true`) |
+| `applyFormatOnInit` | `bool` | When the editor loads, it resets the value to formatted value (defaults to `true`) |
+| `allowFirstDot` | `bool` | Allow a dot at the beginning when accepting negative numbers (defaults to `false`) |
+| `locale` | `String?` | Specifies the numeric locale of the column (if not specified, uses default locale) |
+| `decimalInput` | `bool` | When true, users can input direct percentage values (42 for 42%) rather than decimal values (0.42) (defaults to `false`) |
+
+#### Using `decimalInput`
+
+When `decimalInput` is set to `true`, the column will:
+
+1. Accept direct percentage values as input (e.g., 42 for 42%)
+2. Display values as percentages (e.g., 42.0%)
+3. Store values internally as percentages (not as decimals)
+
+```dart
+// Example of a column with decimalInput enabled
+TrinaColumn(
+  title: 'Percentage',
+  field: 'percentage',
+  type: TrinaColumnType.percentage(
+    decimalInput: true,
+    decimalDigits: 1,
+  ),
+)
+
+// Usage with decimalInput: true
+TrinaCell(value: 42)  // Displays as "42.0%"
+
+// Regular percentage column (decimalInput: false)
+TrinaCell(value: 0.42)  // Displays as "42.00%"
+```
 
 ### Custom Column
 
@@ -273,7 +319,7 @@ TrinaColumn(
 )
 ```
 
-#### Properties
+#### Custom Column Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -355,6 +401,14 @@ List<TrinaColumn> columns = [
     width: 120,
   ),
   TrinaColumn(
+    title: 'Created At',
+    field: 'createdAt',
+    type: TrinaColumnType.dateTime(
+      format: 'yyyy-MM-dd HH:mm',
+    ),
+    width: 150,
+  ),
+  TrinaColumn(
     title: 'Salary',
     field: 'salary',
     type: TrinaColumnType.currency(
@@ -362,6 +416,15 @@ List<TrinaColumn> columns = [
       decimalDigits: 2,
     ),
     width: 120,
+  ),
+  TrinaColumn(
+    title: 'Completion',
+    field: 'completion',
+    type: TrinaColumnType.percentage(
+      decimalDigits: 1,
+      showSymbol: true,
+    ),
+    width: 100,
   ),
   TrinaColumn(
     title: 'Active',

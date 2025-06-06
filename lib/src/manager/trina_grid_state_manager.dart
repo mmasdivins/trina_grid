@@ -79,6 +79,7 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     required this.scroll,
     this.sortOrder = const [],
     List<TrinaColumnGroup>? columnGroups,
+    this.rowsCacheExtent,
     this.rowWrapper,
     this.editCellRenderer,
     this.onChanged,
@@ -131,6 +132,8 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     setGridMode(mode ?? TrinaGridMode.normal);
     _initialize();
   }
+
+  final double? rowsCacheExtent;
 
   /// {@macro trina_grid_row_wrapper}
   @override
@@ -372,6 +375,7 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     required super.gridFocusNode,
     required super.scroll,
     super.sortOrder,
+    super.rowsCacheExtent,
     super.rowWrapper,
     super.editCellRenderer,
     super.columnGroups,

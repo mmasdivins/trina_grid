@@ -1,5 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
+
+// A simple constant to determine if we are in a test environment
+// Use a function that returns true if Flutter's testing flag is set
+// This avoids directly importing flutter_test which would create a circular dependency
+bool get _isTestEnvironment =>
+    WidgetsBinding.instance.toString().contains('TestWidgetsFlutterBinding');
 
 class TrinaVerticalScrollBar extends StatefulWidget {
   const TrinaVerticalScrollBar({
@@ -33,6 +40,9 @@ class _TrinaVerticalScrollBarState extends State<TrinaVerticalScrollBar>
 
   // Track the last scroll position to detect scrolling
   double _lastScrollOffset = 0;
+
+  // Timer for hiding scrollbar
+  Timer? _hideTimer;
 
   // Variables for drag functionality
 
@@ -123,11 +133,17 @@ class _TrinaVerticalScrollBarState extends State<TrinaVerticalScrollBar>
   void _showScrollbar() {
     _fadeController.forward();
 
+    // Cancel any existing timer
+    _hideTimer?.cancel();
+
     // If not hovering or dragging, hide after delay
     if (!widget.stateManager.configuration.scrollbar.isAlwaysShown &&
         !_hovering &&
         !_isDragging) {
-      Future.delayed(const Duration(seconds: 3), () {
+      // Use a shorter duration in tests to avoid lingering timers
+      final duration = Duration(milliseconds: _isTestEnvironment ? 300 : 3000);
+
+      _hideTimer = Timer(duration, () {
         if (!_hovering && !_isDragging && mounted) {
           _fadeController.reverse();
         }
@@ -139,6 +155,11 @@ class _TrinaVerticalScrollBarState extends State<TrinaVerticalScrollBar>
   void dispose() {
     widget.verticalScrollOffsetNotifier.removeListener(_handleScrollChange);
     widget.stateManager.removeListener(_handleConfigChange);
+
+    // Cancel any pending timer
+    _hideTimer?.cancel();
+    _hideTimer = null;
+
     _fadeController.dispose();
     super.dispose();
   }
@@ -245,7 +266,8 @@ class _TrinaVerticalScrollBarState extends State<TrinaVerticalScrollBar>
                                         widget.height,
                                       ),
                                 width: scrollConfig.thickness,
-                                right: 2,
+                                left: widget.stateManager.isRTL ? 2 : null,
+                                right: widget.stateManager.isRTL ? null : 2,
                                 child: MouseRegion(
                                   cursor: SystemMouseCursors.grab,
                                   onEnter: (_) {

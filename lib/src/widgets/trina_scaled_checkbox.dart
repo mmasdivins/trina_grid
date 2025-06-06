@@ -15,6 +15,8 @@ class TrinaScaledCheckbox extends StatelessWidget {
 
   final Color checkColor;
 
+  final BorderSide? side;
+
   const TrinaScaledCheckbox({
     super.key,
     required this.value,
@@ -24,6 +26,7 @@ class TrinaScaledCheckbox extends StatelessWidget {
     this.unselectedColor = Colors.black26,
     this.activeColor = Colors.lightBlue,
     this.checkColor = const Color(0xFFDCF5FF),
+    this.side,
   });
 
   @override

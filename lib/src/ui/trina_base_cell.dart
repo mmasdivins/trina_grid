@@ -8,6 +8,7 @@ import 'package:trina_grid/trina_grid.dart';
 import 'package:trina_grid/src/helper/platform_helper.dart';
 import 'package:trina_grid/src/helper/trina_double_tap_detector.dart';
 import 'package:trina_grid/src/ui/cells/trina_boolean_cell.dart';
+import 'package:trina_grid/src/ui/cells/trina_date_time_cell.dart';
 
 import 'ui.dart';
 

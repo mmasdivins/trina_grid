@@ -5,7 +5,7 @@ import 'package:trina_grid/src/model/column_types/trina_column_type_date_time.da
 import 'package:trina_grid/src/model/column_types/trina_column_type_percentage.dart';
 import 'package:trina_grid/trina_grid.dart';
 
-abstract class TrinaColumnType {
+abstract interface class TrinaColumnType {
   dynamic get defaultValue;
 
   /// Set as a string column.
@@ -203,7 +203,6 @@ abstract class TrinaColumnType {
     );
   }
 
-
   /// Set as a datetime column combining date and time.
   ///
   /// [startDate] Range start date (If there is no value, Can select the date without limit)
@@ -247,6 +246,7 @@ abstract class TrinaColumnType {
     );
   }
 
+
   /// Set to boolean column.
   ///
   /// [allowEmpty] determines if null/empty values are allowed
@@ -279,6 +279,10 @@ abstract class TrinaColumnType {
   int compare(dynamic a, dynamic b);
 
   dynamic makeCompareValue(dynamic v);
+
+  /// If returns (true, correctedValue) then the correctedValue will be applied to the cell,
+  /// see EditingState.changeCellValue() and CellState.filteredCellValue()
+  (bool, dynamic) filteredValue({dynamic newValue, dynamic oldValue});
 }
 
 mixin TrinaColumnTypeDefaultMixin {

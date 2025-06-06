@@ -47,6 +47,8 @@ class TrinaDualGrid extends StatefulWidget {
 
   final TrinaDualOnSelectedEventCallback? onSelected;
 
+  final bool? isVertical;
+
   /// [TrinaDualGridDisplayRatio]
   /// Set the width of the two grids by specifying the ratio of the left grid.
   /// 0.5 is 5(left grid):5(right grid).
@@ -67,6 +69,7 @@ class TrinaDualGrid extends StatefulWidget {
     this.mode = TrinaGridMode.normal,
     this.onSelected,
     this.display,
+    this.isVertical,
     this.divider = const TrinaDualGridDivider(),
     super.key,
   });
@@ -97,11 +100,14 @@ class TrinaDualGridState extends State<TrinaDualGrid> {
 
   late final StreamSubscription<TrinaGridEvent> _streamB;
 
+  late bool isVertical;
+
   @override
   void initState() {
     super.initState();
 
     display = widget.display ?? TrinaDualGridDisplayRatio();
+    isVertical = widget.isVertical ?? false;
   }
 
   @override
@@ -111,6 +117,16 @@ class TrinaDualGridState extends State<TrinaDualGrid> {
     _streamB.cancel();
 
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant TrinaDualGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isVertical != oldWidget.isVertical) {
+      setState(() {
+        isVertical = widget.isVertical ?? false;
+      });
+    }
   }
 
   Widget _buildGrid({
@@ -209,6 +225,7 @@ class TrinaDualGridState extends State<TrinaDualGrid> {
         display: display,
         showDraggableDivider: widget.divider.show,
         isLTR: isLTR,
+        isVertical: isVertical,
       ),
       children: [
         _buildGrid(
@@ -227,12 +244,19 @@ class TrinaDualGridState extends State<TrinaDualGrid> {
                 final RenderBox object =
                     context.findRenderObject() as RenderBox;
 
-                display.offset = object
-                    .globalToLocal(Offset(
-                      details.globalPosition.dx,
-                      details.globalPosition.dy,
-                    ))
-                    .dx;
+                display.offset = isVertical
+                    ? object
+                        .globalToLocal(Offset(
+                          details.globalPosition.dx,
+                          details.globalPosition.dy,
+                        ))
+                        .dy
+                    : object
+                        .globalToLocal(Offset(
+                          details.globalPosition.dx,
+                          details.globalPosition.dy,
+                        ))
+                        .dx;
 
                 resizeNotifier.resize();
               },
@@ -306,19 +330,27 @@ class TrinaDualGridDividerWidgetState
           onHorizontalDragStart: onHorizontalDragStart,
           onHorizontalDragUpdate: onHorizontalDragUpdate,
           onHorizontalDragEnd: onHorizontalDragEnd,
+          onVerticalDragStart: onHorizontalDragStart,
+          onVerticalDragUpdate: onHorizontalDragUpdate,
+          onVerticalDragEnd: onHorizontalDragEnd,
           child: ColoredBox(
             color: isDragging ? widget.draggingColor : widget.backgroundColor,
             child: Stack(
               children: [
                 Positioned(
-                  top: (size.maxHeight / 2) - 18,
-                  left: -4,
+                  top: size.maxHeight > size.maxWidth
+                      ? (size.maxHeight / 2) - 18
+                      : -4,
+                  left: size.maxHeight > size.maxWidth
+                      ? -4
+                      : (size.maxWidth / 2) - 18,
                   child: Icon(
-                    Icons.drag_indicator,
-                    color: widget.indicatorColor,
-                    size: 18,
-                  ),
-                ),
+                      size.maxHeight > size.maxWidth
+                          ? Icons.drag_indicator
+                          : Icons.drag_handle,
+                      color: widget.indicatorColor,
+                      size: 18),
+                )
               ],
             ),
           ),
@@ -340,6 +372,7 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
     required this.display,
     required this.showDraggableDivider,
     required this.isLTR,
+    required this.isVertical,
   }) : super(relayout: notifier);
 
   final TrinaDualGridDisplay display;
@@ -347,6 +380,8 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
   final bool showDraggableDivider;
 
   final bool isLTR;
+
+  final bool isVertical;
 
   @override
   void performLayout(Size size) {
@@ -366,6 +401,8 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
             : display.offset! - dividerHalf
         : display.gridAWidth(constrains) - dividerHalf;
     double gridBWidth = size.width - gridAWidth - dividerWidth;
+    double gridAHeight = size.height;
+    double gridBHeight = size.height;
 
     if (!isLTR) {
       final savedGridBWidth = gridBWidth;
@@ -385,15 +422,44 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
       gridBWidth = size.width - dividerWidth;
     }
 
+    if (isVertical) {
+      gridAWidth = size.width;
+      gridBWidth = size.width;
+      gridAHeight = showDraggableDivider
+          ? display.offset == null
+              ? display.gridAHeight(constrains) - dividerHalf
+              : display.offset! - dividerHalf
+          : display.gridAHeight(constrains) - dividerHalf;
+      gridBHeight = size.height - gridAHeight - dividerWidth;
+
+      if (gridAHeight < 0) {
+        gridAHeight = 0;
+      } else if (gridAHeight > size.height - dividerWidth) {
+        gridAHeight = size.height - dividerWidth;
+      }
+
+      if (gridBHeight < 0) {
+        gridBHeight = 0;
+      } else if (gridBHeight > size.height - dividerWidth) {
+        gridBHeight = size.height - dividerWidth;
+      }
+    }
+
     if (hasChild(_TrinaDualGridId.gridA)) {
       layoutChild(
         _TrinaDualGridId.gridA,
         BoxConstraints.tight(
-          Size(gridAWidth, size.height),
+          Size(gridAWidth, gridAHeight),
         ),
       );
 
       final double posX = isLTR ? 0 : gridBWidth + dividerWidth;
+
+      if (isVertical) {
+        positionChild(_TrinaDualGridId.gridA, const Offset(0, 0));
+      } else {
+        positionChild(_TrinaDualGridId.gridA, Offset(posX, 0));
+      }
 
       positionChild(_TrinaDualGridId.gridA, Offset(posX, 0));
     }
@@ -402,26 +468,36 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
       layoutChild(
         _TrinaDualGridId.divider,
         BoxConstraints.tight(
-          Size(TrinaDualGrid.dividerWidth, size.height),
+          isVertical
+              ? Size(size.width, TrinaDualGrid.dividerWidth)
+              : Size(TrinaDualGrid.dividerWidth, size.height),
         ),
       );
 
       final double posX = isLTR ? gridAWidth : gridBWidth;
-
-      positionChild(_TrinaDualGridId.divider, Offset(posX, 0));
+      if (isVertical) {
+        positionChild(_TrinaDualGridId.divider, Offset(0, gridAHeight));
+      } else {
+        positionChild(_TrinaDualGridId.divider, Offset(posX, 0));
+      }
     }
 
     if (hasChild(_TrinaDualGridId.gridB)) {
       layoutChild(
         _TrinaDualGridId.gridB,
         BoxConstraints.tight(
-          Size(gridBWidth, size.height),
+          Size(gridBWidth, gridBHeight),
         ),
       );
 
       final double posX = isLTR ? gridAWidth + dividerWidth : 0;
 
-      positionChild(_TrinaDualGridId.gridB, Offset(posX, 0));
+      if (isVertical) {
+        positionChild(
+            _TrinaDualGridId.gridB, Offset(0, gridAHeight + dividerWidth));
+      } else {
+        positionChild(_TrinaDualGridId.gridB, Offset(posX, 0));
+      }
     }
   }
 
@@ -444,8 +520,9 @@ class TrinaDualOnSelectedEvent {
 
 abstract class TrinaDualGridDisplay {
   double gridAWidth(BoxConstraints size);
-
+  double gridAHeight(BoxConstraints size);
   double gridBWidth(BoxConstraints size);
+  double gridBHeight(BoxConstraints size);
 
   double? offset;
 }
@@ -465,6 +542,12 @@ class TrinaDualGridDisplayRatio implements TrinaDualGridDisplay {
 
   @override
   double gridBWidth(BoxConstraints size) => size.maxWidth * (1 - ratio);
+
+  @override
+  double gridAHeight(BoxConstraints size) => size.maxHeight * ratio;
+
+  @override
+  double gridBHeight(BoxConstraints size) => size.maxHeight * (1 - ratio);
 }
 
 class TrinaDualGridDisplayFixedAndExpanded implements TrinaDualGridDisplay {
@@ -482,6 +565,12 @@ class TrinaDualGridDisplayFixedAndExpanded implements TrinaDualGridDisplay {
 
   @override
   double gridBWidth(BoxConstraints size) => size.maxWidth - width;
+
+  @override
+  double gridAHeight(BoxConstraints size) => width;
+
+  @override
+  double gridBHeight(BoxConstraints size) => size.maxHeight - width;
 }
 
 class TrinaDualGridDisplayExpandedAndFixed implements TrinaDualGridDisplay {
@@ -499,6 +588,12 @@ class TrinaDualGridDisplayExpandedAndFixed implements TrinaDualGridDisplay {
 
   @override
   double gridBWidth(BoxConstraints size) => width;
+
+  @override
+  double gridAHeight(BoxConstraints size) => size.maxHeight - width;
+
+  @override
+  double gridBHeight(BoxConstraints size) => width;
 }
 
 class TrinaDualGridProps {

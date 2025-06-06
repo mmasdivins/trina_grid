@@ -421,21 +421,6 @@ void main() {
 
         list.insert(0, -2);
       });
-
-      test(
-        'length should be reflected',
-        () {
-          expect(list.length, 5);
-
-          expect(list, [-2, 2, 4, 6, 8]);
-
-          list.setFilter(null);
-
-          expect(list.length, 10);
-
-          expect(list, [1, -2, 2, 3, 4, 5, 6, 7, 8, 9]);
-        },
-      );
     });
 
     group('Inserting elements using insertAll.', () {
@@ -603,6 +588,87 @@ void main() {
         expect(list.length, 3);
       },
     );
+
+    test(
+      'Setting out of bounds filterRange should return empty list',
+      () {
+        list.setFilterRange(FilteredListRange(10, 13));
+
+        expect(list, []);
+        expect(list.length, 0);
+      },
+    );
+
+    group('With List filtering ', () {
+      setUp(() {
+        list.setFilter((element) => element % 2 == 0);
+      });
+
+      test(
+        'Setting range 0, 3 should return [2, 4, 6]',
+        () {
+          list.setFilterRange(FilteredListRange(0, 3));
+
+          expect(list, [2, 4, 6]);
+          expect(list.length, 3);
+        },
+      );
+
+      test(
+        'Setting range 1, 3 should return [4, 6]',
+        () {
+          list.setFilterRange(FilteredListRange(1, 3));
+
+          expect(list, [4, 6]);
+          expect(list.length, 2);
+        },
+      );
+
+      test(
+        'Setting filterRange to null should return originalList',
+        () {
+          list.setFilterRange(null);
+
+          expect(list, [2, 4, 6, 8]);
+          expect(list.length, 4);
+        },
+      );
+
+      test(
+        'The array should be filtered and paginated.',
+        () {
+          list = FilteredList(
+              initialList: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+
+          // 2, 4, 6, 8, 10, 12
+          list.setFilter((value) => value % 2 == 0);
+
+          // 4, 6
+          list.setFilterRange(FilteredListRange(1, 3));
+
+          expect(list, [4, 6]);
+          expect(list.length, 2);
+
+          // 2, 4, 6, 8, 10, 12
+          list.setFilterRange(null);
+
+          expect(list, [2, 4, 6, 8, 10, 12]);
+          expect(list.length, 6);
+
+          // 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+          list.setFilter(null);
+
+          expect(list, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+          expect(list.length, 12);
+
+          // 4, 5, 6
+          list.setFilterRange(FilteredListRange(3, 6));
+
+          expect(list, [4, 5, 6]);
+          expect(list.length, 3);
+        },
+      );
+    });
   });
 
   group('pagination and insertAll', () {

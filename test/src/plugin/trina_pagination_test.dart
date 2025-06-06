@@ -30,7 +30,7 @@ void main() {
     subject.close();
   });
 
-  group('렌더링', () {
+  group('Rendering', () {
     buildWidget({
       int page = 1,
       int totalPage = 1,

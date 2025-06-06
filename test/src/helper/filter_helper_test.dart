@@ -608,6 +608,30 @@ void main() {
         expect(compare('B', 'A'), isFalse);
       });
     });
+
+    group('Regex', () {
+      late Function compare;
+
+      setUp(() {
+        compare = makeCompareFunction(const TrinaFilterTypeRegex());
+      });
+
+      test('Value matches regex pattern', () {
+        expect(compare('apple123', r'apple\d+'), isTrue);
+      });
+
+      test('Value with special characters matches regex pattern', () {
+        expect(compare('user@example.com', r'.+@.+\..+'), isTrue);
+      });
+
+      test('Value does not match regex pattern', () {
+        expect(compare('apple', r'^\d+$'), isFalse);
+      });
+
+      test('Invalid regex pattern returns false', () {
+        expect(compare('apple', r'[unclosed'), isFalse);
+      });
+    });
   });
 
   group('FilterPopupState', () {
@@ -888,8 +912,8 @@ void main() {
 
         var columnType = filterColumn.type as TrinaColumnTypeSelect;
 
-        // configuration's filter count should be created. (default 8)
-        expect(configuration.columnFilter.filters.length, 8);
+        // configuration's filter count should be created. (default 9)
+        expect(configuration.columnFilter.filters.length, 9);
         expect(
           columnType.items.length,
           configuration.columnFilter.filters.length,

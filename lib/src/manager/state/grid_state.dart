@@ -178,6 +178,13 @@ mixin GridState implements ITrinaGridState {
     if (applyColumnFilter) {
       _state._configuration!.applyColumnFilter(refColumns.originalList);
     }
+
+    // Apply selectingMode from configuration for modes that allow it
+    if (mode == TrinaGridMode.normal ||
+        mode == TrinaGridMode.readOnly ||
+        mode == TrinaGridMode.popup) {
+      setSelectingMode(configuration.selectingMode, notify: false);
+    }
   }
 
   @override
@@ -211,7 +218,7 @@ mixin GridState implements ITrinaGridState {
       case TrinaGridMode.normal:
       case TrinaGridMode.readOnly:
       case TrinaGridMode.popup:
-        selectingMode = this.selectingMode;
+        selectingMode = configuration.selectingMode;
         break;
       case TrinaGridMode.select:
       case TrinaGridMode.selectWithOneTap:

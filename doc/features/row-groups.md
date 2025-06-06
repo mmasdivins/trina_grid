@@ -270,10 +270,24 @@ TrinaGrid(
 You can programmatically control row groups through the state manager:
 
 ```dart
-// Expand or collapse a specific group row
-void toggleGroupExpansion(TrinaRow groupRow, bool expand) {
+// Toggle a specific group row (expand if collapsed, collapse if expanded)
+void toggleGroupExpansion(TrinaRow groupRow) {
   if (groupRow.type.isGroup) {
-    stateManager.toggleExpandedRowGroup(groupRow, expand);
+    stateManager.toggleExpandedRowGroup(rowGroup: groupRow);
+  }
+}
+
+// Explicitly expand a specific group row
+void expandGroup(TrinaRow groupRow) {
+  if (groupRow.type.isGroup) {
+    stateManager.toggleExpandedRowGroup(rowGroup: groupRow, expanded: true);
+  }
+}
+
+// Explicitly collapse a specific group row
+void collapseGroup(TrinaRow groupRow) {
+  if (groupRow.type.isGroup) {
+    stateManager.toggleExpandedRowGroup(rowGroup: groupRow, expanded: false);
   }
 }
 
@@ -448,7 +462,7 @@ class _RowGroupExampleState extends State<RowGroupExample> {
         title: Text('Row Group Example'),
         actions: [
           IconButton(
-            icon: Icon(Icons.expand_all),
+            icon: Icon(Icons.unfold_more),
             onPressed: () {
               stateManagerA.expandAllRowGroups();
               stateManagerB.expandAllRowGroups();
@@ -456,7 +470,7 @@ class _RowGroupExampleState extends State<RowGroupExample> {
             tooltip: 'Expand All Groups',
           ),
           IconButton(
-            icon: Icon(Icons.collapse_all),
+            icon: Icon(Icons.unfold_less),
             onPressed: () {
               stateManagerA.collapseAllRowGroups();
               stateManagerB.collapseAllRowGroups();

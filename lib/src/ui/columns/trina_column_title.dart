@@ -17,8 +17,8 @@ class TrinaColumnTitle extends TrinaStatefulWidget {
     required this.stateManager,
     required this.column,
     double? height,
-  }) : height = height ?? stateManager.columnHeight,
-       super(key: ValueKey('column_title_${column.key}'));
+  })  : height = height ?? stateManager.columnHeight,
+        super(key: ValueKey('column_title_${column.key}'));
 
   @override
   TrinaColumnTitleState createState() => TrinaColumnTitleState();
@@ -150,10 +150,9 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
           icon: TrinaGridColumnIcon(
             sort: _sort,
             color: style.iconColor,
-            icon:
-                widget.column.enableContextMenu
-                    ? style.columnContextIcon
-                    : style.columnResizeIcon,
+            icon: widget.column.enableContextMenu
+                ? style.columnContextIcon
+                : style.columnResizeIcon,
             ascendingIcon: style.columnAscendingIcon,
             descendingIcon: style.columnDescendingIcon,
           ),
@@ -177,10 +176,10 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
       // Ensure dragging functionality works with custom renderer
       return widget.column.enableColumnDrag
           ? _DraggableWidget(
-            stateManager: stateManager,
-            column: widget.column,
-            child: customTitleWidget,
-          )
+              stateManager: stateManager,
+              column: widget.column,
+              child: customTitleWidget,
+            )
           : customTitleWidget;
     }
 
@@ -189,14 +188,13 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
         Positioned(
           left: 0,
           right: 0,
-          child:
-              widget.column.enableColumnDrag
-                  ? _DraggableWidget(
-                    stateManager: stateManager,
-                    column: widget.column,
-                    child: columnWidget,
-                  )
-                  : columnWidget,
+          child: widget.column.enableColumnDrag
+              ? _DraggableWidget(
+                  stateManager: stateManager,
+                  column: widget.column,
+                  child: columnWidget,
+                )
+              : columnWidget,
         ),
         if (showContextIcon)
           Positioned.directional(
@@ -226,15 +224,14 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
       stateManager: stateManager,
       height: widget.height,
       showContextIcon: showContextIcon,
-      contextMenuIcon:
-          enableGesture
-              ? Listener(
-                onPointerDown: _handleOnPointDown,
-                onPointerMove: _handleOnPointMove,
-                onPointerUp: _handleOnPointUp,
-                child: contextMenuIcon,
-              )
-              : contextMenuIcon,
+      contextMenuIcon: enableGesture
+          ? Listener(
+              onPointerDown: _handleOnPointDown,
+              onPointerMove: _handleOnPointMove,
+              onPointerUp: _handleOnPointUp,
+              child: contextMenuIcon,
+            )
+          : contextMenuIcon,
       isFiltered: isFiltered,
       showContextMenu:
           mounted && widget.column.enableContextMenu ? _showContextMenu : null,
@@ -479,13 +476,13 @@ class _SortableWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return column.enableSorting
         ? MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            key: const ValueKey('ColumnTitleSortableGesture'),
-            onTap: _onTap,
-            child: child,
-          ),
-        )
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              key: const ValueKey('ColumnTitleSortableGesture'),
+              onTap: _onTap,
+              child: child,
+            ),
+          )
         : child;
   }
 }
@@ -540,17 +537,15 @@ class _ColumnWidget extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: column.backgroundGradient, //
-              color:
-                  column.backgroundGradient == null
-                      ? (noDragTarget
-                          ? column.backgroundColor
-                          : style.dragTargetColumnColor)
-                      : null,
+              color: column.backgroundGradient == null
+                  ? (noDragTarget
+                      ? column.backgroundColor
+                      : style.dragTargetColumnColor)
+                  : null,
               border: BorderDirectional(
-                end:
-                    style.enableColumnBorderVertical
-                        ? BorderSide(color: style.borderColor, width: 1.0)
-                        : BorderSide.none,
+                end: style.enableColumnBorderVertical
+                    ? BorderSide(color: style.borderColor, width: 1.0)
+                    : BorderSide.none,
               ),
             ),
             child: Padding(
@@ -643,6 +638,7 @@ class CheckboxAllSelectionWidgetState
       unselectedColor: stateManager.configuration.style.columnUnselectedColor,
       activeColor: stateManager.configuration.style.columnActiveColor,
       checkColor: stateManager.configuration.style.columnCheckedColor,
+      side: stateManager.configuration.style.columnCheckedSide,
     );
   }
 }
@@ -747,6 +743,7 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
         ),
     ];
   }
+
 
   @override
   Widget build(BuildContext context) {

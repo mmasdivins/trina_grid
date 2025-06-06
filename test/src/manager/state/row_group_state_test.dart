@@ -205,7 +205,7 @@ void main() {
   ///     - 004
   ///   - 2
   ///     - 005
-  group('2개의 컬럼으로 그룹핑 - TrinaRowGroupByColumnDelegate.', () {
+  group('Grouping by 2 columns - TrinaRowGroupByColumnDelegate.', () {
     late List<TrinaColumn> columns;
 
     late List<TrinaRow> rows;
@@ -1745,6 +1745,186 @@ void main() {
           },
         );
       });
+    });
+  });
+
+  group('RowGroupState expandAllRowGroups and collapseAllRowGroups', () {
+    late TrinaGridStateManager stateManager;
+    late List<TrinaColumn> columns;
+    late List<TrinaRow> rows;
+
+    setUp(() {
+      columns = [
+        TrinaColumn(
+          title: 'Category',
+          field: 'category',
+          type: TrinaColumnType.text(),
+        ),
+        TrinaColumn(
+          title: 'Subcategory',
+          field: 'subcategory',
+          type: TrinaColumnType.text(),
+        ),
+        TrinaColumn(
+          title: 'Product',
+          field: 'product',
+          type: TrinaColumnType.text(),
+        ),
+      ];
+
+      rows = [
+        TrinaRow(cells: {
+          'category': TrinaCell(value: 'Electronics'),
+          'subcategory': TrinaCell(value: 'Phones'),
+          'product': TrinaCell(value: 'Smartphone X'),
+        }),
+        TrinaRow(cells: {
+          'category': TrinaCell(value: 'Electronics'),
+          'subcategory': TrinaCell(value: 'Phones'),
+          'product': TrinaCell(value: 'Smartphone Y'),
+        }),
+        TrinaRow(cells: {
+          'category': TrinaCell(value: 'Electronics'),
+          'subcategory': TrinaCell(value: 'Laptops'),
+          'product': TrinaCell(value: 'Laptop Z'),
+        }),
+        TrinaRow(cells: {
+          'category': TrinaCell(value: 'Clothing'),
+          'subcategory': TrinaCell(value: 'Shirts'),
+          'product': TrinaCell(value: 'T-Shirt'),
+        }),
+      ];
+
+      stateManager = TrinaGridStateManager(
+        columns: columns,
+        rows: rows,
+        gridFocusNode: FocusNode(),
+        scroll: TrinaGridScrollController(),
+      );
+
+      stateManager.setRowGroup(
+        TrinaRowGroupByColumnDelegate(
+          columns: [columns[0], columns[1]],
+        ),
+      );
+    });
+
+    tearDown(() {
+      stateManager.dispose();
+    });
+
+    test('expandAllRowGroups should expand all collapsed groups', () {
+      // Initially, all groups should be collapsed
+      final groupRows = stateManager.iterateAllRowGroup.toList();
+      expect(groupRows.isNotEmpty, true);
+
+      // Check that some groups are collapsed
+      final collapsedGroups =
+          groupRows.where((row) => !row.type.group.expanded).toList();
+      expect(collapsedGroups.isNotEmpty, true);
+
+      // Expand all groups
+      stateManager.expandAllRowGroups();
+
+      // Check that all groups are now expanded
+      final allGroupsExpanded = stateManager.iterateAllRowGroup
+          .every((row) => row.type.group.expanded);
+      expect(allGroupsExpanded, true);
+    });
+
+    test('collapseAllRowGroups should collapse all expanded groups', () {
+      // First expand all groups
+      stateManager.expandAllRowGroups();
+
+      // Verify all groups are expanded
+      final allGroupsExpanded = stateManager.iterateAllRowGroup
+          .every((row) => row.type.group.expanded);
+      expect(allGroupsExpanded, true);
+
+      // Collapse all groups
+      stateManager.collapseAllRowGroups();
+
+      // Check that all groups are now collapsed
+      final allGroupsCollapsed = stateManager.iterateAllRowGroup
+          .every((row) => !row.type.group.expanded);
+      expect(allGroupsCollapsed, true);
+    });
+
+    test('expandAllRowGroups should do nothing when row groups are not enabled',
+        () {
+      // Create a state manager without row groups
+      final stateManagerNoGroups = TrinaGridStateManager(
+        columns: columns,
+        rows: rows,
+        gridFocusNode: FocusNode(),
+        scroll: TrinaGridScrollController(),
+      );
+
+      // This should not throw an error
+      expect(() => stateManagerNoGroups.expandAllRowGroups(), returnsNormally);
+
+      stateManagerNoGroups.dispose();
+    });
+
+    test(
+        'collapseAllRowGroups should do nothing when row groups are not enabled',
+        () {
+      // Create a state manager without row groups
+      final stateManagerNoGroups = TrinaGridStateManager(
+        columns: columns,
+        rows: rows,
+        gridFocusNode: FocusNode(),
+        scroll: TrinaGridScrollController(),
+      );
+
+      // This should not throw an error
+      expect(
+          () => stateManagerNoGroups.collapseAllRowGroups(), returnsNormally);
+
+      stateManagerNoGroups.dispose();
+    });
+
+    test('expandAllRowGroups should actually expand visible rows', () {
+      stateManager.setRowGroup(
+        TrinaRowGroupByColumnDelegate(
+          columns: [columns[0], columns[1]],
+        ),
+      );
+
+      // Initially, only main group rows should be visible
+      final initialVisibleCount = stateManager.refRows.length;
+
+      // Expand all groups
+      stateManager.expandAllRowGroups();
+
+      // Now more rows should be visible
+      final expandedVisibleCount = stateManager.refRows.length;
+      expect(expandedVisibleCount, greaterThan(initialVisibleCount));
+
+      // Collapse all groups
+      stateManager.collapseAllRowGroups();
+
+      // Should be back to initial count
+      final collapsedVisibleCount = stateManager.refRows.length;
+      expect(collapsedVisibleCount, equals(initialVisibleCount));
+    });
+
+    test('collapseAllRowGroups should actually collapse visible rows', () {
+      stateManager.setRowGroup(
+        TrinaRowGroupByColumnDelegate(
+          columns: [columns[0], columns[1]],
+        ),
+      );
+
+      // Expand all first
+      stateManager.expandAllRowGroups();
+      final expandedCount = stateManager.refRows.length;
+
+      // Then collapse all
+      stateManager.collapseAllRowGroups();
+      final collapsedCount = stateManager.refRows.length;
+
+      expect(collapsedCount, lessThan(expandedCount));
     });
   });
 }

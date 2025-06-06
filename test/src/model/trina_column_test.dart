@@ -630,7 +630,7 @@ void main() {
       // When the date format is applied, the behavior of the column's compare function is different from the intended behavior.
       // You need to change the format when calling the compare function. The compare function converts the format appropriately
       // and the format change is processed when the function is called from outside.
-      test('12/30/2019, 01/01/2020 인 경우 1', () {
+      test('12/30/2019, 01/01/2020 in case 1', () {
         final TrinaColumnTypeDate column =
             TrinaColumnType.date(format: 'MM/dd/yyyy') as TrinaColumnTypeDate;
         expect(column.compare('12/30/2019', '01/01/2020'), 1);
@@ -647,7 +647,7 @@ void main() {
       // When the date format is applied, the behavior of the column's compare function is different from the intended behavior.
       // You need to change the format when calling the compare function. The compare function converts the format appropriately
       // and the format change is processed when the function is called from outside.
-      test('01/01/2020, 12/30/2019  인 경우 -1', () {
+      test('01/01/2020, 12/30/2019 in case 2', () {
         final TrinaColumnTypeDate column =
             TrinaColumnType.date(format: 'MM/dd/yyyy') as TrinaColumnTypeDate;
         expect(column.compare('01/01/2020', '12/30/2019'), -1);

@@ -133,6 +133,17 @@ TrinaGridConfiguration(
 )
 ```
 
+The available selection modes are:
+
+- `TrinaGridSelectingMode.cell`: Allows selection of individual cells or ranges of cells
+- `TrinaGridSelectingMode.row`: Selects entire rows when clicking on any cell  
+- `TrinaGridSelectingMode.none`: Disables selection functionality
+
+Note: This setting may be overridden by the grid mode:
+
+- In `TrinaGridMode.select` or `TrinaGridMode.selectWithOneTap`, it's forced to `TrinaGridSelectingMode.none`
+- In `TrinaGridMode.multiSelect`, it's forced to `TrinaGridSelectingMode.row`
+
 ### Editing Configuration
 
 Control editing behavior:
@@ -225,6 +236,8 @@ TrinaColumn(
   enableRowChecked: false,
   enableEditingMode: true,
   readOnly: false,
+  // Override Enter key behavior for this column's filter
+  filterEnterKeyAction: TrinaGridEnterKeyAction.none,
 )
 ```
 
@@ -318,7 +331,6 @@ TrinaGrid(
     // Behavior configuration
     enableMoveDownAfterSelecting: true,
     enterKeyAction: TrinaGridEnterKeyAction.editingAndMoveDown,
-    enableEditingMode: true,
     selectingMode: TrinaGridSelectingMode.cell,
     
     // Keyboard shortcuts
@@ -331,6 +343,8 @@ TrinaGrid(
   ),
 )
 ```
+
+> **Note:** While most keyboard behavior is configured at the grid level with `enterKeyAction`, you can override the Enter key behavior for specific column filters using the `filterEnterKeyAction` property on individual columns. See [Column Filtering](../features/column-filtering.md#controlling-keyboard-navigation-in-column-filters) for more details.
 
 ## Next Steps
 

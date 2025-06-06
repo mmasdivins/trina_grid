@@ -43,7 +43,7 @@ class TrinaColumnTypePercentage
     this.locale,
     this.decimalInput = false,
   })  : format = decimalDigits > 0 ? '#,##0.${'0' * decimalDigits}' : '#,##0',
-  // Create a NumberFormat WITHOUT the % symbol to avoid automatic multiplication
+        // Create a NumberFormat WITHOUT the % symbol to avoid automatic multiplication
         numberFormat = decimalDigits > 0
             ? intl.NumberFormat('#,##0.${'0' * decimalDigits}', locale)
             : intl.NumberFormat('#,##0', locale),
@@ -60,7 +60,7 @@ class TrinaColumnTypePercentage
     // If it's already a properly formatted percentage string, return it as is
     if (value is String &&
         ((value.endsWith('%') &&
-            symbolPosition == PercentageSymbolPosition.after) ||
+                symbolPosition == PercentageSymbolPosition.after) ||
             (value.startsWith('%') &&
                 symbolPosition == PercentageSymbolPosition.before))) {
       return value;
@@ -70,8 +70,8 @@ class TrinaColumnTypePercentage
     num? parsedValue = value is num
         ? value
         : num.tryParse(
-      value.toString().replaceAll(numberFormat.symbols.DECIMAL_SEP, '.'),
-    );
+            value.toString().replaceAll(numberFormat.symbols.DECIMAL_SEP, '.'),
+          );
 
     if (parsedValue == null) {
       return '';

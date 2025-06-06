@@ -6,12 +6,13 @@ import 'package:trina_grid/src/model/trina_column_type_has_popup_icon.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 class TrinaColumnTypeDate
-  with TrinaColumnTypeDefaultMixin
-  implements
-      TrinaColumnType,
-      TrinaColumnTypeHasFormat<String>,
-      TrinaColumnTypeHasDateFormat,
-      TrinaColumnTypeHasPopupIcon {
+    with TrinaColumnTypeDefaultMixin
+    implements
+        TrinaColumnType,
+        TrinaColumnTypeHasFormat<String>,
+        TrinaColumnTypeHasDateFormat,
+        TrinaColumnTypeHasPopupIcon {
+
   @override
   final dynamic defaultValue;
 

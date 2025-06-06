@@ -394,6 +394,10 @@ mixin CellState implements ITrinaGridState {
     dynamic newValue,
     dynamic oldValue,
   }) {
+    final typeResult =
+        column.type.filteredValue(oldValue: oldValue, newValue: newValue);
+    if (typeResult.$1) return typeResult.$2;
+
     if (column.type.isSelect) {
       return column.type.select.items.contains(newValue) == true
           ? newValue

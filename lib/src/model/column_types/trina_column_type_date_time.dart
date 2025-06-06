@@ -72,7 +72,7 @@ class TrinaColumnTypeDateTime
     return TrinaGeneralHelper.compareWithNull(
       a,
       b,
-          () => a.toString().compareTo(b.toString()),
+      () => a.toString().compareTo(b.toString()),
     );
   }
 

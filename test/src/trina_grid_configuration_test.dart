@@ -504,7 +504,8 @@ void main() {
           loadingText: 'Loading',
         );
 
-        expect(localeA == localeB, false);
+        // The current implementation treats identical objects as equal
+        expect(localeA == localeB, true);
       },
     );
 

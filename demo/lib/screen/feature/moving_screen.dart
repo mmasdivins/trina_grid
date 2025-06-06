@@ -55,7 +55,7 @@ class _MovingScreenState extends State<MovingScreen> {
         },
         configuration: const TrinaGridConfiguration(
           enableMoveDownAfterSelecting: true,
-          enterKeyAction: TrinaGridEnterKeyAction.editingAndMoveDown,
+          enterKeyAction: TrinaGridEnterKeyAction.editingAndMoveRight,
         ),
       ),
     );

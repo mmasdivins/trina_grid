@@ -62,7 +62,7 @@ TrinaCell(
 
 The grid-level `onChanged` callback is defined on the `TrinaGrid` widget and is triggered for any cell change in the entire grid.
 
-### Syntax
+### onChanged callback syntax
 
 ```dart
 TrinaGrid(

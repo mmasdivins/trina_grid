@@ -50,9 +50,30 @@ class _ColumnFilteringScreenState extends State<ColumnFilteringScreen> {
         field: 'select',
         type: TrinaColumnType.select(<String>['A', 'B', 'C', 'D', 'E', 'F']),
       ),
+      TrinaColumn(
+        title: 'Regex',
+        field: 'regex',
+        type: TrinaColumnType.text(),
+      ),
     ]);
 
     rows.addAll(DummyData.rowsByColumns(length: 30, columns: columns));
+
+    // Add some special pattern data for regex filtering examples
+    for (var i = 0; i < 5; i++) {
+      rows.add(
+        TrinaRow(
+          cells: {
+            'text': TrinaCell(value: 'Text value ${i + 1}'),
+            'number': TrinaCell(value: i + 100),
+            'date': TrinaCell(value: '2025-05-${i + 1}'),
+            'disable': TrinaCell(value: 'Disable value ${i + 1}'),
+            'select': TrinaCell(value: ['A', 'B', 'C', 'D', 'E', 'F'][i % 6]),
+            'regex': TrinaCell(value: 'user${i + 1}@example.com'),
+          },
+        ),
+      );
+    }
   }
 
   @override
@@ -73,6 +94,8 @@ class _ColumnFilteringScreenState extends State<ColumnFilteringScreen> {
             'Also, like the Disable column, if enableFilterMenuItem is false, it is excluded from all column filtering conditions.'),
         Text(
             'In the case of the Select column, it is a custom filter that can filter multiple filters with commas. (ex: a,b,c)'),
+        Text(
+            'The Regex column demonstrates the new Regex filter type that allows filtering with regular expressions.'),
         SizedBox(
           height: 10,
         ),
@@ -114,6 +137,8 @@ class _ColumnFilteringScreenState extends State<ColumnFilteringScreen> {
                 return resolver<TrinaFilterTypeLessThan>() as TrinaFilterType;
               } else if (column.field == 'select') {
                 return resolver<ClassYouImplemented>() as TrinaFilterType;
+              } else if (column.field == 'regex') {
+                return resolver<TrinaFilterTypeRegex>() as TrinaFilterType;
               }
 
               return resolver<TrinaFilterTypeContains>() as TrinaFilterType;

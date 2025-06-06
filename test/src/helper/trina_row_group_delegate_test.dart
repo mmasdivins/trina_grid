@@ -274,7 +274,7 @@ void main() {
   /// (R)      -B411-09
   /// (G)    -42
   /// (R)      -B412-10
-  group('TrinaRowGroupByColumnDelegate. 3개 컬럼으로 그룹핑.', () {
+  group('TrinaRowGroupByColumnDelegate. Grouping by 3 columns.', () {
     late TrinaRowGroupByColumnDelegate delegate;
 
     late List<TrinaColumn> columns;
@@ -360,7 +360,7 @@ void main() {
     );
 
     test('The isEditableCell should return true for the non-group row.', () {
-      final sampleColumn = columns[3]; // 그룹 컬럼이 아님.
+      final sampleColumn = columns[3]; // Not a group column.
       final sampleRow = TrinaRow(cells: {}, type: TrinaRowType.normal());
       final sampleCell = TrinaCell()
         ..setRow(sampleRow)

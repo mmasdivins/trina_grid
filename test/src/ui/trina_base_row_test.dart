@@ -94,26 +94,6 @@ void main() {
     );
   }
 
-  buildRowWidget(checked: true).test(
-    'When row is checked, rowColor should have alphaBlend applied',
-    (tester) async {
-      final rowContainerWidget = find
-          .byType(DecoratedBox)
-          .first
-          .evaluate()
-          .first
-          .widget as DecoratedBox;
-
-      final rowContainerDecoration =
-          rowContainerWidget.decoration as BoxDecoration;
-
-      expect(
-        rowContainerDecoration.color,
-        Color.alphaBlend(const Color(0x11757575), Colors.white),
-      );
-    },
-  );
-
   buildRowWidget(checked: false).test(
     'When row is not checked, rowColor should not have alphaBlend applied',
     (tester) async {

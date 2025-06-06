@@ -105,7 +105,14 @@ class TrinaGridKeyManager {
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (stateManager.textEditingController != null) {
-          stateManager.textEditingController!.text = keyEvent.event.character!;
+          Future.delayed(const Duration(milliseconds: 50), () {
+            stateManager.textEditingController!.text =
+                keyEvent.event.character!;
+            stateManager.textEditingController!.selection =
+                TextSelection.collapsed(
+              offset: stateManager.textEditingController!.text.length,
+            );
+          });
         }
       });
     }

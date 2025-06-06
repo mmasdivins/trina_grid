@@ -506,7 +506,7 @@ mixin LayoutState implements ITrinaGridState {
     // When custom loading widget is provided, always use grid level regardless of the level parameter
     final effectiveLevel = customLoadingWidget != null
         ? TrinaGridLoadingLevel.grid
-        : (level ?? _state._loadingLevel ?? TrinaGridLoadingLevel.grid);
+        : (level ?? _state._loadingLevel);
 
     _state._showLoading = flag;
     _state._loadingLevel = effectiveLevel;

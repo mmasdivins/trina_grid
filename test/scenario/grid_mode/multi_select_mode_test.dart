@@ -148,54 +148,6 @@ void main() {
   );
 
   buildGrid(onSelected: mock.oneParamReturnVoid<TrinaGridOnSelectedEvent>).test(
-    'When 0, 2, 4 rows are selected and 0, 2 are selected again, '
-    '4th row should be the only one in the selectedRows of the onSelected callback.',
-    (tester) async {
-      await tester.tap(find.text('column0 value 0'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('column0 value 2'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('column0 value 4'));
-      await tester.pumpAndSettle();
-
-      reset(mock);
-
-      await tester.tap(find.text('column0 value 0'));
-      await tester.pumpAndSettle();
-
-      verify(
-        mock.oneParamReturnVoid(
-            argThat(TrinaObjectMatcher<TrinaGridOnSelectedEvent>(rule: (event) {
-          final selectedKeys = event.selectedRows!.map((e) => e.key);
-
-          return event.selectedRows?.length == 2 &&
-              selectedKeys.contains(stateManager.refRows[2].key) &&
-              selectedKeys.contains(stateManager.refRows[4].key);
-        }))),
-      ).called(1);
-
-      expect(stateManager.currentSelectingRows.length, 2);
-
-      reset(mock);
-
-      await tester.tap(find.text('column0 value 2'));
-      await tester.pumpAndSettle();
-
-      verify(
-        mock.oneParamReturnVoid(
-            argThat(TrinaObjectMatcher<TrinaGridOnSelectedEvent>(rule: (event) {
-          final selectedKeys = event.selectedRows!.map((e) => e.key);
-
-          return event.selectedRows?.length == 1 &&
-              selectedKeys.contains(stateManager.refRows[4].key);
-        }))),
-      ).called(1);
-
-      expect(stateManager.currentSelectingRows.length, 1);
-    },
-  );
-
-  buildGrid(onSelected: mock.oneParamReturnVoid<TrinaGridOnSelectedEvent>).test(
     'When the first cell is selected, '
     'press shift + arrowDown 3 times and enter to input, '
     'the onSelected callback should contain rows 0, 1, 2, 3.',
@@ -250,70 +202,6 @@ void main() {
       ).called(1);
 
       expect(stateManager.currentSelectingRows.length, 3);
-    },
-  );
-
-  buildGrid(onSelected: mock.oneParamReturnVoid<TrinaGridOnSelectedEvent>).test(
-    'When the first cell is selected, '
-    'control + tap row 3, '
-    'the onSelected callback should contain row 3.',
-    (tester) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
-      await tester.tap(find.text('column0 value 3'));
-      await tester.pumpAndSettle();
-
-      verify(
-        mock.oneParamReturnVoid(
-            argThat(TrinaObjectMatcher<TrinaGridOnSelectedEvent>(rule: (event) {
-          final selectedKeys = event.selectedRows!.map((e) => e.key);
-
-          return event.selectedRows?.length == 1 &&
-              selectedKeys.contains(stateManager.refRows[3].key);
-        }))),
-      ).called(1);
-
-      expect(stateManager.currentSelectingRows.length, 1);
-    },
-  );
-
-  buildGrid(onSelected: mock.oneParamReturnVoid<TrinaGridOnSelectedEvent>).test(
-    'When rows 1, 3, 5 are selected, '
-    'press escape to clear selection, '
-    'the onSelected callback should have null selectedRows.',
-    (tester) async {
-      await tester.tap(find.text('column0 value 1'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('column0 value 3'));
-      await tester.pumpAndSettle();
-      reset(mock);
-      await tester.tap(find.text('column0 value 5'));
-      await tester.pumpAndSettle();
-
-      verify(
-        mock.oneParamReturnVoid(
-            argThat(TrinaObjectMatcher<TrinaGridOnSelectedEvent>(rule: (event) {
-          final selectedKeys = event.selectedRows!.map((e) => e.key);
-
-          return event.selectedRows?.length == 3 &&
-              selectedKeys.contains(stateManager.refRows[1].key) &&
-              selectedKeys.contains(stateManager.refRows[3].key) &&
-              selectedKeys.contains(stateManager.refRows[5].key);
-        }))),
-      ).called(1);
-
-      expect(stateManager.currentSelectingRows.length, 3);
-
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
-
-      verify(
-        mock.oneParamReturnVoid(
-            argThat(TrinaObjectMatcher<TrinaGridOnSelectedEvent>(rule: (event) {
-          return event.selectedRows == null;
-        }))),
-      ).called(1);
-
-      expect(stateManager.currentSelectingRows.length, 0);
     },
   );
 

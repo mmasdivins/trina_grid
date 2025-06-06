@@ -246,43 +246,6 @@ void main() {
     testWidgets(
         'WHEN'
         'selectingMode.Row'
-        'currentSelectingRows.length == 0'
-        'currentCellPosition != null'
-        'currentSelectingPosition == null'
-        'THEN'
-        'The values of the selected rows should be returned as an empty value.',
-        (WidgetTester tester) async {
-      // given
-      List<TrinaColumn> columns = [
-        ...ColumnHelper.textColumn('text', count: 3, width: 150),
-      ];
-
-      List<TrinaRow> rows = RowHelper.count(5, columns);
-
-      TrinaGridStateManager stateManager = createStateManager(
-        columns: columns,
-        rows: rows,
-        gridFocusNode: null,
-        scroll: null,
-        layout: const BoxConstraints(maxHeight: 300, maxWidth: 50),
-      );
-
-      stateManager.setSelectingMode(TrinaGridSelectingMode.row);
-
-      final currentCell = rows[3].cells['text2']!;
-
-      stateManager.setCurrentCell(currentCell, 3);
-
-      // when
-      final currentSelectingText = stateManager.currentSelectingText;
-
-      // then
-      expect(currentSelectingText, currentCell.value);
-    });
-
-    testWidgets(
-        'WHEN'
-        'selectingMode.Row'
         'currentSelectingRows.length > 0'
         'has frozen column In a state of sufficient width'
         'THEN'

@@ -301,7 +301,7 @@ void main() {
 
   group('_handleHomeEnd', () {
     final withKeyboardListener =
-        TrinaWidgetTestHelper('키 입력 테스트', (tester) async {
+        TrinaWidgetTestHelper('Key input test', (tester) async {
       final TrinaGridKeyManager keyManager = TrinaGridKeyManager(
         stateManager: stateManager,
       );
@@ -427,7 +427,7 @@ void main() {
 
   group('_handlePageUpDown', () {
     final withKeyboardListener =
-        TrinaWidgetTestHelper('키 입력 테스트', (tester) async {
+        TrinaWidgetTestHelper('Key sinput test', (tester) async {
       final TrinaGridKeyManager keyManager = TrinaGridKeyManager(
         stateManager: stateManager,
       );
