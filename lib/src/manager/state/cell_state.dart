@@ -34,11 +34,13 @@ abstract class ICellState {
   bool canMoveCell(
     TrinaGridCellPosition cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   );
 
   bool canNotMoveCell(
     TrinaGridCellPosition? cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   );
 
   /// Whether the cell is in a mutable state
@@ -324,6 +326,7 @@ mixin CellState implements ITrinaGridState {
   bool canMoveCell(
     TrinaGridCellPosition? cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   ) {
     if (cellPosition == null || !cellPosition.hasPosition) return false;
 
@@ -334,8 +337,22 @@ mixin CellState implements ITrinaGridState {
         return cellPosition.columnIdx! < refColumns.length - 1;
       case TrinaMoveDirection.up:
         return cellPosition.rowIdx! > 0;
-      case TrinaMoveDirection.down:
-        return cellPosition.rowIdx! < refRows.length - 1;
+      case TrinaMoveDirection.down: {
+        var isRowDefaultFunction = stateManager.isRowDefault ?? _isRowDefault;
+        bool isRowDefault = isRowDefaultFunction(currentCell!.row, stateManager);
+        // If we are editing and we try to move down we have to check the configuration of the last
+        // key row to know if we allow it or not
+        if (!(cellPosition.rowIdx! < refRows.length - 1) && mode != TrinaGridMode.readOnly) {
+          if (configuration.lastRowKeyDownAction.isAddMultiple){
+            return true;
+          }
+          else if (configuration.lastRowKeyDownAction.isAddOne) {
+            return !isRowDefault;
+          }
+        }
+
+        return (cellPosition.rowIdx! < refRows.length - 1);
+      }
     }
   }
 
@@ -343,8 +360,9 @@ mixin CellState implements ITrinaGridState {
   bool canNotMoveCell(
     TrinaGridCellPosition? cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   ) {
-    return !canMoveCell(cellPosition, direction);
+    return !canMoveCell(cellPosition, direction, stateManager);
   }
 
   @override
