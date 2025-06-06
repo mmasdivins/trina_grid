@@ -94,79 +94,81 @@ class TrinaGridActionMoveCellFocus extends TrinaGridShortcutAction {
 
     stateManager.moveCurrentCell(direction, force: force);
 
-    var isRowDefaultFunction = stateManager.isRowDefault ?? _isRowDefault;
+    stateManager.moveUpOrDown(direction, force);
 
-    if (stateManager.mode != TrinaGridMode.readOnly
-        && direction.isDown
-        && stateManager.rows.length == (index + 1)) {
-
-      bool isRowDefault = isRowDefaultFunction(stateManager.currentCell!.row, stateManager);
-
-      // If row changed notifiy changed row
-      // Put index + 1 so it detects it that we are changing the row
-      await stateManager.notifyTrackingRow(index + 1);
-
-      // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
-      // lastRowKeyDownAction
-      if (stateManager.onLastRowKeyDown != null){
-        stateManager.onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
-          rowIdx: index,
-          row: stateManager.currentCell!.row,
-          isRowDefault: isRowDefault,
-        ));
-      }
-      else {
-        if (stateManager.configuration.lastRowKeyDownAction.isAddMultiple){
-          // Afegim una nova fila al final
-          stateManager.insertRows(
-            index + 1,
-            [stateManager.getNewRow()],
-          );
-          stateManager.moveCurrentCell(direction, force: force);
-        }
-        else if (stateManager.configuration.lastRowKeyDownAction.isAddOne){
-          if (!isRowDefault){
-            // Afegim una nova fila al final
-            stateManager.insertRows(
-              index + 1,
-              [stateManager.getNewRow()],
-            );
-            stateManager.moveCurrentCell(direction, force: force);
-          }
-        }
-      }
-    }
-    else if (stateManager.mode != TrinaGridMode.readOnly
-        && direction.isUp
-        && stateManager.rows.length == (index + 1)) {
-
-      var row = stateManager.rows.elementAt(index);
-      bool isRowDefault = isRowDefaultFunction(row, stateManager);
-
-      // Si tenim definit l'event onLastRowKeyUp no fem cas de la configuració
-      // lastRowKeyUpAction
-      if (stateManager.onLastRowKeyUp != null){
-        stateManager.onLastRowKeyUp!.call(TrinaGridOnLastRowKeyUpEvent(
-          rowIdx: index,
-          row: row,
-          isRowDefault: isRowDefault,
-        ));
-      }
-      else {
-        if (stateManager.configuration.lastRowKeyUpAction.isRemoveOne && isRowDefault && stateManager.rows.length > 1){
-          // Esborrem la última fila si s'ha creat i no conté res i hi ha més d'una
-          // fila
-          stateManager.removeRows([row]);
-        }
-      }
-    }
-    else if (stateManager.mode != TrinaGridMode.readOnly
-        && direction.isUp
-        && index == 0) {
-      // If row changed notifiy changed row
-      // Put -1 so it detects it that we are changing the row
-      await stateManager.notifyTrackingRow(-1);
-    }
+    // var isRowDefaultFunction = stateManager.isRowDefault ?? _isRowDefault;
+    //
+    // if (stateManager.mode != TrinaGridMode.readOnly
+    //     && direction.isDown
+    //     && stateManager.rows.length == (index + 1)) {
+    //
+    //   bool isRowDefault = isRowDefaultFunction(stateManager.currentCell!.row, stateManager);
+    //
+    //   // If row changed notifiy changed row
+    //   // Put index + 1 so it detects it that we are changing the row
+    //   await stateManager.notifyTrackingRow(index + 1);
+    //
+    //   // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
+    //   // lastRowKeyDownAction
+    //   if (stateManager.onLastRowKeyDown != null){
+    //     stateManager.onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
+    //       rowIdx: index,
+    //       row: stateManager.currentCell!.row,
+    //       isRowDefault: isRowDefault,
+    //     ));
+    //   }
+    //   else {
+    //     if (stateManager.configuration.lastRowKeyDownAction.isAddMultiple){
+    //       // Afegim una nova fila al final
+    //       stateManager.insertRows(
+    //         index + 1,
+    //         [stateManager.getNewRow()],
+    //       );
+    //       stateManager.moveCurrentCell(direction, force: force);
+    //     }
+    //     else if (stateManager.configuration.lastRowKeyDownAction.isAddOne){
+    //       if (!isRowDefault){
+    //         // Afegim una nova fila al final
+    //         stateManager.insertRows(
+    //           index + 1,
+    //           [stateManager.getNewRow()],
+    //         );
+    //         stateManager.moveCurrentCell(direction, force: force);
+    //       }
+    //     }
+    //   }
+    // }
+    // else if (stateManager.mode != TrinaGridMode.readOnly
+    //     && direction.isUp
+    //     && stateManager.rows.length == (index + 1)) {
+    //
+    //   var row = stateManager.rows.elementAt(index);
+    //   bool isRowDefault = isRowDefaultFunction(row, stateManager);
+    //
+    //   // Si tenim definit l'event onLastRowKeyUp no fem cas de la configuració
+    //   // lastRowKeyUpAction
+    //   if (stateManager.onLastRowKeyUp != null){
+    //     stateManager.onLastRowKeyUp!.call(TrinaGridOnLastRowKeyUpEvent(
+    //       rowIdx: index,
+    //       row: row,
+    //       isRowDefault: isRowDefault,
+    //     ));
+    //   }
+    //   else {
+    //     if (stateManager.configuration.lastRowKeyUpAction.isRemoveOne && isRowDefault && stateManager.rows.length > 1){
+    //       // Esborrem la última fila si s'ha creat i no conté res i hi ha més d'una
+    //       // fila
+    //       stateManager.removeRows([row]);
+    //     }
+    //   }
+    // }
+    // else if (stateManager.mode != TrinaGridMode.readOnly
+    //     && direction.isUp
+    //     && index == 0) {
+    //   // If row changed notifiy changed row
+    //   // Put -1 so it detects it that we are changing the row
+    //   await stateManager.notifyTrackingRow(-1);
+    // }
   }
 
   bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager){
@@ -530,9 +532,9 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
   }
 
   void _moveCell(
-    TrinaKeyManagerEvent keyEvent,
-    TrinaGridStateManager stateManager,
-  ) {
+      TrinaKeyManagerEvent keyEvent,
+      TrinaGridStateManager stateManager,
+      ) {
     final enterKeyAction = stateManager.configuration.enterKeyAction;
 
     if (enterKeyAction.isNone) {
@@ -562,19 +564,33 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
         // Check if we're on the last cell of the row
         final position = stateManager.currentCellPosition;
         if (position != null &&
-            position.columnIdx == stateManager.refColumns.length - 1 &&
-            position.rowIdx! < stateManager.refRows.length - 1) {
-          // Move to first cell of next row
-          stateManager.moveCurrentCell(
-            TrinaMoveDirection.down,
-            force: true,
-            notify: false,
-          );
-          stateManager.moveCurrentCellToEdgeOfColumns(
-            TrinaMoveDirection.left,
-            force: true,
-            notify: false,
-          );
+            position.columnIdx == stateManager.refColumns.length - 1) {
+
+          // Si estem a l'última línia hem de fer l'acció de baixar de línia que controla si
+          // afegeix o no una línia nova
+          if (position.rowIdx! == stateManager.refRows.length - 1) {
+            stateManager.moveUpOrDown(TrinaMoveDirection.down, true);
+
+            stateManager.moveCurrentCellToEdgeOfColumns(
+              TrinaMoveDirection.left,
+              force: true,
+              notify: false,
+            );
+          }
+          else {
+            // Move to first cell of next row
+            stateManager.moveCurrentCell(
+              TrinaMoveDirection.down,
+              force: true,
+              notify: false,
+            );
+            stateManager.moveCurrentCellToEdgeOfColumns(
+              TrinaMoveDirection.left,
+              force: true,
+              notify: false,
+            );
+          }
+
         } else {
           stateManager.moveCurrentCell(
             TrinaMoveDirection.right,

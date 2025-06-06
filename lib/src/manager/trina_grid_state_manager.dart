@@ -438,6 +438,103 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     scroll.horizontal?.jumpTo(jumpTo);
   }
 
+  /// Moves the current cell position 1 row up or down
+  void moveUpOrDown(TrinaMoveDirection direction, bool force) async {
+    var index = rows.indexOf(currentCell!.row);
+
+    moveCurrentCell(direction, force: force);
+
+    var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
+
+    if (mode != TrinaGridMode.readOnly
+        && direction.isDown
+        && rows.length == (index + 1)) {
+
+      bool isRowDefault = isRowDefaultFunction(currentCell!.row, this);
+
+      // If row changed notifiy changed row
+      // Put index + 1 so it detects it that we are changing the row
+      await notifyTrackingRow(index + 1);
+
+      // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
+      // lastRowKeyDownAction
+      if (onLastRowKeyDown != null){
+        onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
+          rowIdx: index,
+          row: currentCell!.row,
+          isRowDefault: isRowDefault,
+        ));
+      }
+      else {
+        if (configuration.lastRowKeyDownAction.isAddMultiple){
+          // Afegim una nova fila al final
+          insertRows(
+            index + 1,
+            [getNewRow()],
+          );
+          moveCurrentCell(direction, force: force);
+        }
+        else if (configuration.lastRowKeyDownAction.isAddOne){
+          if (!isRowDefault){
+            // Afegim una nova fila al final
+            insertRows(
+              index + 1,
+              [getNewRow()],
+            );
+            moveCurrentCell(direction, force: force);
+          }
+        }
+      }
+    }
+    else if (mode != TrinaGridMode.readOnly
+        && direction.isUp
+        && rows.length == (index + 1)) {
+
+      var row = rows.elementAt(index);
+      bool isRowDefault = isRowDefaultFunction(row, this);
+
+      // Si tenim definit l'event onLastRowKeyUp no fem cas de la configuració
+      // lastRowKeyUpAction
+      if (onLastRowKeyUp != null){
+        onLastRowKeyUp!.call(TrinaGridOnLastRowKeyUpEvent(
+          rowIdx: index,
+          row: row,
+          isRowDefault: isRowDefault,
+        ));
+      }
+      else {
+        if (configuration.lastRowKeyUpAction.isRemoveOne && isRowDefault && rows.length > 1){
+          // Esborrem la última fila si s'ha creat i no conté res i hi ha més d'una
+          // fila
+          removeRows([row]);
+        }
+      }
+    }
+    else if (mode != TrinaGridMode.readOnly
+        && direction.isUp
+        && index == 0) {
+      // If row changed notifiy changed row
+      // Put -1 so it detects it that we are changing the row
+      await notifyTrackingRow(-1);
+    }
+  }
+
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager){
+    for (var element in refColumns) {
+      var cell = row.cells[element.field]!;
+
+      var value = element.type.defaultValue;
+      if (element.type.defaultValue is Function){
+        value = element.type.defaultValue.call();
+      }
+
+      if (value != cell.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// Returns a list of columns that are currently visible in the viewport
   List<TrinaColumn> getViewPortVisibleColumns() {
     if (refColumns.isEmpty) return [];
