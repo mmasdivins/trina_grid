@@ -220,6 +220,9 @@ mixin EditingState implements ITrinaGridState {
         column.type.applyFormat(value),
       );
     }
+    else if (column.type is TrinaColumnTypeWithCustomFormat) {
+      return (column.type as TrinaColumnTypeWithCustomFormat).applyFormat(value);
+    }
 
     return value;
   }

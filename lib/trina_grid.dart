@@ -60,6 +60,7 @@ export './src/model/trina_column_type_extension.dart';
 export 'src/model/column_types/trina_column_type_select.dart';
 export 'src/model/column_types/trina_column_type_time.dart';
 export './src/model/trina_column_type_with_number_format.dart';
+export './src/model/trina_column_type_with_custom_format.dart';
 export 'src/model/column_types/trina_column_type_boolean.dart';
 export 'src/model/column_types/trina_column_type_currency.dart';
 export 'src/model/column_types/trina_column_type_date.dart';
