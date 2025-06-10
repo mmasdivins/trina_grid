@@ -676,6 +676,8 @@ mixin RowState implements ITrinaGridState {
         // No s'ha canviat cap cel·la per tant no generem l'event de on row changed
         // i reïniciem el row editing state
         resetRowEditingState();
+
+        (this as TrinaGridStateManager).commitChanges();
         return;
       }
 
@@ -689,6 +691,7 @@ mixin RowState implements ITrinaGridState {
 
       if (result == null || result == true) {
         // Reiniciem el row editing state
+        (this as TrinaGridStateManager).commitChanges();
         resetRowEditingState();
       }
     }
@@ -698,6 +701,13 @@ mixin RowState implements ITrinaGridState {
   /// Retorna true si s'ha canviat alguna cell, false altrament
   bool _compareCells(Map<String, TrinaCell> newCells,  Map<String, dynamic> oldCells){
     for(var entry in newCells.entries) {
+
+      // Si la cel·la és dirty vol dir que s'ha canviat el valor així que retornem true
+      var cell = newCells[entry.key];
+      var isDirty = cell?.isDirty;
+      if (isDirty != null && isDirty)
+        return true;
+
       if(!oldCells.containsKey(entry.key))
         return true;
 
