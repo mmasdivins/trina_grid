@@ -1311,7 +1311,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       _stateManager.columnFooterHeight = s.height;
 
       final double posX =
-          isLTR ? bodyLeftOffset : size.width - s.width - bodyRightOffset;
+          isLTR ? bodyLeftOffset + widthIndexColumn : size.width - s.width - bodyRightOffset;
 
       positionChild(
         _StackName.bodyColumnFooters,
