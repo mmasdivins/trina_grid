@@ -64,14 +64,15 @@ class TrinaGridDefaultExportExcel extends TrinaGridExport {
         else if (value is DateTime) {
           // If it's dateTime we set the width to 20 to ensure it's visible
           sheet.setColumnWidth(indexCol, 20);
-          cell.value = DateTimeCellValue.fromDateTime(value);
           if (column.formatExportExcel == null || column.formatExportExcel == "") {
+            final DateTime dateValue = value as DateTime;
+            cell.value = DateCellValue(year: dateValue.year, month: dateValue.month, day: dateValue.day);
             cell.cellStyle = CellStyle(numberFormat: const CustomDateTimeNumFormat(formatCode: "dd/mm/yyyy"));
           }
           else {
+            cell.value = DateTimeCellValue.fromDateTime(value);
             cell.cellStyle = CellStyle(numberFormat: CustomDateTimeNumFormat(formatCode: column.formatExportExcel!));
           }
-          // row.add(DateTimeCellValue.fromDateTime(value));
         }
         else {
           cell.value = TextCellValue(value != null ? column.formattedValueForDisplay(value) : "");
@@ -121,11 +122,13 @@ class TrinaGridDefaultExportExcel extends TrinaGridExport {
         else if (value is DateTime) {
           // If it's dateTime we set the width to 20 to ensure it's visible
           sheet.setColumnWidth(indexCol, 20);
-          cell.value = DateTimeCellValue.fromDateTime(value);
           if (column.formatExportExcel == null || column.formatExportExcel == "") {
+            final DateTime dateValue = value as DateTime;
+            cell.value = DateCellValue(year: dateValue.year, month: dateValue.month, day: dateValue.day);
             cell.cellStyle = CellStyle(numberFormat: const CustomDateTimeNumFormat(formatCode: "dd/mm/yyyy"));
           }
           else {
+            cell.value = DateTimeCellValue.fromDateTime(value);
             cell.cellStyle = CellStyle(numberFormat: CustomDateTimeNumFormat(formatCode: column.formatExportExcel!));
           }
           // row.add(DateTimeCellValue.fromDateTime(value));
