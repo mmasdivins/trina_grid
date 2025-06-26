@@ -125,7 +125,12 @@ class _TrinaCustomScrollbarState extends State<_TrinaCustomScrollbar> {
 
   // Scroll the content when the user taps on the scrollbar track
   void _scrollToPosition(Offset position) {
+
+    final viewportDimension = widget.controller.position.viewportDimension;
+    final maxScrollExtent = widget.controller.position.maxScrollExtent;
     final arrowButtonSize = widget.trackThickness;
+    final availableScrollArea = viewportDimension - _thumbSize - 2 * arrowButtonSize;
+
     final isVertical = widget.orientation == ScrollbarOrientation.right || widget.orientation == ScrollbarOrientation.left;
 
     // Determine if the tap is outside the thumb bounds
@@ -145,9 +150,12 @@ class _TrinaCustomScrollbarState extends State<_TrinaCustomScrollbar> {
 
     // Proceed with normal track tap behavior if the tap was outside the thumb
     final viewportSize = isVertical ? context.size!.height : context.size!.width;
+    // final tappedFraction = isVertical
+    //     ? position.dy / (viewportSize - _thumbSize)
+    //     : position.dx / (viewportSize - _thumbSize);
     final tappedFraction = isVertical
-        ? position.dy / (viewportSize - _thumbSize)
-        : position.dx / (viewportSize - _thumbSize);
+        ? (position.dy) / (viewportSize)
+        : (position.dx)/ (viewportSize);
 
     final newScrollPosition = tappedFraction * widget.controller.position.maxScrollExtent;
     widget.controller.jumpTo(newScrollPosition);
