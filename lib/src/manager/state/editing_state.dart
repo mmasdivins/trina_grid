@@ -330,22 +330,28 @@ mixin EditingState implements ITrinaGridState {
     currentRow.setState(TrinaRowState.updated);
     cell.value = value;
 
-    final changedEvent = TrinaGridOnChangedEvent(
-      columnIdx: columnIndex(currentColumn)!,
-      column: currentColumn,
-      rowIdx: rowIdx,
-      row: currentRow,
-      value: value,
-      oldValue: oldValue,
-    );
+    // Only call the on changed event if the column is not hide, if it's hide
+    // it will not find the index and will throw an error
+    if (!currentColumn.hide) {
+      final changedEvent = TrinaGridOnChangedEvent(
+        columnIdx: columnIndex(currentColumn)!,
+        column: currentColumn,
+        rowIdx: rowIdx,
+        row: currentRow,
+        value: value,
+        oldValue: oldValue,
+      );
 
-    if (callOnChangedEvent == true && cell.onChanged != null) {
-      cell.onChanged!(changedEvent);
+      if (callOnChangedEvent == true && cell.onChanged != null) {
+        cell.onChanged!(changedEvent);
+      }
+
+      if (callOnChangedEvent == true && onChanged != null) {
+        onChanged!(changedEvent);
+      }
     }
 
-    if (callOnChangedEvent == true && onChanged != null) {
-      onChanged!(changedEvent);
-    }
+
 
     notifyListeners(notify, changeCellValue.hashCode);
   }
