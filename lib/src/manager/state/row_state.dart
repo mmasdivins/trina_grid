@@ -569,6 +569,19 @@ mixin RowState implements ITrinaGridState {
       bool wasEmpty = refRows.isEmpty;
       refRows.insertAll(safetyIndex, rows);
 
+      if (onRowInserted != null) {
+        for(final row in rows) {
+          if (row.state.isAdded) {
+            onRowInserted!(
+              TrinaGridOnRowInsertedEvent(
+                row: row,
+                rowIdx: safetyIndex,
+              ),
+            );
+          }
+        }
+      }
+
       // Initialize the original list without the filter
       TrinaGridStateManager.initializeRows(
         refColumns.originalList,

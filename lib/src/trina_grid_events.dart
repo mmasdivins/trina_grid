@@ -291,6 +291,18 @@ class TrinaGridOnRowSecondaryTapEvent {
   });
 }
 
+/// Argument of the [TrinaGrid.onRowInserted] callback
+/// to receive the event when a row is inserted.
+class TrinaGridOnRowInsertedEvent {
+  final TrinaRow row;
+  final int rowIdx;
+
+  const TrinaGridOnRowInsertedEvent({
+    required this.row,
+    required this.rowIdx,
+  });
+}
+
 /// Argument of [TrinaGrid.onRowEnter] callback
 /// to receive the event of entering the row with the mouse.
 class TrinaGridOnRowEnterEvent {
