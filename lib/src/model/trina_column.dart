@@ -147,6 +147,9 @@ class TrinaColumn {
   /// Change the position of the row by dragging the icon in the cell.
   bool enableRowDrag;
 
+  bool Function(TrinaRow row)? disableRowDragWhen;
+
+
   /// A checkbox appears in the cell of the column.
   bool enableRowChecked;
 
@@ -387,6 +390,7 @@ class TrinaColumn {
     this.filterWidgetDelegate =
         const TrinaFilterColumnWidgetDelegate.textField(),
     this.disableRowCheckboxWhen,
+    this.disableRowDragWhen,
     this.validator,
     this.editCellRenderer,
     this.filterEnterKeyAction,

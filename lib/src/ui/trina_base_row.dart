@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:trina_grid/src/manager/event/trina_grid_cell_not_exist_event.dart';
 import 'package:trina_grid/trina_grid.dart';
 import 'package:trina_grid/src/manager/event/trina_grid_row_hover_event.dart';
 
@@ -51,6 +50,14 @@ class TrinaBaseRow extends StatelessWidget {
     final draggingRows = stateManager.currentSelectingRows.isNotEmpty
         ? stateManager.currentSelectingRows
         : [draggingRow.data];
+
+    if (stateManager.onRowMoveAccept != null) {
+      // Check if we accept to move the rows in that position
+      bool accept = stateManager.onRowMoveAccept!.call(TrinaGridOnRowMoveAcceptEvent(idx: rowIdx, rows: draggingRows));
+      if (!accept) {
+        return;
+      }
+    }
 
     stateManager.eventManager!.addEvent(
       TrinaGridDragRowsEvent(rows: draggingRows, targetIdx: rowIdx),

@@ -321,6 +321,16 @@ class TrinaGridOnRowExitEvent {
   const TrinaGridOnRowExitEvent({this.row, this.rowIdx});
 }
 
+/// Argument of [TrinaGrid.onRowMoveAccept] callback
+/// to receive the rows that we are trying to move and the
+/// position where we are trying to drop it
+class TrinaGridOnRowMoveAcceptEvent {
+  final int idx;
+  final List<TrinaRow> rows;
+
+  const TrinaGridOnRowMoveAcceptEvent({required this.idx, required this.rows});
+}
+
 /// Argument of [TrinaGrid.onRowsMoved] callback
 /// to receive the event of moving the row by dragging it.
 class TrinaGridOnRowsMovedEvent {

@@ -112,7 +112,7 @@ class _TrinaDefaultCellState extends TrinaStateWithChange<TrinaDefaultCell> {
 
     _canRowDrag = update<bool>(
       _canRowDrag,
-      widget.column.enableRowDrag && stateManager.canRowDrag,
+      widget.column.enableRowDrag && stateManager.canRowDrag && (widget.column.disableRowDragWhen?.call(widget.row) ?? true),
     );
 
     _isCurrentCell = update<bool>(

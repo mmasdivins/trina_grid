@@ -97,6 +97,7 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     this.onRowInserted,
     this.onRowEnter,
     this.onRowExit,
+    this.onRowMoveAccept,
     this.onRowsMoved,
     this.onColumnTap,
     this.onActiveCellChanged,
@@ -211,6 +212,9 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
 
   @override
   final TrinaOnRowExitEventCallback? onRowExit;
+
+  @override
+  final TrinaOnRowMoveAcceptEventCallback? onRowMoveAccept;
 
   @override
   final TrinaOnRowsMovedEventCallback? onRowsMoved;
@@ -398,6 +402,7 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     super.onRowInserted,
     super.onRowEnter,
     super.onRowExit,
+    super.onRowMoveAccept,
     super.onRowsMoved,
     super.onColumnTap,
     super.onActiveCellChanged,

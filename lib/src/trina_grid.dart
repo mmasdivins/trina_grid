@@ -57,6 +57,9 @@ typedef TrinaOnRowEnterEventCallback = void Function(
 typedef TrinaOnRowExitEventCallback = void Function(
     TrinaGridOnRowExitEvent event);
 
+typedef TrinaOnRowMoveAcceptEventCallback = bool Function(
+    TrinaGridOnRowMoveAcceptEvent event);
+
 typedef TrinaOnRowsMovedEventCallback = void Function(
     TrinaGridOnRowsMovedEvent event);
 
@@ -144,6 +147,7 @@ class TrinaGrid extends TrinaStatefulWidget {
     this.onRowInserted,
     this.onRowEnter,
     this.onRowExit,
+    this.onRowMoveAccept,
     this.onRowsMoved,
     this.onActiveCellChanged,
     this.onColumnsMoved,
@@ -346,6 +350,12 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// [onRowExit] is called when the mouse exits the row.
   /// {@endtemplate}
   final TrinaOnRowExitEventCallback? onRowExit;
+
+  /// {@template trina_grid_property_onRowMoveAccept}
+  /// [onRowMoveAccept] is called before the row dragged is moved
+  /// if [TrinaColumn.enableRowDrag] is enabled.
+  /// {@endtemplate}
+  final TrinaOnRowMoveAcceptEventCallback? onRowMoveAccept;
 
   /// {@template trina_grid_property_onRowsMoved}
   /// [onRowsMoved] is called after the row is dragged and moved
@@ -762,6 +772,7 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       onRowInserted: widget.onRowInserted,
       onRowEnter: widget.onRowEnter,
       onRowExit: widget.onRowExit,
+      onRowMoveAccept: widget.onRowMoveAccept,
       onRowsMoved: widget.onRowsMoved,
       onColumnTap: widget.onColumnTap,
       onActiveCellChanged: widget.onActiveCellChanged,
