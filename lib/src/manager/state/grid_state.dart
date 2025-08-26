@@ -210,7 +210,7 @@ mixin GridState implements ITrinaGridState {
       var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
       List<TrinaRow> rowsRemove = [];
       for (var row in rows) {
-        if (isRowDefaultFunction(row, this as TrinaGridStateManager)) {
+        if (isRowDefaultFunction(row, this as TrinaGridStateManager, false)) {
           rowsRemove.add(row);
         }
       }
@@ -259,7 +259,7 @@ mixin GridState implements ITrinaGridState {
     return TrinaRow(cells: cells);
   }
 
-  bool _isRowDefault(TrinaRow row, TrinaGridStateManager state){
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager state, bool isInsert){
     for (var element in refColumns) {
       var cell = row.cells[element.field]!;
 

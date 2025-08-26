@@ -558,7 +558,7 @@ mixin RowState implements ITrinaGridState {
       }
 
       for (final row in rows) {
-        if (isRowDefault?.call(row, this as TrinaGridStateManager) ?? false) {
+        if (isRowDefault?.call(row, this as TrinaGridStateManager, true) ?? false) {
           row.setState(TrinaRowState.added);
         }
         else {
@@ -684,14 +684,22 @@ mixin RowState implements ITrinaGridState {
 
     if (_rowEditingState.indexRow != null && _rowEditingState.indexRow != idxRow){
 
-      // Primer comprovem si hi s'ha canviat alguna cel·la
-      if (!_compareCells(_rowEditingState.newRow!.cells, _rowEditingState.cellValues!)) {
-        // No s'ha canviat cap cel·la per tant no generem l'event de on row changed
-        // i reïniciem el row editing state
-        resetRowEditingState();
+      // Primer comprovem si s'ha canviat alguna cel·la
+      // o si és una fila per defecte i tenim la configuració d'afegir múltiples files
+      bool isRowDefaultResult = isRowDefault?.call(_rowEditingState.newRow!, this as TrinaGridStateManager, true) ?? false;
+      bool isAddMultiple = configuration.lastRowKeyDownAction.isAddMultiple;
 
-        (this as TrinaGridStateManager).commitChanges();
-        return;
+      if (!_compareCells(_rowEditingState.newRow!.cells, _rowEditingState.cellValues!)) {
+
+        if (!isRowDefaultResult || !isAddMultiple) {
+          // No s'ha canviat cap cel·la per tant no generem l'event de on row changed
+          // i reïniciem el row editing state
+          resetRowEditingState();
+
+          (this as TrinaGridStateManager).commitChanges();
+          return;
+        }
+
       }
 
       // S'ha canviat la fila seleccionada enviem els canvis si n'hi havia

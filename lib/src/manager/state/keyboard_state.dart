@@ -155,7 +155,7 @@ mixin KeyboardState implements ITrinaGridState {
         && direction.isDown
         && rows.length == (index + 1)) {
 
-      bool isRowDefault = isRowDefaultFunction(currentCell!.row,  this as TrinaGridStateManager);
+      bool isRowDefault = isRowDefaultFunction(currentCell!.row,  this as TrinaGridStateManager, true);
 
       // If row changed notifiy changed row
       // Put index + 1 so it detects it that we are changing the row
@@ -171,12 +171,14 @@ mixin KeyboardState implements ITrinaGridState {
         ));
       }
       else {
-        if (configuration.lastRowKeyDownAction.isAddMultiple){
+        if (configuration.lastRowKeyDownAction.isAddMultiple) {
+
           // Afegim una nova fila al final
           insertRows(
             index + 1,
             [getNewRow()],
           );
+
 
           moveToLeftEdge = true;
           // moveCurrentCell(direction, force: force);
@@ -188,6 +190,7 @@ mixin KeyboardState implements ITrinaGridState {
         }
         else if (configuration.lastRowKeyDownAction.isAddOne){
           if (!isRowDefault){
+
             // Afegim una nova fila al final
             insertRows(
               index + 1,
@@ -209,7 +212,7 @@ mixin KeyboardState implements ITrinaGridState {
         && rows.length == (index + 1)) {
 
       var row = rows.elementAt(index);
-      bool isRowDefault = isRowDefaultFunction(row, this as TrinaGridStateManager);
+      bool isRowDefault = isRowDefaultFunction(row, this as TrinaGridStateManager, false);
 
       // Si tenim definit l'event onLastRowKeyUp no fem cas de la configuració
       // lastRowKeyUpAction
@@ -231,6 +234,7 @@ mixin KeyboardState implements ITrinaGridState {
     else if (mode != TrinaGridMode.readOnly
         && direction.isUp
         && index == 0) {
+
       // If row changed notifiy changed row
       // Put -1 so it detects it that we are changing the row
       await notifyTrackingRow(-1);
@@ -261,7 +265,7 @@ mixin KeyboardState implements ITrinaGridState {
     return;
   }
 
-  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager){
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager, bool isInsert){
     for (var element in refColumns) {
       var cell = row.cells[element.field]!;
 

@@ -82,7 +82,7 @@ typedef OnDeleteRowEventCallBack = void Function(TrinaRow row,
     TrinaGridStateManager stateManager);
 
 typedef IsRowDefaultCallback = bool Function(TrinaRow row,
-    TrinaGridStateManager stateManager);
+    TrinaGridStateManager stateManager, bool isInsert);
 
 typedef CreateFooterCallBack = Widget Function(
     TrinaGridStateManager stateManager);

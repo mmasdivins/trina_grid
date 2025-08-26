@@ -277,14 +277,19 @@ mixin CellState implements ITrinaGridState {
 
     var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
 
+    bool isRowDefaultResult = false;
+    if (oldCell != null) {
+      // SI la fila a la que ens estem movent és més gran que l'anterior vol dir que estem intentant insertar
+      isRowDefaultResult = isRowDefaultFunction(oldCell.row, this as TrinaGridStateManager, (oldRowIdx ?? 0) < rowIdx);
+    }
+
     if (mode != TrinaGridMode.readOnly
         && oldCell != null
         && oldCell.row != currentCell!.row
         && (oldRowIdx ?? 0) > rowIdx
         && configuration.lastRowKeyUpAction.isRemoveOne) {
 
-      bool isRowDefault = isRowDefaultFunction(oldCell.row, this as TrinaGridStateManager);
-      if (isRowDefault){
+      if (isRowDefaultResult){
         removeRows([oldCell.row]);
       }
     }
@@ -306,7 +311,7 @@ mixin CellState implements ITrinaGridState {
     ));
   }
 
-  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager){
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager, bool isInsert){
     for (var element in stateManager.refColumns) {
       var cell = row.cells[element.field]!;
 
@@ -339,7 +344,7 @@ mixin CellState implements ITrinaGridState {
         return cellPosition.rowIdx! > 0;
       case TrinaMoveDirection.down: {
         var isRowDefaultFunction = stateManager.isRowDefault ?? _isRowDefault;
-        bool isRowDefault = isRowDefaultFunction(currentCell!.row, stateManager);
+        bool isRowDefault = isRowDefaultFunction(currentCell!.row, stateManager, true);
         // If we are editing and we try to move down we have to check the configuration of the last
         // key row to know if we allow it or not
         if (!(cellPosition.rowIdx! < refRows.length - 1) && mode != TrinaGridMode.readOnly) {
