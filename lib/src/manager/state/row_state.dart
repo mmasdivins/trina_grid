@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
@@ -6,7 +8,25 @@ class RowEditingState {
   int? indexRow;
   Map<String, dynamic>? cellValues;
   TrinaRow? newRow;
-  bool semaphor = false;
+
+  bool _semaphor = false;
+  Completer<void>? _completer;
+
+  Future<void> waitUntilFree() async {
+    if (!_semaphor) return;
+    return _completer?.future;
+  }
+
+  void startEdit() {
+    _semaphor = true;
+    _completer = Completer<void>();
+  }
+
+  void endEdit() {
+    _semaphor = false;
+    _completer?.complete();
+    _completer = null;
+  }
 }
 
 abstract class IRowState {
@@ -677,9 +697,11 @@ mixin RowState implements ITrinaGridState {
   Future notifyTrackingRow(int idxRow) async {
 
     // If semaphor don't notify
-    if (_rowEditingState.semaphor) {
-      return;
-    }
+    await _rowEditingState.waitUntilFree();
+
+    // if (_rowEditingState.semaphor) {
+    //   return;
+    // }
 
 
     if (_rowEditingState.indexRow != null && _rowEditingState.indexRow != idxRow){
@@ -722,6 +744,12 @@ mixin RowState implements ITrinaGridState {
   /// Retorna true si s'ha canviat alguna cell, false altrament
   bool _compareCells(Map<String, TrinaCell> newCells,  Map<String, dynamic> oldCells){
     for(var entry in newCells.entries) {
+
+      // Només comparem cel·les que siguin editables, si s'ha modificat una cel·la no
+      // editable no fem res.
+      if (entry.value.column.checkReadOnly(entry.value.row, entry.value)) {
+        continue;
+      }
 
       // Si la cel·la és dirty vol dir que s'ha canviat el valor així que retornem true
       var cell = newCells[entry.key];
