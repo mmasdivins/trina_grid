@@ -890,7 +890,14 @@ class TrinaGridActionSearch extends TrinaGridShortcutAction {
 /// Search a string.
 /// {@endtemplate}
 class TrinaGridActionSearchNext extends TrinaGridShortcutAction {
-  const TrinaGridActionSearchNext();
+
+  final Function()? notFound;
+  final Function()? lastFound;
+
+  const TrinaGridActionSearchNext({
+    this.notFound,
+    this.lastFound,
+  });
 
   @override
   void execute({
@@ -906,7 +913,7 @@ class TrinaGridActionSearchNext extends TrinaGridShortcutAction {
       return;
     }
 
-    stateManager.searchNext(notify: true);
+    stateManager.searchNext(notify: true, notFound: notFound, lastFound: lastFound);
 
   }
 }

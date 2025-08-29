@@ -27,6 +27,8 @@ abstract class ISearchState {
 
   void searchText(String? searchText, {
     bool notify = true,
+    Function()? notFound,
+    Function()? lastFound,
   });
 
 
@@ -145,7 +147,11 @@ mixin SearchState implements ITrinaGridState {
   void searchText(
       String? searchText, {
         bool notify = true,
+        Function()? notFound,
+        Function()? lastFound,
       }) {
+    var lastFoundCell = _state._foundCell;
+
     if (_state._searchedText != searchText) {
       // Si ha canviat el text cercat tornem a buscar
       clearFoundCell();
@@ -254,6 +260,14 @@ mixin SearchState implements ITrinaGridState {
           setCurrentCell(foundCell, itemPos.rowIdx);
 
         }
+
+        if (lastFoundCell == _state._foundCell) {
+          // Hem arribat al final
+          lastFound?.call();
+        }
+      }
+      else {
+        notFound?.call();
       }
     }
 
@@ -263,8 +277,10 @@ mixin SearchState implements ITrinaGridState {
   @override
   void searchNext({
     bool notify = true,
+    Function()? notFound,
+    Function()? lastFound,
   }) {
-    searchText(searchedText, notify: notify);
+    searchText(searchedText, notify: notify, notFound: notFound, lastFound: lastFound);
     notifyListeners(notify, searchNext.hashCode);
   }
 

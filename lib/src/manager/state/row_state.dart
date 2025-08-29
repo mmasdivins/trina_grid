@@ -747,7 +747,7 @@ mixin RowState implements ITrinaGridState {
 
       // Només comparem cel·les que siguin editables, si s'ha modificat una cel·la no
       // editable no fem res.
-      if (entry.value.column.checkReadOnly(entry.value.row, entry.value)) {
+      if (entry.value.initialized && entry.value.column.checkReadOnly(entry.value.row, entry.value)) {
         continue;
       }
 
