@@ -84,12 +84,12 @@ void main() {
         tempList = fakeFetchedRows.where(filter!).toList();
       }
 
-      if (request.sortColumn != null && !request.sortColumn!.sort.isNone) {
+      if (request.sortColumn != null && !request.sortColumn!.sort.sortOrder.isNone) {
         tempList = [...tempList];
 
         tempList.sort((a, b) {
-          final sortA = request.sortColumn!.sort.isAscending ? a : b;
-          final sortB = request.sortColumn!.sort.isAscending ? b : a;
+          final sortA = request.sortColumn!.sort.sortOrder.isAscending ? a : b;
+          final sortB = request.sortColumn!.sort.sortOrder.isAscending ? b : a;
 
           return request.sortColumn!.type.compare(
             sortA.cells[request.sortColumn!.field]!.valueForSorting,

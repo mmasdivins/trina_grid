@@ -453,7 +453,7 @@ void main() {
         field: 'field',
         readOnly: readonly,
         type: TrinaColumnType.text(),
-        enableEditingMode: enableEditingMode,
+        enableEditingMode: (_) => enableEditingMode,
       );
     }
 

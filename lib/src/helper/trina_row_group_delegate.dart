@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:trina_grid/trina_grid.dart';
+import 'package:flutter/material.dart';
 
 /// {@template trina_row_group_delegate_type}
 /// Determines the grouping type of the row.
@@ -32,6 +33,9 @@ typedef TrinaRowGroupOnToggled = void Function({
   required TrinaRow row,
   required bool expanded,
 });
+
+
+
 
 /// Abstract class that defines a base interface for grouping rows.
 ///
@@ -233,6 +237,8 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
   /// Column to group by.
   final List<TrinaColumn> columns;
 
+  final TrinaGridStateManager stateManager;
+
   /// {@macro trina_row_group_delegate_showFirstExpandableIon}
   @override
   final bool showFirstExpandableIcon;
@@ -246,6 +252,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
   final bool enableCompactCount;
 
   TrinaRowGroupByColumnDelegate({
+    required this.stateManager,
     required this.columns,
     this.showFirstExpandableIcon = false,
     this.showCount = true,
@@ -321,6 +328,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
         ];
 
         final row = _createRowGroup(
+          groupRows: currentIter.current.value,
           groupKeys: groupKeys,
           sortIdx: ++sortIdx,
           sampleRow: currentIter.current.value.first,
@@ -429,6 +437,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
   }
 
   TrinaRow _createRowGroup({
+    required List<TrinaRow> groupRows,
     required List<String> groupKeys,
     required int sortIdx,
     required TrinaRow sampleRow,
@@ -446,8 +455,22 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
       ),
     );
 
+
+
     for (var e in sampleRow.cells.entries) {
+
+      var colGroup = stateManager.refColumns.firstWhereOrNull((c) => c.field == e.key);
+
       cells[e.key] = TrinaCell(
+        renderer: colGroup?.groupRenderer != null ? (rendererContext) {
+          return colGroup!.groupRenderer!.call(
+              TrinaColumnGroupRendererContext(
+                column: rendererContext.column,
+                groupRows: groupRows,
+                stateManager: rendererContext.stateManager,
+              )
+          ) ?? Container();
+        } : null,
         value: visibleColumns.firstWhereOrNull((c) => c.field == e.key) != null
             ? e.value.value
             : null,

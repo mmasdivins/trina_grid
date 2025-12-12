@@ -10,6 +10,10 @@ typedef TrinaColumnRenderer = Widget Function(
 typedef TrinaColumnFooterRenderer = Widget Function(
     TrinaColumnFooterRendererContext context);
 
+/// Renderer for the column of the grouped row
+typedef TrinaColumnGroupRenderer = Widget Function(
+    TrinaColumnGroupRendererContext context);
+
 /// Renderer for customizing the column title widget
 typedef TrinaColumnTitleRenderer = Widget Function(
     TrinaColumnTitleRendererContext rendererContext);
@@ -136,6 +140,18 @@ class TrinaColumn {
   /// },
   /// ```
   TrinaColumnFooterRenderer? footerRenderer;
+
+  /// A callback that returns a widget
+  /// for expressing the widget for the column of the row group.
+  ///
+  /// ```dart
+  /// groupRenderer: (rendererContext) {
+  ///   return Container(
+  ///     child: Text("Test"),
+  ///   );
+  /// },
+  /// ```
+  TrinaColumnGroupRenderer? groupRenderer;
 
   /// If [TrinaAutoSizeMode] is enabled,
   /// column autoscaling is ignored if [suppressedAutoSize] is true.
@@ -355,6 +371,7 @@ class TrinaColumn {
     this.backgroundColor,
     this.renderer,
     this.footerRenderer,
+    this.groupRenderer,
     this.titleRenderer,
     this.suppressedAutoSize = false,
     this.enableColumnDrag = true,
@@ -627,6 +644,23 @@ class TrinaColumnFooterRendererContext {
     required this.stateManager,
   });
 }
+
+
+/// Context provided to the group renderer
+class TrinaColumnGroupRendererContext {
+  final TrinaColumn column;
+  final List<TrinaRow> groupRows;
+
+  final TrinaGridStateManager stateManager;
+
+  TrinaColumnGroupRendererContext({
+    required this.column,
+    required this.groupRows,
+    required this.stateManager,
+  });
+}
+
+
 
 /// Context provided to the titleRenderer function
 class TrinaColumnTitleRendererContext {

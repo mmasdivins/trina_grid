@@ -181,6 +181,7 @@ class _RowGroupScreenState extends State<RowGroupScreen> {
             stateManagerA = e.stateManager;
             e.stateManager.setRowGroup(
               TrinaRowGroupByColumnDelegate(
+                stateManager: stateManagerA,
                 columns: [
                   columnsA[0],
                   columnsA[1],

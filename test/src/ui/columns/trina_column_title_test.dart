@@ -696,7 +696,7 @@ void main() {
         title: 'column title',
         field: 'column_field_name',
         type: TrinaColumnType.text(),
-        sort: TrinaColumnSort.ascending,
+        sort: TrinaColumnSorting(sortOrder: TrinaColumnSort.ascending, sortPosition: null),
       ),
     ).test(
       'If columnAscendingIcon is set, the set icon should appear',
@@ -726,7 +726,7 @@ void main() {
         title: 'column title',
         field: 'column_field_name',
         type: TrinaColumnType.text(),
-        sort: TrinaColumnSort.descending,
+        sort: TrinaColumnSorting(sortOrder: TrinaColumnSort.descending, sortPosition: null),
       ),
     ).test(
       'If columnDescendingIcon is set, the set icon should appear',

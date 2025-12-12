@@ -223,7 +223,7 @@ void main() {
             title: 'column',
             field: 'column',
             type: TrinaColumnType.text(),
-            enableEditingMode: enableEditingMode,
+            enableEditingMode: (_) => enableEditingMode,
           ),
         ];
 
