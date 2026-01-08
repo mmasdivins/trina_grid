@@ -249,6 +249,10 @@ mixin SearchState implements ITrinaGridState {
           if (colDirection == TrinaMoveDirection.left && columnIdx != null) {
             columnIdx = columnIdx + 1;
           }
+          else if (colDirection == TrinaMoveDirection.right && columnIdx != null && columnIdx > 0) {
+            columnIdx = columnIdx -1;
+          }
+
           moveScrollByColumn(colDirection, columnIdx);
           moveScrollByRow(rowDirection, itemPos.rowIdx);
           setFoundCellPosition(itemPos);
