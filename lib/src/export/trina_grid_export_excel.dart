@@ -38,7 +38,22 @@ class TrinaGridDefaultExportExcel extends TrinaGridExport {
       int indexCol = 0;
       // Order is important, so we iterate over columns
       for (TrinaColumn column in trinaColumns) {
-        dynamic value = rowExport.cells[column.field]?.value;
+
+        dynamic value;
+
+        if (rowExport.type.isGroup) {
+          value = column.groupExportValue?.call(
+              TrinaColumnGroupRendererContext(
+                  column: column,
+                  groupRows: (rowExport.type as TrinaRowTypeGroup).children,
+                  stateManager: stateManager,
+              )
+          ) ?? rowExport.cells[column.field]?.value;
+        }
+        else {
+          value = rowExport.cells[column.field]?.value;
+        }
+
         var cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: indexCol, rowIndex: indexRow));
 
         if (value != null && value is String) {
@@ -86,6 +101,8 @@ class TrinaGridDefaultExportExcel extends TrinaGridExport {
       indexRow++;
 
     }
+
+
 
     // Export the footer if it exists
     if (trinaColumns.where((x) => x.footerRenderer != null).isNotEmpty) {

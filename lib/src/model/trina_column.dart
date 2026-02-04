@@ -268,6 +268,9 @@ class TrinaColumn {
   /// Value of the footer if it's exported and the footer renderer is not null
   dynamic Function(TrinaColumnFooterRendererContext rendererContext)? footerExportValue;
 
+  /// Value of the group if it's exported and the group renderer is not null
+  dynamic Function(TrinaColumnGroupRendererContext rendererContext)? groupExportValue;
+
   /// The widget of the filter column, this can be customized with the multiple constructors, defaults to a [TrinaFilterColumnWidgetDelegate.initial()]
   TrinaFilterColumnWidgetDelegate? filterWidgetDelegate;
 
@@ -402,6 +405,7 @@ class TrinaColumn {
     this.exportable = true,
     this.formatExportExcel,
     this.footerExportValue,
+    this.groupExportValue,
     this.backgroundGradient,
     this.filterWidgetBuilder,
     this.filterWidgetDelegate =
