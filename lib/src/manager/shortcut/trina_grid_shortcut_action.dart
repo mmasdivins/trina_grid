@@ -413,7 +413,12 @@ class TrinaGridActionDefaultEnterKey extends TrinaGridShortcutAction {
             }
           });
         }
-      } else {
+      }
+      else if (stateManager.mode.isReadOnly) {
+        // If grid in read only we just move the cell
+        _moveCell(keyEvent, stateManager);
+      }
+      else {
         stateManager.toggleEditing(notify: false);
         // On change editing after enter, select all text in cell
         WidgetsBinding.instance.addPostFrameCallback((_) {
