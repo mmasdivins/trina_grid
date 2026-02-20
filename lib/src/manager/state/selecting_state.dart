@@ -727,6 +727,22 @@ mixin SelectingState implements ITrinaGridState {
   }
 
   String _selectingTextFromCurrentCell() {
+    // Primer de tot mirem si és una cel·la de group, si ho és mirem si
+    // té definit una funció d'exportació, si la té retornem aquest valor
+    // si no retornem el valor de la cel·la. Més endavant és podria crear
+    // una funció propia de la columna que pugués sobre escriure el copy
+    // de la cel·la
+    final  r = currentCell!.row;
+    final  c = currentCell!.column;
+    if (r.type is TrinaRowTypeGroup) {
+      if (c.groupExportValue != null) {
+        return c.groupExportValue?.call(TrinaColumnGroupRendererContext(
+          stateManager: this as TrinaGridStateManager,
+          column: c,
+          groupRows: (r.type as TrinaRowTypeGroup).children,
+        ));
+      }
+    }
     return currentCell!.value.toString();
   }
 
