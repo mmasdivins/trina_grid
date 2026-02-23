@@ -157,9 +157,10 @@ mixin KeyboardState implements ITrinaGridState {
 
       bool isRowDefault = isRowDefaultFunction(currentCell!.row,  this as TrinaGridStateManager, true);
 
-      // If row changed notifiy changed row
+      /// We do not notify the tracking row since we call the setCurrentCell
+      /// which will notify the row
       // Put index + 1 so it detects it that we are changing the row
-      await notifyTrackingRow(index + 1);
+      // await notifyTrackingRow(index + 1);
 
       // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
       // lastRowKeyDownAction
@@ -237,6 +238,8 @@ mixin KeyboardState implements ITrinaGridState {
 
       // If row changed notifiy changed row
       // Put -1 so it detects it that we are changing the row
+      // we have to put it here because the cell won't move since it's
+      // on the top of the grid and it won't notify that the row changed
       await notifyTrackingRow(-1);
     }
 
