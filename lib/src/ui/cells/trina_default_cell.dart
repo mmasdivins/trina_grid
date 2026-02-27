@@ -101,9 +101,9 @@ class _TrinaDefaultCellState extends TrinaStateWithChange<TrinaDefaultCell> {
 
   @override
   void updateState(TrinaNotifierEvent event) {
-    final disable =
-        widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
-    if (disable) return;
+    // final disable =
+    //     widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
+    // if (disable) return;
 
     _hasFocus = update<bool>(
       _hasFocus,
@@ -386,12 +386,12 @@ class CheckboxSelectionWidgetState
 
   @override
   void updateState(TrinaNotifierEvent event) {
-    final disable =
-        widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
-    if (disable) {
-      _checked = _pureValue;
-      return;
-    }
+    // final disable =
+    //     widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
+    // if (disable) {
+    //   _checked = _pureValue;
+    //   return;
+    // }
 
     _tristate = update<bool>(
       _tristate,
