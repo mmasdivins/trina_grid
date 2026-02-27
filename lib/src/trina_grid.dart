@@ -1323,7 +1323,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
         _StackName.bodyColumnFooters,
         BoxConstraints.loose(
           Size(
-            _safe(size.width - bodyLeftOffset - bodyRightOffset),
+            _safe(size.width - bodyLeftOffset - bodyRightOffset - cornerOffset),
             size.height,
           ),
         ),
@@ -1331,8 +1331,12 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
 
       _stateManager.columnFooterHeight = s.height;
 
+      // final double posX =
+      //     isLTR ? bodyLeftOffset + widthIndexColumn : size.width - s.width - bodyRightOffset;
+
       final double posX =
-          isLTR ? bodyLeftOffset + widthIndexColumn : size.width - s.width - bodyRightOffset;
+      isLTR ? bodyLeftOffset + cornerOffset
+          : size.width - s.width - bodyRightOffset;
 
       positionChild(
         _StackName.bodyColumnFooters,
