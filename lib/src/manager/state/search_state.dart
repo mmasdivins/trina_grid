@@ -143,6 +143,11 @@ mixin SearchState implements ITrinaGridState {
     notifyListeners(notify, setFoundCell.hashCode);
   }
 
+  String _sanitizeSearchText(String text) {
+    // Remove control characters (includes \r, \n, \t, and other non-printable chars)
+    return text.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '').trim();
+  }
+
   @override
   void searchText(
       String? searchText, {
@@ -151,6 +156,10 @@ mixin SearchState implements ITrinaGridState {
         Function()? lastFound,
       }) {
     var lastFoundCell = _state._foundCell;
+
+    if (searchText != "" && searchText != null) {
+      searchText = _sanitizeSearchText(searchText);
+    }
 
     if (_state._searchedText != searchText) {
       // Si ha canviat el text cercat tornem a buscar
@@ -219,6 +228,10 @@ mixin SearchState implements ITrinaGridState {
           }
           else {
             String? value = cell?.value?.toString().toUpperCase();
+            if (value != "" && value != null) {
+              value = _sanitizeSearchText(value);
+            }
+
             String? compare = searchText.toUpperCase();
             if ((value?.contains(compare) ?? false)) {
               _state._foundCell = cell;
