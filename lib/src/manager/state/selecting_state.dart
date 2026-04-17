@@ -736,11 +736,13 @@ mixin SelectingState implements ITrinaGridState {
     final  c = currentCell!.column;
     if (r.type is TrinaRowTypeGroup) {
       if (c.groupExportValue != null) {
-        return c.groupExportValue?.call(TrinaColumnGroupRendererContext(
+        var exportValue = c.groupExportValue?.call(TrinaColumnGroupRendererContext(
           stateManager: this as TrinaGridStateManager,
           column: c,
           groupRows: (r.type as TrinaRowTypeGroup).children,
         ));
+
+        return exportValue?.toString() ?? "";
       }
     }
     return currentCell!.value.toString();
