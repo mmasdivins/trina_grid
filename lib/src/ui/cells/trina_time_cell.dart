@@ -146,7 +146,7 @@ class _PopupContent extends StatelessWidget {
               onEnterKeyEvent: onEnterKeyEvent,
               onChanged: onChanged,
               onValidationChanged: (isValid) =>
-                  selectedTimeIsValid.value = isValid,
+              selectedTimeIsValid.value = isValid,
               minTime: minTime,
               maxTime: maxTime,
               invalidHourText: localeText.timePickerInvalidHourMessage,

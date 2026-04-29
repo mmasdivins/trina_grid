@@ -47,9 +47,9 @@ abstract class ISelectingState {
   /// When [TrinaGrid.mode] is [TrinaGridMode.multiSelect]
   /// Coerced to [TrinaGridSelectingMode.row] regardless of [selectingMode] value.
   void setSelectingMode(
-    TrinaGridSelectingMode selectingMode, {
-    bool notify = true,
-  });
+      TrinaGridSelectingMode selectingMode, {
+        bool notify = true,
+      });
 
   void setAllCurrentSelecting();
 
@@ -78,6 +78,9 @@ abstract class ISelectingState {
 
   /// Select or unselect a row.
   void toggleSelectingRow(int rowIdx, {bool notify = true});
+
+  /// Selects always the row and unselects the other rows
+  void toggleMultiSelectRow(int rowIdx, {bool notify = true});
 
   bool isSelectingInteraction();
 
@@ -143,6 +146,7 @@ mixin SelectingState implements ITrinaGridState {
           positions.addAll(_selectingCellsHorizontally());
           break;
         case TrinaGridSelectingMode.row:
+        case TrinaGridSelectingMode.rowCell:
         case TrinaGridSelectingMode.none:
           break;
       }
@@ -164,8 +168,8 @@ mixin SelectingState implements ITrinaGridState {
           );
           // Avoid duplicates
           if (!positions.any(
-            (p) =>
-                p.rowIdx == selectingPos.rowIdx &&
+                (p) =>
+            p.rowIdx == selectingPos.rowIdx &&
                 p.field == selectingPos.field,
           )) {
             positions.add(selectingPos);
@@ -204,8 +208,8 @@ mixin SelectingState implements ITrinaGridState {
     // Check for individually selected cells (Ctrl+Click mode)
     final bool fromIndividualCells =
         configuration.enableCtrlClickMultiSelect &&
-        selectingMode.isCell &&
-        _state._individuallySelectedCells.isNotEmpty;
+            selectingMode.isCell &&
+            _state._individuallySelectedCells.isNotEmpty;
 
     final bool fromCurrentCell = currentCellPosition != null;
 
@@ -253,13 +257,15 @@ mixin SelectingState implements ITrinaGridState {
 
   @override
   void setSelectingMode(
-    TrinaGridSelectingMode selectingMode, {
-    bool notify = true,
-  }) {
+      TrinaGridSelectingMode selectingMode, {
+        bool notify = true,
+      }) {
     if (mode.isSingleSelectMode) {
       selectingMode = TrinaGridSelectingMode.none;
     } else if (mode.isMultiSelectMode) {
       selectingMode = TrinaGridSelectingMode.row;
+    } else if (mode.isMultiSelectAlwaysOne) {
+      selectingMode = TrinaGridSelectingMode.rowCell;
     }
 
     if (_state._selectingMode == selectingMode) {
@@ -294,6 +300,7 @@ mixin SelectingState implements ITrinaGridState {
         );
         break;
       case TrinaGridSelectingMode.row:
+      case TrinaGridSelectingMode.rowCell:
         if (currentCell == null) {
           _setFistCellAsCurrent();
         }
@@ -333,7 +340,7 @@ mixin SelectingState implements ITrinaGridState {
         ? null
         : cellPosition;
 
-    if (currentSelectingPosition != null && selectingMode.isRow) {
+    if (currentSelectingPosition != null && (selectingMode.isRow || selectingMode.isRowCell)) {
       setCurrentSelectingRowsByRange(
         currentRowIdx,
         currentSelectingPosition!.rowIdx,
@@ -346,9 +353,9 @@ mixin SelectingState implements ITrinaGridState {
 
   @override
   void setCurrentSelectingPositionByCellKey(
-    Key? cellKey, {
-    bool notify = true,
-  }) {
+      Key? cellKey, {
+        bool notify = true,
+      }) {
     if (cellKey == null) {
       return;
     }
@@ -367,25 +374,25 @@ mixin SelectingState implements ITrinaGridState {
 
     final double gridBodyOffsetDy =
         gridGlobalOffset!.dy +
-        gridBorderWidth +
-        headerHeight +
-        columnGroupHeight +
-        columnHeight +
-        columnFilterHeight;
+            gridBorderWidth +
+            headerHeight +
+            columnGroupHeight +
+            columnHeight +
+            columnFilterHeight;
 
     double currentCellOffsetDy =
         (currentRowIdx! * rowTotalHeight) +
-        gridBodyOffsetDy -
-        scroll.vertical!.offset;
+            gridBodyOffsetDy -
+            scroll.vertical!.offset;
 
     if (gridBodyOffsetDy > offset!.dy) {
       return;
     }
 
     int rowIdx =
-        (((currentCellOffsetDy - offset.dy) / rowTotalHeight).ceil() -
-                currentRowIdx!)
-            .abs();
+    (((currentCellOffsetDy - offset.dy) / rowTotalHeight).ceil() -
+        currentRowIdx!)
+        .abs();
 
     int? columnIdx;
 
@@ -424,11 +431,11 @@ mixin SelectingState implements ITrinaGridState {
 
   @override
   void setCurrentSelectingRowsByRange(
-    int? from,
-    int? to, {
-    bool notify = true,
-  }) {
-    if (!selectingMode.isRow) {
+      int? from,
+      int? to, {
+        bool notify = true,
+      }) {
+    if (!selectingMode.isRow && !selectingMode.isRowCell) {
       return;
     }
 
@@ -472,7 +479,7 @@ mixin SelectingState implements ITrinaGridState {
 
   @override
   void toggleSelectingRow(int? rowIdx, {notify = true}) {
-    if (!selectingMode.isRow) {
+    if (!selectingMode.isRow && !selectingMode.isRowCell) {
       return;
     }
 
@@ -493,12 +500,37 @@ mixin SelectingState implements ITrinaGridState {
     notifyListeners(notify, toggleSelectingRow.hashCode);
   }
 
+  @override
+  void toggleMultiSelectRow(int rowIdx, {bool notify = true}) {
+    if (!selectingMode.isRow && !selectingMode.isRowCell) {
+      return;
+    }
+
+    if (rowIdx == null || rowIdx < 0 || rowIdx > refRows.length - 1) {
+      return;
+    }
+
+    final TrinaRow row = refRows[rowIdx];
+
+    final keys = Set.from(currentSelectingRows.map((e) => e.key));
+
+    // We delete the rows that are not the selected one
+    currentSelectingRows.removeWhere((element) => element.key != row.key);
+
+    if (!keys.contains(row.key)) {
+      // If it does not have the row we add it to the selecting list
+      currentSelectingRows.add(row);
+    }
+
+    notifyListeners(notify, toggleMultiSelectRow.hashCode);
+  }
+
   /// Toggle individual cell in multi-select mode.
   /// Used for Ctrl+Click functionality.
   void toggleSelectingCell(
-    TrinaGridCellPosition cellPosition, {
-    bool notify = true,
-  }) {
+      TrinaGridCellPosition cellPosition, {
+        bool notify = true,
+      }) {
     if (!configuration.enableCtrlClickMultiSelect) {
       return;
     }
@@ -574,7 +606,7 @@ mixin SelectingState implements ITrinaGridState {
       for (final position in currentSelectingPositionList) {
         // Convert field name to column index
         final column = refColumns.firstWhereOrNull(
-          (col) => col.field == position.field,
+              (col) => col.field == position.field,
         );
         if (column == null) continue;
 
@@ -611,14 +643,14 @@ mixin SelectingState implements ITrinaGridState {
   @override
   bool isSelectedRow(Key? rowKey) {
     if (rowKey == null ||
-        !selectingMode.isRow ||
+        (!selectingMode.isRow && !selectingMode.isRowCell) ||
         currentSelectingRows.isEmpty) {
       return false;
     }
 
     return currentSelectingRows.firstWhereOrNull(
           (element) => element.key == rowKey,
-        ) !=
+    ) !=
         null;
   }
 
@@ -654,15 +686,15 @@ mixin SelectingState implements ITrinaGridState {
     if (selectingMode.isCell) {
       final bool inRangeOfRows =
           min(
-                currentCellPosition!.rowIdx as num,
-                currentSelectingPosition!.rowIdx as num,
-              ) <=
+            currentCellPosition!.rowIdx as num,
+            currentSelectingPosition!.rowIdx as num,
+          ) <=
               rowIdx &&
-          rowIdx <=
-              max(
-                currentCellPosition!.rowIdx!,
-                currentSelectingPosition!.rowIdx!,
-              );
+              rowIdx <=
+                  max(
+                    currentCellPosition!.rowIdx!,
+                    currentSelectingPosition!.rowIdx!,
+                  );
 
       if (inRangeOfRows == false) {
         return false;
@@ -676,15 +708,15 @@ mixin SelectingState implements ITrinaGridState {
 
       final bool inRangeOfColumns =
           min(
-                currentCellPosition!.columnIdx as num,
-                currentSelectingPosition!.columnIdx as num,
-              ) <=
+            currentCellPosition!.columnIdx as num,
+            currentSelectingPosition!.columnIdx as num,
+          ) <=
               columnIdx &&
-          columnIdx <=
-              max(
-                currentCellPosition!.columnIdx!,
-                currentSelectingPosition!.columnIdx!,
-              );
+              columnIdx <=
+                  max(
+                    currentCellPosition!.columnIdx!,
+                    currentSelectingPosition!.columnIdx!,
+                  );
 
       if (inRangeOfColumns == false) {
         return false;
@@ -742,6 +774,8 @@ mixin SelectingState implements ITrinaGridState {
 
       return false;
     } else if (selectingMode.isRow) {
+      return false;
+    } else if (selectingMode.isRowCell) {
       return false;
     } else {
       throw Exception('selectingMode is not handled');
@@ -806,9 +840,9 @@ mixin SelectingState implements ITrinaGridState {
 
     final bool firstCurrent =
         currentCellPosition!.rowIdx! < currentSelectingPosition!.rowIdx! ||
-        (currentCellPosition!.rowIdx! == currentSelectingPosition!.rowIdx! &&
-            currentCellPosition!.columnIdx! <=
-                currentSelectingPosition!.columnIdx!);
+            (currentCellPosition!.rowIdx! == currentSelectingPosition!.rowIdx! &&
+                currentCellPosition!.columnIdx! <=
+                    currentSelectingPosition!.columnIdx!);
 
     TrinaGridCellPosition startCell = firstCurrent
         ? currentCellPosition!
@@ -868,6 +902,24 @@ mixin SelectingState implements ITrinaGridState {
   }
 
   String _selectingTextFromCurrentCell() {
+    // Primer de tot mirem si és una cel·la de group, si ho és mirem si
+    // té definit una funció d'exportació, si la té retornem aquest valor
+    // si no retornem el valor de la cel·la. Més endavant és podria crear
+    // una funció propia de la columna que pugués sobre escriure el copy
+    // de la cel·la
+    final  r = currentCell!.row;
+    final  c = currentCell!.column;
+    if (r.type is TrinaRowTypeGroup) {
+      if (c.groupExportValue != null) {
+        var exportValue = c.groupExportValue?.call(TrinaColumnGroupRendererContext(
+          stateManager: this as TrinaGridStateManager,
+          column: c,
+          groupRows: (r.type as TrinaRowTypeGroup).children,
+        ));
+
+        return exportValue?.toString() ?? "";
+      }
+    }
     return currentCell!.value.toString();
   }
 
@@ -899,7 +951,7 @@ mixin SelectingState implements ITrinaGridState {
         );
         // Check if current cell is not already in the list
         if (!allPositions.any(
-          (p) => p.rowIdx == currentPos.rowIdx && p.field == currentPos.field,
+              (p) => p.rowIdx == currentPos.rowIdx && p.field == currentPos.field,
         )) {
           allPositions.add(currentPos);
         }

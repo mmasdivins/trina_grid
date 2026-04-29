@@ -24,6 +24,9 @@ export './src/manager/event/trina_grid_drag_rows_event.dart';
 export './src/manager/event/trina_grid_event.dart';
 export './src/manager/event/trina_grid_scroll_update_event.dart';
 export './src/manager/event/trina_grid_set_column_filter_event.dart';
+export './src/manager/event/trina_grid_change_lazy_page_event.dart';
+export './src/manager/event/trina_grid_cell_not_exist_event.dart';
+export './src/manager/event/trina_grid_error_event.dart';
 export './src/manager/trina_change_notifier.dart';
 export './src/manager/trina_change_notifier_filter.dart';
 export './src/manager/trina_grid_event_manager.dart';
@@ -59,6 +62,7 @@ export './src/model/trina_column_type_extension.dart';
 export 'src/model/column_types/trina_column_type_select.dart';
 export 'src/model/column_types/trina_column_type_time.dart';
 export './src/model/trina_column_type_with_number_format.dart';
+export './src/model/trina_column_type_with_custom_format.dart';
 export 'src/model/column_types/trina_column_type_boolean.dart';
 export 'src/model/column_types/trina_column_type_currency.dart';
 export 'src/model/column_types/trina_column_type_date.dart';
@@ -70,11 +74,13 @@ export 'src/model/column_types/trina_column_type_custom.dart';
 export 'src/model/trina_column_type_has_format.dart';
 export 'src/model/trina_dropdown_menu_filter.dart';
 export 'src/ui/widgets/trina_dropdown_menu.dart' show TrinaDropdownMenuVariant;
+export 'src/model/trina_column_sorting.dart';
 
 // Export grid export functionality
 export './src/export/trina_grid_export.dart';
 export './src/export/trina_grid_export_pdf.dart';
 export './src/export/trina_grid_export_csv.dart';
 export './src/export/trina_grid_export_json.dart';
+export './src/export/trina_grid_export_excel.dart';
 // Export pdf package types needed for export
 export 'package:pdf/pdf.dart' show PdfPageFormat;

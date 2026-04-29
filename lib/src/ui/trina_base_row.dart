@@ -26,7 +26,7 @@ class TrinaBaseRow extends StatelessWidget {
 
   bool _checkSameDragRows(DragTargetDetails<TrinaRow> draggingRow) {
     final List<TrinaRow> selectedRows =
-        stateManager.currentSelectingRows.isNotEmpty
+    stateManager.currentSelectingRows.isNotEmpty
         ? stateManager.currentSelectingRows
         : [draggingRow.data];
 
@@ -51,12 +51,25 @@ class TrinaBaseRow extends StatelessWidget {
         ? stateManager.dragRows
         : [draggingRow.data];
 
+    if (stateManager.onRowMoveAccept != null) {
+      // Check if we accept to move the rows in that position
+      bool accept = stateManager.onRowMoveAccept!.call(TrinaGridOnRowMoveAcceptEvent(idx: rowIdx, rows: draggingRows));
+      if (!accept) {
+        return;
+      }
+    }
+
     stateManager.eventManager!.addEvent(
       TrinaGridDragRowsEvent(rows: draggingRows, targetIdx: rowIdx),
     );
   }
 
   TrinaVisibilityLayoutId _makeCell(TrinaColumn column) {
+
+    if (row.cells[column.field] == null) {
+      stateManager.eventManager?.addEvent(TrinaGridCellNotExistEvent(column: column.field));
+    }
+
     final cell = row.cells[column.field] ??= TrinaCell(
       value: column.type.defaultValue,
     );
@@ -75,10 +88,10 @@ class TrinaBaseRow extends StatelessWidget {
 
   // BuildContext, List<TrinaRow<dynamic>?>,
   Widget _dragTargetBuilder(
-    BuildContext dragContext,
-    List<TrinaRow<dynamic>?> candidate,
-    List<dynamic> rejected,
-  ) {
+      BuildContext dragContext,
+      List<TrinaRow<dynamic>?> candidate,
+      List<dynamic> rejected,
+      ) {
     return _RowContainerWidget(
       stateManager: stateManager,
       rowIdx: rowIdx,
@@ -87,27 +100,27 @@ class TrinaBaseRow extends StatelessWidget {
       key: ValueKey('rowContainer_${row.key}'),
       child: visibilityLayout
           ? TrinaVisibilityLayout(
-              key: ValueKey('rowContainer_${row.key}_row'),
-              delegate: _RowCellsLayoutDelegate(
-                stateManager: stateManager,
-                columns: columns,
-                textDirection: stateManager.textDirection,
-                rowIdx: rowIdx,
-              ),
-              scrollController: stateManager.scroll.bodyRowsHorizontal!,
-              initialViewportDimension: MediaQuery.of(dragContext).size.width,
-              children: columns.map(_makeCell).toList(growable: false),
-            )
+        key: ValueKey('rowContainer_${row.key}_row'),
+        delegate: _RowCellsLayoutDelegate(
+          stateManager: stateManager,
+          columns: columns,
+          textDirection: stateManager.textDirection,
+          rowIdx: rowIdx,
+        ),
+        scrollController: stateManager.scroll.bodyRowsHorizontal!,
+        initialViewportDimension: MediaQuery.of(dragContext).size.width,
+        children: columns.map(_makeCell).toList(growable: false),
+      )
           : CustomMultiChildLayout(
-              key: ValueKey('rowContainer_${row.key}_row'),
-              delegate: _RowCellsLayoutDelegate(
-                stateManager: stateManager,
-                columns: columns,
-                textDirection: stateManager.textDirection,
-                rowIdx: rowIdx,
-              ),
-              children: columns.map(_makeCell).toList(growable: false),
-            ),
+        key: ValueKey('rowContainer_${row.key}_row'),
+        delegate: _RowCellsLayoutDelegate(
+          stateManager: stateManager,
+          columns: columns,
+          textDirection: stateManager.textDirection,
+          rowIdx: rowIdx,
+        ),
+        children: columns.map(_makeCell).toList(growable: false),
+      ),
     );
   }
 
@@ -159,7 +172,7 @@ class _RowCellsLayoutDelegate extends MultiChildLayoutDelegate {
   Size getSize(BoxConstraints constraints) {
     final double width = columns.fold(
       0,
-      (previousValue, element) => previousValue + element.width,
+          (previousValue, element) => previousValue + element.width,
     );
 
     // Use row-specific height instead of global height
@@ -187,8 +200,8 @@ class _RowCellsLayoutDelegate extends MultiChildLayoutDelegate {
             width: width,
             height: stateManager.style.enableCellBorderHorizontal
                 ? rowHeight
-                // we add `cellHorizontalBorderWidth` to the row height so the cells are not
-                // vertically-separated by the disabled horizontal border
+            // we add `cellHorizontalBorderWidth` to the row height so the cells are not
+            // vertically-separated by the disabled horizontal border
                 : rowHeight + stateManager.style.cellHorizontalBorderWidth,
           ),
         );
@@ -245,8 +258,8 @@ class _RowContainerWidgetState extends TrinaStateWithChange<_RowContainerWidget>
 
   Color get _evenRowColor =>
       stateManager.configuration.style.evenRowColor == null
-      ? stateManager.configuration.style.rowColor
-      : stateManager.configuration.style.evenRowColor!;
+          ? stateManager.configuration.style.rowColor
+          : stateManager.configuration.style.evenRowColor!;
 
   Color get _rowColor {
     if (widget.row.frozen != TrinaRowFrozen.none) {
@@ -314,39 +327,39 @@ class _RowContainerWidgetState extends TrinaStateWithChange<_RowContainerWidget>
 
     final frozenBorder = widget.row.frozen != TrinaRowFrozen.none
         ? Border(
-            top: BorderSide(
-              width: stateManager.configuration.style.cellHorizontalBorderWidth,
-              color: stateManager.configuration.style.frozenRowBorderColor,
-            ),
-            bottom: BorderSide(
-              width: stateManager.configuration.style.cellHorizontalBorderWidth,
-              color: stateManager.configuration.style.frozenRowBorderColor,
-            ),
-          )
+      top: BorderSide(
+        width: stateManager.configuration.style.cellHorizontalBorderWidth,
+        color: stateManager.configuration.style.frozenRowBorderColor,
+      ),
+      bottom: BorderSide(
+        width: stateManager.configuration.style.cellHorizontalBorderWidth,
+        color: stateManager.configuration.style.frozenRowBorderColor,
+      ),
+    )
         : null;
 
     return BoxDecoration(
       color: rowColor,
       border:
-          frozenBorder ??
+      frozenBorder ??
           Border(
             top: isTopDragTarget
                 ? BorderSide(
-                    width: stateManager.style.cellHorizontalBorderWidth,
-                    color:
-                        stateManager.configuration.style.activatedBorderColor,
-                  )
+              width: stateManager.style.cellHorizontalBorderWidth,
+              color:
+              stateManager.configuration.style.activatedBorderColor,
+            )
                 : BorderSide.none,
             bottom: isBottomDragTarget
                 ? BorderSide(
-                    width: stateManager.style.cellHorizontalBorderWidth,
-                    color: stateManager.style.activatedBorderColor,
-                  )
+              width: stateManager.style.cellHorizontalBorderWidth,
+              color: stateManager.style.activatedBorderColor,
+            )
                 : stateManager.style.enableCellBorderHorizontal
                 ? BorderSide(
-                    width: stateManager.style.cellHorizontalBorderWidth,
-                    color: stateManager.style.borderColor,
-                  )
+              width: stateManager.style.cellHorizontalBorderWidth,
+              color: stateManager.style.borderColor,
+            )
                 : BorderSide.none,
           ),
     );
@@ -381,10 +394,10 @@ class _AnimatedOrNormalContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return enable
         ? AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            decoration: decoration,
-            child: child,
-          )
+      duration: const Duration(milliseconds: 300),
+      decoration: decoration,
+      child: child,
+    )
         : DecoratedBox(decoration: decoration, child: child);
   }
 }

@@ -76,6 +76,12 @@ abstract class TrinaChangeNotifierFilterResolver {
       stateManager.setShowColumnGroups.hashCode: 'setShowColumnGroups',
       stateManager.removeColumnsInColumnGroup.hashCode:
           'removeColumnsInColumnGroup',
+      /// search_state
+      stateManager.setFoundCellPosition.hashCode: 'setFoundCellPosition',
+      stateManager.clearFoundCell.hashCode: 'clearFoundCell',
+      stateManager.setFoundCell.hashCode: 'setFoundCell',
+      stateManager.searchText.hashCode: 'searchText',
+      stateManager.searchNext.hashCode: 'searchNext',
 
       /// column_state
       stateManager.toggleFrozenColumn.hashCode: 'toggleFrozenColumn',
@@ -111,6 +117,7 @@ abstract class TrinaChangeNotifierFilterResolver {
       /// layout_state
       stateManager.setShowColumnTitle.hashCode: 'setShowColumnTitle',
       stateManager.setShowColumnFooter.hashCode: 'setShowColumnFooter',
+      stateManager.setShowColumnIndex.hashCode: 'setShowColumnIndex',
       stateManager.setShowColumnFilter.hashCode: 'setShowColumnFilter',
       stateManager.setShowLoading.hashCode: 'setShowLoading',
       stateManager.notifyChangedShowFrozenColumn.hashCode:
@@ -144,6 +151,7 @@ abstract class TrinaChangeNotifierFilterResolver {
           'setCurrentSelectingRowsByRange',
       stateManager.clearCurrentSelecting.hashCode: 'clearCurrentSelecting',
       stateManager.toggleSelectingRow.hashCode: 'toggleSelectingRow',
+      stateManager.toggleMultiSelectRow.hashCode: 'toggleMultiSelectRow',
       stateManager.handleAfterSelectingRow.hashCode: 'handleAfterSelectingRow',
 
       /// hovering_state
@@ -194,6 +202,7 @@ class TrinaNotifierFilterResolverDefault
       stateManager.setShowColumnTitle.hashCode,
       stateManager.setShowColumnFilter.hashCode,
       stateManager.setShowColumnFooter.hashCode,
+      stateManager.setShowColumnIndex.hashCode,
       stateManager.setShowColumnGroups.hashCode,
       stateManager.setShowLoading.hashCode,
       stateManager.toggleFrozenColumn.hashCode,

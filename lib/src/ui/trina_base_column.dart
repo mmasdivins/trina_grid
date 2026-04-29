@@ -53,31 +53,36 @@ class TrinaBaseColumnState extends TrinaStateWithChange<TrinaBaseColumn> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: _showColumnFilter ? stateManager.columnFilterHeight : 0,
-          child: TrinaColumnTitle(
-            stateManager: stateManager,
-            column: widget.column,
-            height: widget.columnTitleHeight ?? stateManager.columnHeight,
-          ),
-        ),
-        if (_showColumnFilter)
+    return GestureDetector(
+      onTap: () {
+        stateManager.onColumnTap?.call(TrinaGridOnColumnTapEvent(column: widget.column));
+      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
           Positioned(
-            bottom: 0,
-            right: 0,
+            top: 0,
             left: 0,
-            child: TrinaColumnFilter(
+            right: 0,
+            bottom: _showColumnFilter ? stateManager.columnFilterHeight : 0,
+            child: TrinaColumnTitle(
               stateManager: stateManager,
               column: widget.column,
+              height: widget.columnTitleHeight ?? stateManager.columnHeight,
             ),
           ),
-      ],
+          if (_showColumnFilter)
+            Positioned(
+              bottom: 0,
+              right: 0,
+              left: 0,
+              child: TrinaColumnFilter(
+                stateManager: stateManager,
+                column: widget.column,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

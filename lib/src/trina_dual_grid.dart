@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 typedef TrinaDualOnSelectedEventCallback =
-    void Function(TrinaDualOnSelectedEvent event);
+void Function(TrinaDualOnSelectedEvent event);
 
 /// In [TrinaDualGrid], set the separation widget between the two grids.
 class TrinaDualGridDivider {
@@ -88,7 +88,7 @@ class TrinaDualGridResizeNotifier extends ChangeNotifier {
 
 class TrinaDualGridState extends State<TrinaDualGrid> {
   final TrinaDualGridResizeNotifier resizeNotifier =
-      TrinaDualGridResizeNotifier();
+  TrinaDualGridResizeNotifier();
 
   late final TrinaDualGridDisplay display;
 
@@ -240,25 +240,25 @@ class TrinaDualGridState extends State<TrinaDualGrid> {
               draggingColor: widget.divider.draggingColor,
               dragCallback: (details) {
                 final RenderBox object =
-                    context.findRenderObject() as RenderBox;
+                context.findRenderObject() as RenderBox;
 
                 display.offset = isVertical
                     ? object
-                          .globalToLocal(
-                            Offset(
-                              details.globalPosition.dx,
-                              details.globalPosition.dy,
-                            ),
-                          )
-                          .dy
+                    .globalToLocal(
+                  Offset(
+                    details.globalPosition.dx,
+                    details.globalPosition.dy,
+                  ),
+                )
+                    .dy
                     : object
-                          .globalToLocal(
-                            Offset(
-                              details.globalPosition.dx,
-                              details.globalPosition.dy,
-                            ),
-                          )
-                          .dx;
+                    .globalToLocal(
+                  Offset(
+                    details.globalPosition.dx,
+                    details.globalPosition.dy,
+                  ),
+                )
+                    .dx;
 
                 resizeNotifier.resize();
               },
@@ -393,8 +393,8 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
 
     double gridAWidth = showDraggableDivider
         ? display.offset == null
-              ? display.gridAWidth(constrains) - dividerHalf
-              : display.offset! - dividerHalf
+        ? display.gridAWidth(constrains) - dividerHalf
+        : display.offset! - dividerHalf
         : display.gridAWidth(constrains) - dividerHalf;
     double gridBWidth = size.width - gridAWidth - dividerWidth;
     double gridAHeight = size.height;
@@ -423,8 +423,8 @@ class TrinaDualGridLayoutDelegate extends MultiChildLayoutDelegate {
       gridBWidth = size.width;
       gridAHeight = showDraggableDivider
           ? display.offset == null
-                ? display.gridAHeight(constrains) - dividerHalf
-                : display.offset! - dividerHalf
+          ? display.gridAHeight(constrains) - dividerHalf
+          : display.offset! - dividerHalf
           : display.gridAHeight(constrains) - dividerHalf;
       gridBHeight = size.height - gridAHeight - dividerWidth;
 
@@ -522,7 +522,7 @@ class TrinaDualGridDisplayRatio implements TrinaDualGridDisplay {
   final double ratio;
 
   TrinaDualGridDisplayRatio({this.ratio = 0.5})
-    : assert(0 < ratio && ratio < 1);
+      : assert(0 < ratio && ratio < 1);
 
   @override
   double? offset;
@@ -613,6 +613,9 @@ class TrinaDualGridProps {
   /// {@macro trina_grid_property_onRowsMoved}
   final TrinaOnRowsMovedEventCallback? onRowsMoved;
 
+  /// {@macro pluto_grid_property_onColumnTap}
+  final TrinaOnColumnTapEventCallback? onColumnTap;
+
   /// {@macro trina_grid_property_onColumnsMoved}
   final TrinaOnColumnsMovedEventCallback? onColumnsMoved;
 
@@ -621,6 +624,18 @@ class TrinaDualGridProps {
 
   /// {@macro trina_grid_property_createFooter}
   final CreateFooterCallBack? createFooter;
+
+  /// {@macro pluto_grid_property_createColumnIndex}
+  final CreateColumnIndexCallBack? createColumnIndex;
+
+  /// {@macro pluto_grid_property_createCornerWidget}
+  final CreateCornerWidgetCallBack? createCornerWidget;
+
+  /// {@macro pluto_grid_property_onDeleteRowEvent}
+  final OnDeleteRowEventCallBack? onDeleteRowEvent;
+
+  /// {@macro pluto_grid_property_isRowDefault}
+  final IsRowDefaultCallback? isRowDefault;
 
   /// {@macro trina_grid_property_noRowsWidget}
   final Widget? noRowsWidget;
@@ -662,9 +677,14 @@ class TrinaDualGridProps {
     this.onRowDoubleTap,
     this.onRowSecondaryTap,
     this.onRowsMoved,
+    this.onColumnTap,
     this.onColumnsMoved,
     this.createHeader,
     this.createFooter,
+    this.createColumnIndex,
+    this.createCornerWidget,
+    this.onDeleteRowEvent,
+    this.isRowDefault,
     this.noRowsWidget,
     this.rowColorCallback,
     this.cellColorCallback,
@@ -685,9 +705,14 @@ class TrinaDualGridProps {
     TrinaOptional<TrinaOnRowDoubleTapEventCallback?>? onRowDoubleTap,
     TrinaOptional<TrinaOnRowSecondaryTapEventCallback?>? onRowSecondaryTap,
     TrinaOptional<TrinaOnRowsMovedEventCallback?>? onRowsMoved,
+    TrinaOptional<TrinaOnColumnTapEventCallback?>? onColumnTap,
     TrinaOptional<TrinaOnColumnsMovedEventCallback?>? onColumnsMoved,
     TrinaOptional<CreateHeaderCallBack?>? createHeader,
     TrinaOptional<CreateFooterCallBack?>? createFooter,
+    TrinaOptional<CreateColumnIndexCallBack?>? createColumnIndex,
+    TrinaOptional<CreateCornerWidgetCallBack?>? createCornerWidget,
+    TrinaOptional<OnDeleteRowEventCallBack?>? onDeleteRowEvent,
+    TrinaOptional<IsRowDefaultCallback?>? isRowDefault,
     TrinaOptional<Widget?>? noRowsWidget,
     TrinaOptional<TrinaRowColorCallback?>? rowColorCallback,
     TrinaOptional<TrinaCellColorCallback?>? cellColorCallback,
@@ -715,6 +740,8 @@ class TrinaDualGridProps {
           ? this.onRowSecondaryTap
           : onRowSecondaryTap.value,
       onRowsMoved: onRowsMoved == null ? this.onRowsMoved : onRowsMoved.value,
+      onColumnTap:
+      onColumnTap == null ? this.onColumnTap : onColumnTap.value,
       onColumnsMoved: onColumnsMoved == null
           ? this.onColumnsMoved
           : onColumnsMoved.value,
@@ -724,6 +751,14 @@ class TrinaDualGridProps {
       createFooter: createFooter == null
           ? this.createFooter
           : createFooter.value,
+      createColumnIndex:
+      createColumnIndex == null ? this.createColumnIndex : createColumnIndex.value,
+      createCornerWidget:
+      createCornerWidget == null ? this.createCornerWidget : createCornerWidget.value,
+      onDeleteRowEvent:
+      onDeleteRowEvent == null ? this.onDeleteRowEvent : onDeleteRowEvent.value,
+      isRowDefault:
+      isRowDefault == null ? this.isRowDefault : isRowDefault.value,
       noRowsWidget: noRowsWidget == null
           ? this.noRowsWidget
           : noRowsWidget.value,

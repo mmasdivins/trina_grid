@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 import '../ui.dart';
@@ -102,15 +103,15 @@ class _TrinaDefaultCellState extends TrinaStateWithChange<TrinaDefaultCell> {
 
   @override
   void updateState(TrinaNotifierEvent event) {
-    final disable =
-        widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
-    if (disable) return;
+    // final disable =
+    //     widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
+    // if (disable) return;
 
     _hasFocus = update<bool>(_hasFocus, stateManager.hasFocus);
 
     _canRowDrag = update<bool>(
       _canRowDrag,
-      widget.column.enableRowDrag && stateManager.canRowDrag,
+      widget.column.enableRowDrag && stateManager.canRowDrag && (widget.column.disableRowDragWhen?.call(widget.row) ?? true),
     );
 
     _isCurrentCell = update<bool>(
@@ -166,68 +167,75 @@ class _TrinaDefaultCellState extends TrinaStateWithChange<TrinaDefaultCell> {
         onPressed: _isEmptyGroup ? null : _handleToggleExpandedRowGroup,
         icon: _isEmptyGroup
             ? Icon(
-                style.rowGroupEmptyIcon,
-                size: style.iconSize / 2,
-                color: style.iconColor,
-              )
+          style.rowGroupEmptyIcon,
+          size: style.iconSize / 2,
+          color: style.iconColor,
+        )
             : widget.row.type.group.expanded
             ? Icon(
-                style.rowGroupExpandedIcon,
-                size: style.iconSize,
-                color: style.iconColor,
-              )
+          style.rowGroupExpandedIcon,
+          size: style.iconSize,
+          color: style.iconColor,
+        )
             : Icon(
-                style.rowGroupCollapsedIcon,
-                size: style.iconSize,
-                color: style.iconColor,
-              ),
+          style.rowGroupCollapsedIcon,
+          size: style.iconSize,
+          color: style.iconColor,
+        ),
       );
     }
 
+    TextStyle defaultCellStyle = TrinaDefaultCell.groupCountTextStyle(stateManager.style);
+    if (widget.column.highlight) {
+      defaultCellStyle = defaultCellStyle.copyWith(fontWeight: FontWeight.bold);
+    }
+
     return Row(
-      children: [
+        children: [
         if (_canRowDrag)
-          Flexible(
-            flex: 0,
-            child: _RowDragIconWidget(
-              column: widget.column,
-              row: widget.row,
-              rowIdx: widget.rowIdx,
-              stateManager: stateManager,
-              feedbackWidget: cellWidget,
-              dragIcon: Icon(
-                Icons.drag_indicator,
-                size: style.iconSize,
-                color: style.iconColor,
-              ),
-            ),
-          ),
-        if (widget.column.enableRowChecked &&
-            depth >= widget.column.rowCheckBoxGroupDepth)
-          Flexible(
-            flex: 0,
-            child: CheckboxSelectionWidget(
-              column: widget.column,
-              row: widget.row,
-              rowIdx: widget.rowIdx,
-              stateManager: stateManager,
-            ),
-          ),
-        ?spacingWidget,
-        ?expandIcon,
-        Expanded(child: cellWidget),
-        if (TrinaDefaultCell.showGroupCount(
-          stateManager.rowGroupDelegate,
-          widget.cell,
-        ))
-          Text(
-            TrinaDefaultCell.groupCountText(
-              stateManager.rowGroupDelegate!,
-              widget.row,
-            ),
-            style: TrinaDefaultCell.groupCountTextStyle(stateManager.style),
-          ),
-      ],
+    Flexible(
+      flex: 0,
+      child: _RowDragIconWidget(
+        column: widget.column,
+        row: widget.row,
+        rowIdx: widget.rowIdx,
+        stateManager: stateManager,
+        feedbackWidget: cellWidget,
+        dragIcon: Icon(
+          Icons.drag_indicator,
+          size: style.iconSize,
+          color: style.iconColor,
+        ),
+      ),
+    ),
+    if (widget.column.enableRowChecked &&
+    depth >= widget.column.rowCheckBoxGroupDepth)
+    Flexible(
+      flex: 0,
+      child: CheckboxSelectionWidget(
+        column: widget.column,
+        row: widget.row,
+        rowIdx: widget.rowIdx,
+        stateManager: stateManager,
+      ),
+    ),
+    if (spacingWidget != null)
+      spacingWidget,
+    if (expandIcon != null)
+      expandIcon,
+    Expanded(child: cellWidget),
+    if (TrinaDefaultCell.showGroupCount(
+      stateManager.rowGroupDelegate,
+      widget.cell,
+    ))
+    Text(
+      TrinaDefaultCell.groupCountText(
+        stateManager.rowGroupDelegate!,
+        widget.row,
+      ),
+      style: defaultCellStyle,
+    ),
+    ],
     );
   }
 }
@@ -320,9 +328,9 @@ class _RowDragIconWidget extends StatelessWidget {
               width: column.width,
               height: stateManager.rowHeight,
               backgroundColor:
-                  stateManager.configuration.style.gridBackgroundColor,
+              stateManager.configuration.style.gridBackgroundColor,
               borderColor:
-                  stateManager.configuration.style.activatedBorderColor,
+              stateManager.configuration.style.activatedBorderColor,
               child: Row(
                 children: [
                   Flexible(flex: 0, child: dragIcon),
@@ -372,18 +380,27 @@ class CheckboxSelectionWidgetState
   @override
   void initState() {
     super.initState();
+
+    // Allow to change the state of the checkbox with the space
+    stateManager.keyManager!.subject
+        .listen((TrinaKeyManagerEvent value) {
+      if (value.isKeyDownEvent && value.event.logicalKey == LogicalKeyboardKey.space && stateManager.currentRowIdx == widget.rowIdx) {
+        _checked == null ? _handleOnChanged(null) : _handleOnChanged(!(_checked!));
+      }
+    });
+
     updateState(TrinaNotifierEventForceUpdate.instance);
     _pureValue = widget.row.checked ?? false;
   }
 
   @override
   void updateState(TrinaNotifierEvent event) {
-    final disable =
-        widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
-    if (disable) {
-      _checked = _pureValue;
-      return;
-    }
+    // final disable =
+    //     widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
+    // if (disable) {
+    //   _checked = _pureValue;
+    //   return;
+    // }
 
     _tristate = update<bool>(
       _tristate,
@@ -397,6 +414,12 @@ class CheckboxSelectionWidgetState
   }
 
   void _handleOnChanged(bool? changed) {
+    final disable = widget.column.disableRowCheckboxWhen?.call(widget.row) ?? false;
+    // bool enabled = stateManager.enableCheckSelection?.call(widget.row) ?? true;
+    if (disable) {
+      return;
+    }
+
     if (changed == _checked) {
       return;
     }
@@ -421,9 +444,13 @@ class CheckboxSelectionWidgetState
       );
     }
 
-    setState(() {
-      _checked = changed;
-    });
+    // We change the value before calling set state, and call
+    // only set state only if it's mounted
+    _checked = changed;
+    if (mounted) {
+      setState(() {
+      });
+    }
   }
 
   @override
@@ -474,8 +501,8 @@ class _DefaultCellWidgetState extends State<_DefaultCellWidget> {
     }
 
     return widget.stateManager.rowGroupDelegate!.isExpandableCell(
-          widget.cell,
-        ) ||
+      widget.cell,
+    ) ||
         widget.stateManager.rowGroupDelegate!.isEditableCell(widget.cell) ||
         widget.cell.hasRenderer ||
         widget.column.hasRenderer;
@@ -490,12 +517,12 @@ class _DefaultCellWidgetState extends State<_DefaultCellWidget> {
         widget.stateManager.rowGroupDelegate!.showFirstExpandableIcon &&
         widget.stateManager.rowGroupDelegate!.type.isByColumn) {
       final delegate =
-          widget.stateManager.rowGroupDelegate as TrinaRowGroupByColumnDelegate;
+      widget.stateManager.rowGroupDelegate as TrinaRowGroupByColumnDelegate;
 
       if (widget.row.depth < delegate.columns.length) {
         cellValue =
             widget.row.cells[delegate.columns[widget.row.depth].field]?.value ??
-            cellValue;
+                cellValue;
       }
     }
 
@@ -504,6 +531,16 @@ class _DefaultCellWidgetState extends State<_DefaultCellWidget> {
 
   @override
   Widget build(BuildContext context) {
+
+    TextStyle style = widget.stateManager.configuration.style.cellTextStyle.copyWith(
+      decoration: TextDecoration.none,
+      fontWeight: FontWeight.normal,
+    );
+
+    if (widget.column.highlight) {
+      style = style.copyWith(fontWeight: FontWeight.bold);
+    }
+
     // Check for cell renderer first
     if (widget.cell.hasRenderer) {
       return widget.cell.renderer!(
@@ -532,10 +569,7 @@ class _DefaultCellWidgetState extends State<_DefaultCellWidget> {
 
     return Text(
       _text,
-      style: widget.stateManager.configuration.style.cellTextStyle.copyWith(
-        decoration: TextDecoration.none,
-        fontWeight: FontWeight.normal,
-      ),
+      style: style,
       overflow: TextOverflow.ellipsis,
       textAlign: widget.column.textAlign.value,
     );

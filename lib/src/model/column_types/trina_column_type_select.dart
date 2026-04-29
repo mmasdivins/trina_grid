@@ -116,11 +116,11 @@ class TrinaColumnTypeSelect<T>
 
   @override
   Widget buildCell(
-    TrinaGridStateManager stateManager,
-    TrinaCell cell,
-    TrinaColumn column,
-    TrinaRow row,
-  ) {
+      TrinaGridStateManager stateManager,
+      TrinaCell cell,
+      TrinaColumn column,
+      TrinaRow row,
+      ) {
     return TrinaSelectCell<T>(
       stateManager: stateManager,
       cell: cell,

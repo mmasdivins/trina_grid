@@ -20,6 +20,24 @@ class TrinaGridPopup {
   /// {@macro trina_grid_property_onChanged}
   final TrinaOnChangedEventCallback? onChanged;
 
+  /// {@macro trina_grid_property_onRowChanged}
+  final TrinaOnRowChangedEventCallback? onRowChanged;
+
+  /// {@macro trina_grid_property_onLastRowKeyDown}
+  final TrinaOnLastRowKeyDownEventCallback? onLastRowKeyDown;
+
+  /// {@macro trina_grid_property_onLastRowKeyUp}
+  final TrinaOnLastRowKeyUpEventCallback? onLastRowKeyUp;
+
+  /// {@macro trina_grid_property_onRightClickCell}
+  final TrinaOnRightClickCellEventCallback? onRightClickCell;
+
+  /// {@macro trina_grid_property_rightClickCellContextMenu}
+  final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
+
+  /// {@macro trina_grid_property_onSelectedCellChanged}
+  final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
+
   /// {@macro trina_grid_property_onSelected}
   final TrinaOnSelectedEventCallback? onSelected;
 
@@ -49,6 +67,18 @@ class TrinaGridPopup {
 
   /// {@macro trina_grid_property_createFooter}
   final CreateFooterCallBack? createFooter;
+
+  /// {@macro trina_grid_property_createColumnIndex}
+  final CreateColumnIndexCallBack? createColumnIndex;
+
+  /// {@macro trina_grid_property_createCornerWidget}
+  final CreateCornerWidgetCallBack? createCornerWidget;
+
+  /// {@macro trina_grid_property_onDeleteRowEvent}
+  final OnDeleteRowEventCallBack? onDeleteRowEvent;
+
+  /// {@macro trina_grid_property_isRowDefault}
+  final IsRowDefaultCallback? isRowDefault;
 
   /// {@macro trina_grid_property_noRowsWidget}
   final Widget? noRowsWidget;
@@ -90,6 +120,12 @@ class TrinaGridPopup {
     this.columnGroups,
     this.onLoaded,
     this.onChanged,
+    this.onRowChanged,
+    this.onLastRowKeyDown,
+    this.onLastRowKeyUp,
+    this.onRightClickCell,
+    this.rightClickCellContextMenu,
+    this.onSelectedCellChanged,
     this.onSelected,
     this.onSorted,
     this.onRowChecked,
@@ -100,6 +136,10 @@ class TrinaGridPopup {
     this.onColumnsMoved,
     this.createHeader,
     this.createFooter,
+    this.createColumnIndex,
+    this.createCornerWidget,
+    this.onDeleteRowEvent,
+    this.isRowDefault,
     this.noRowsWidget,
     this.rowColorCallback,
     this.cellColorCallback,
@@ -130,55 +170,65 @@ class TrinaGridPopup {
     );
 
     TrinaGridOnSelectedEvent? selected =
-        await showDialog<TrinaGridOnSelectedEvent>(
-          context: context,
-          barrierDismissible: barrierDismissible ?? true,
-          builder: (BuildContext ctx) {
-            return Dialog(
-              shape: borderRadius == BorderRadius.zero
-                  ? null
-                  : RoundedRectangleBorder(borderRadius: borderRadius),
-              child: LayoutBuilder(
-                builder: (ctx, size) {
-                  return SizedBox(
-                    width:
-                        (width ?? size.maxWidth) +
-                        TrinaGridSettings.gridInnerSpacing,
-                    height: height ?? size.maxHeight,
-                    child: Directionality(
-                      textDirection: textDirection,
-                      child: TrinaGrid(
-                        columns: setColumnConfig(),
-                        rows: rows,
-                        columnGroups: columnGroups,
-                        onLoaded: onLoaded,
-                        onChanged: onChanged,
-                        onSelected: (TrinaGridOnSelectedEvent event) {
-                          Navigator.pop(ctx, event);
-                        },
-                        onSorted: onSorted,
-                        onRowChecked: onRowChecked,
-                        onRowDoubleTap: onRowDoubleTap,
-                        onRowSecondaryTap: onRowSecondaryTap,
-                        onRowsMoved: onRowsMoved,
-                        onActiveCellChanged: onActiveCellChanged,
-                        onColumnsMoved: onColumnsMoved,
-                        createHeader: createHeader,
-                        createFooter: createFooter,
-                        noRowsWidget: noRowsWidget,
-                        rowColorCallback: rowColorCallback,
-                        cellColorCallback: cellColorCallback,
-                        columnMenuDelegate: columnMenuDelegate,
-                        configuration: configuration,
-                        mode: mode,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
+    await showDialog<TrinaGridOnSelectedEvent>(
+      context: context,
+      barrierDismissible: barrierDismissible ?? true,
+      builder: (BuildContext ctx) {
+        return Dialog(
+          shape: borderRadius == BorderRadius.zero
+              ? null
+              : RoundedRectangleBorder(borderRadius: borderRadius),
+          child: LayoutBuilder(
+            builder: (ctx, size) {
+              return SizedBox(
+                width:
+                (width ?? size.maxWidth) +
+                    TrinaGridSettings.gridInnerSpacing,
+                height: height ?? size.maxHeight,
+                child: Directionality(
+                  textDirection: textDirection,
+                  child: TrinaGrid(
+                    columns: setColumnConfig(),
+                    rows: rows,
+                    columnGroups: columnGroups,
+                    onLoaded: onLoaded,
+                    onChanged: onChanged,
+                    onRowChanged: onRowChanged,
+                    onLastRowKeyDown: onLastRowKeyDown,
+                    onLastRowKeyUp: onLastRowKeyUp,
+                    onRightClickCell: onRightClickCell,
+                    rightClickCellContextMenu: rightClickCellContextMenu,
+                    onSelectedCellChanged: onSelectedCellChanged,
+                    onSelected: (TrinaGridOnSelectedEvent event) {
+                      Navigator.pop(ctx, event);
+                    },
+                    onSorted: onSorted,
+                    onRowChecked: onRowChecked,
+                    onRowDoubleTap: onRowDoubleTap,
+                    onRowSecondaryTap: onRowSecondaryTap,
+                    onRowsMoved: onRowsMoved,
+                    onActiveCellChanged: onActiveCellChanged,
+                    onColumnsMoved: onColumnsMoved,
+                    createHeader: createHeader,
+                    createFooter: createFooter,
+                    noRowsWidget: noRowsWidget,
+                    createColumnIndex: createColumnIndex,
+                    createCornerWidget: createCornerWidget,
+                    onDeleteRowEvent: onDeleteRowEvent,
+                    isRowDefault: isRowDefault,
+                    rowColorCallback: rowColorCallback,
+                    cellColorCallback: cellColorCallback,
+                    columnMenuDelegate: columnMenuDelegate,
+                    configuration: configuration,
+                    mode: mode,
+                  ),
+                ),
+              );
+            },
+          ),
         );
+      },
+    );
     if (onSelected != null && selected != null) {
       onSelected!(selected);
     }

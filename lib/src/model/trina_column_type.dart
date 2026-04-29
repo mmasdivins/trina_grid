@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:trina_grid/src/ui/widgets/trina_dropdown_menu.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:trina_grid/src/model/column_types/trina_column_type_custom.dart';
+import 'package:trina_grid/src/model/column_types/trina_column_type_date_time.dart';
+import 'package:trina_grid/src/model/column_types/trina_column_type_percentage.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 /// Defines the behavior and properties of a `TrinaColumn`.
@@ -383,7 +387,8 @@ abstract interface class TrinaColumnType {
     );
   }
 
-  /// Creates a column for boolean (`true`/`false`) values.
+
+  /// Set to boolean column.
   ///
   /// - [allowEmpty]: If true, `null` or empty string are considered valid values.
   /// - [trueText]: The text to display for `true`.

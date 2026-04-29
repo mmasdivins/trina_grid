@@ -214,7 +214,7 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
           final targetThumbPosition = adjustedTapX - (thumbWidth / 2);
           final newScrollOffset =
               (targetThumbPosition / (widget.width - thumbWidth)) *
-              scrollExtent;
+                  scrollExtent;
 
           // Clamp to valid range
           final clampedOffset = newScrollOffset.clamp(
@@ -264,18 +264,18 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
                 builder: (context, viewportExtent, _) {
                   final double thumbWidth =
                       (viewportExtent / (viewportExtent + scrollExtent)) *
-                      widget.width;
+                          widget.width;
 
                   return ValueListenableBuilder<double>(
                     valueListenable: widget.horizontalScrollOffsetNotifier,
                     builder: (context, scrollOffset, _) {
                       final double thumbPosition =
                           (scrollOffset / scrollExtent) *
-                          (widget.width - thumbWidth);
+                              (widget.width - thumbWidth);
 
                       // For RTL languages, we need to flip the thumb position calculation
                       final double adjustedThumbPosition =
-                          widget.stateManager.isRTL
+                      widget.stateManager.isRTL
                           ? widget.width - thumbWidth - thumbPosition
                           : thumbPosition;
 
@@ -307,12 +307,12 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
                                 width: thumbWidth.isNaN
                                     ? widget.width
                                     : thumbWidth.clamp(
-                                        scrollConfig.minThumbLength >
-                                                widget.width
-                                            ? widget.width
-                                            : scrollConfig.minThumbLength,
-                                        widget.width,
-                                      ),
+                                  scrollConfig.minThumbLength >
+                                      widget.width
+                                      ? widget.width
+                                      : scrollConfig.minThumbLength,
+                                  widget.width,
+                                ),
                                 height: scrollConfig.thickness,
                                 top: 2,
                                 child: MouseRegion(
@@ -333,72 +333,72 @@ class _TrinaHorizontalScrollBarState extends State<TrinaHorizontalScrollBar>
                                   },
                                   child: GestureDetector(
                                     onHorizontalDragStart:
-                                        scrollConfig.isDraggable
+                                    scrollConfig.isDraggable
                                         ? (details) {
-                                            setState(() {
-                                              _isDragging = true;
-                                            });
-                                          }
+                                      setState(() {
+                                        _isDragging = true;
+                                      });
+                                    }
                                         : null,
                                     onHorizontalDragUpdate:
-                                        scrollConfig.isDraggable
+                                    scrollConfig.isDraggable
                                         ? (details) {
-                                            // Direct thumb manipulation approach
-                                            final double dragDelta =
-                                                details.delta.dx;
+                                      // Direct thumb manipulation approach
+                                      final double dragDelta =
+                                          details.delta.dx;
 
-                                            // Calculate how much to scroll based on thumb movement
-                                            // The available space for the thumb to move is (widget.width - thumbWidth)
-                                            // The total scrollable content is scrollExtent
-                                            final double scrollableRatio =
-                                                scrollExtent /
-                                                (widget.width - thumbWidth);
-                                            final double scrollDelta =
-                                                dragDelta * scrollableRatio;
+                                      // Calculate how much to scroll based on thumb movement
+                                      // The available space for the thumb to move is (widget.width - thumbWidth)
+                                      // The total scrollable content is scrollExtent
+                                      final double scrollableRatio =
+                                          scrollExtent /
+                                              (widget.width - thumbWidth);
+                                      final double scrollDelta =
+                                          dragDelta * scrollableRatio;
 
-                                            // Get the scroll controller
-                                            final scrollController = widget
-                                                .stateManager
-                                                .scroll
-                                                .bodyRowsHorizontal;
-                                            if (scrollController != null &&
-                                                scrollController.hasClients) {
-                                              // Apply the scroll by adding delta to current position
-                                              final currentOffset =
-                                                  scrollController.offset;
-                                              final newOffset =
-                                                  (currentOffset + scrollDelta)
-                                                      .clamp(
-                                                        0.0,
-                                                        scrollController
-                                                            .position
-                                                            .maxScrollExtent,
-                                                      );
+                                      // Get the scroll controller
+                                      final scrollController = widget
+                                          .stateManager
+                                          .scroll
+                                          .bodyRowsHorizontal;
+                                      if (scrollController != null &&
+                                          scrollController.hasClients) {
+                                        // Apply the scroll by adding delta to current position
+                                        final currentOffset =
+                                            scrollController.offset;
+                                        final newOffset =
+                                        (currentOffset + scrollDelta)
+                                            .clamp(
+                                          0.0,
+                                          scrollController
+                                              .position
+                                              .maxScrollExtent,
+                                        );
 
-                                              // Use jumpTo for immediate response during drag
-                                              scrollController.jumpTo(
-                                                newOffset,
-                                              );
-                                            }
-                                          }
+                                        // Use jumpTo for immediate response during drag
+                                        scrollController.jumpTo(
+                                          newOffset,
+                                        );
+                                      }
+                                    }
                                         : null,
                                     onHorizontalDragEnd:
-                                        scrollConfig.isDraggable
+                                    scrollConfig.isDraggable
                                         ? (_) {
-                                            setState(() {
-                                              _isDragging = false;
-                                              if (!scrollConfig.isAlwaysShown &&
-                                                  !_hovering) {
-                                                _fadeController.reverse();
-                                              }
-                                            });
-                                          }
+                                      setState(() {
+                                        _isDragging = false;
+                                        if (!scrollConfig.isAlwaysShown &&
+                                            !_hovering) {
+                                          _fadeController.reverse();
+                                        }
+                                      });
+                                    }
                                         : null,
                                     child: Container(
                                       decoration: BoxDecoration(
                                         color: _isThumbHovered || _isDragging
                                             ? scrollConfig
-                                                  .effectiveThumbHoverColor
+                                            .effectiveThumbHoverColor
                                             : scrollConfig.effectiveThumbColor,
                                         borderRadius: BorderRadius.circular(
                                           scrollConfig.effectiveRadius,

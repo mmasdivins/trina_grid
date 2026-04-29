@@ -70,7 +70,21 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
 
     if (stateManager.isCurrentCell(cell) && stateManager.isEditing != true) {
       stateManager.setEditing(true);
+
+      // On change editing after click, select all text in cell
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (stateManager.textEditingController != null) {
+          stateManager.textEditingController!.selection = TextSelection(baseOffset: 0, extentOffset: stateManager.textEditingController!.value.text.length);
+        }
+      });
+
     } else {
+      if (stateManager.selectingMode.isRowCell) {
+        stateManager.setCurrentCell(cell, rowIdx);
+        _selecting(stateManager);
+        return;
+      }
+
       stateManager.setCurrentCell(cell, rowIdx);
 
       // In normal mode, also fire onSelected callback when row selection is configured
@@ -106,13 +120,13 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
       // Use traditional selection system for row mode or when drag selection is disabled
       stateManager.setSelecting(true);
 
-      if (stateManager.selectingMode.isRow) {
+      if (stateManager.selectingMode.isRow || stateManager.selectingMode.isRowCell) {
         stateManager.toggleSelectingRow(rowIdx);
 
         // Fire onSelected callback for long press selection in normal mode too
         if ((stateManager.mode.isMultiSelectMode ||
-                (stateManager.mode.isNormal &&
-                    stateManager.selectingMode.isRow)) &&
+            (stateManager.mode.isNormal &&
+                (stateManager.selectingMode.isRow || stateManager.selectingMode.isRowCell))) &&
             stateManager.onSelected != null) {
           stateManager.handleOnSelected();
         }
@@ -142,7 +156,7 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
       // Use traditional selection system
       stateManager.setSelecting(false);
 
-      if (stateManager.mode.isMultiSelectMode) {
+      if (stateManager.mode.isMultiSelectMode || stateManager.mode.isMultiSelectAlwaysOne) {
         stateManager.handleOnSelected();
       }
     }
@@ -246,8 +260,10 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
   void _selecting(TrinaGridStateManager stateManager) {
     // Allow onSelected callback to fire in both multiSelect mode and normal mode with row selection
     bool callOnSelected =
-        stateManager.mode.isMultiSelectMode ||
-        (stateManager.mode.isNormal && stateManager.selectingMode.isRow);
+        (stateManager.mode.isMultiSelectMode || stateManager.mode.isMultiSelectAlwaysOne) ||
+            (stateManager.mode.isNormal && (stateManager.selectingMode.isRow || stateManager.selectingMode.isRowCell));
+    final bool checkSelectedRow = (stateManager.selectingMode.isRow || stateManager.selectingMode.isRowCell) &&
+        stateManager.isSelectedRow(stateManager.refRows[rowIdx].key);
 
     if (stateManager.keyPressed.shift) {
       final int? columnIdx = stateManager.columnIndex(column);
@@ -275,6 +291,8 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
         // Ctrl in row mode or without enableCtrlClickMultiSelect = row toggle (existing behavior)
         stateManager.toggleSelectingRow(rowIdx);
       }
+    } else if (!checkSelectedRow && stateManager.mode.isMultiSelectAlwaysOne) {
+      stateManager.toggleSelectingRow(rowIdx);
     } else {
       callOnSelected = false;
     }
@@ -303,16 +321,20 @@ class TrinaGridCellGestureEvent extends TrinaGridEvent {
       case TrinaGridMode.multiSelect:
         stateManager.toggleSelectingRow(rowIdx);
         break;
+      case TrinaGridMode.multiSelectAlwaysOne:
+        stateManager.setCurrentCell(cell, rowIdx);
+        // stateManager.toggleSelectingRow(rowIdx);
+        break;
     }
 
     stateManager.handleOnSelected();
   }
 
   void _setCurrentCell(
-    TrinaGridStateManager stateManager,
-    TrinaCell? cell,
-    int? rowIdx,
-  ) {
+      TrinaGridStateManager stateManager,
+      TrinaCell? cell,
+      int? rowIdx,
+      ) {
     if (stateManager.isCurrentCell(cell) != true) {
       stateManager.setCurrentCell(cell, rowIdx, notify: false);
     }

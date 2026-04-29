@@ -630,7 +630,7 @@ void main() {
 
     test('When there is a sort column, return the sorted column.', () {
       final columns = ColumnHelper.textColumn('title', count: 3);
-      columns[1].sort = TrinaColumnSort.ascending;
+      columns[1].sort = TrinaColumnSorting(sortOrder: TrinaColumnSort.ascending, sortPosition: null);
 
       TrinaGridStateManager stateManager = getStateManager(
         columns: columns,

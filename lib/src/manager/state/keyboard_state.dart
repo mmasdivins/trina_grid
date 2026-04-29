@@ -72,11 +72,17 @@ mixin KeyboardState implements ITrinaGridState {
 
     switch (direction) {
       case TrinaMoveDirection.left:
+        if (cellPosition!.columnIdx! - 1 < 0) {
+          return cellPosition!;
+        }
         return TrinaGridCellPosition(
           columnIdx: columnIndexes[cellPosition!.columnIdx! - 1],
           rowIdx: cellPosition.rowIdx,
         );
       case TrinaMoveDirection.right:
+        if (cellPosition!.columnIdx! + 1 >= columnIndexes.length) {
+          return cellPosition!;
+        }
         return TrinaGridCellPosition(
           columnIdx: columnIndexes[cellPosition!.columnIdx! + 1],
           rowIdx: cellPosition.rowIdx,
@@ -99,7 +105,7 @@ mixin KeyboardState implements ITrinaGridState {
     TrinaMoveDirection direction, {
     bool force = false,
     bool notify = true,
-  }) {
+  }) async {
     if (currentCell == null) return;
 
     // @formatter:off
@@ -133,7 +139,7 @@ mixin KeyboardState implements ITrinaGridState {
 
     final cellPosition = currentCellPosition;
 
-    if (cellPosition != null && canNotMoveCell(cellPosition, direction)) {
+    if (cellPosition != null && canNotMoveCell(cellPosition, direction, this as TrinaGridStateManager)) {
       eventManager!.addEvent(
         TrinaGridCannotMoveCurrentCellEvent(
           cellPosition: cellPosition,
@@ -142,6 +148,104 @@ mixin KeyboardState implements ITrinaGridState {
       );
 
       return;
+    }
+
+    var index = rows.indexOf(currentCell!.row);
+
+    var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
+
+    bool moveToLeftEdge = false;
+
+    if (mode != TrinaGridMode.readOnly
+        && direction.isDown
+        && rows.length == (index + 1)) {
+
+      bool isRowDefault = isRowDefaultFunction(currentCell!.row,  this as TrinaGridStateManager, true);
+
+      /// We do not notify the tracking row since we call the setCurrentCell
+      /// which will notify the row
+      // Put index + 1 so it detects it that we are changing the row
+      // await notifyTrackingRow(index + 1);
+
+      // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
+      // lastRowKeyDownAction
+      if (onLastRowKeyDown != null){
+        onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
+          rowIdx: index,
+          row: currentCell!.row,
+          isRowDefault: isRowDefault,
+        ));
+      }
+      else {
+        if (configuration.lastRowKeyDownAction.isAddMultiple) {
+
+          // Afegim una nova fila al final
+          insertRows(
+            index + 1,
+            [getNewRow()],
+          );
+
+
+          moveToLeftEdge = true;
+          // moveCurrentCell(direction, force: force);
+          // moveCurrentCellToEdgeOfColumns(
+          //   TrinaMoveDirection.left,
+          //   force: true,
+          //   notify: false,
+          // );
+        }
+        else if (configuration.lastRowKeyDownAction.isAddOne){
+          if (!isRowDefault){
+
+            // Afegim una nova fila al final
+            insertRows(
+              index + 1,
+              [getNewRow()],
+            );
+            moveToLeftEdge = true;
+            // moveCurrentCell(direction, force: force);
+            // moveCurrentCellToEdgeOfColumns(
+            //   TrinaMoveDirection.left,
+            //   force: true,
+            //   notify: false,
+            // );
+          }
+        }
+      }
+    }
+    else if (mode != TrinaGridMode.readOnly
+        && direction.isUp
+        && rows.length == (index + 1)) {
+
+      var row = rows.elementAt(index);
+      bool isRowDefault = isRowDefaultFunction(row, this as TrinaGridStateManager, false);
+
+      // Si tenim definit l'event onLastRowKeyUp no fem cas de la configuració
+      // lastRowKeyUpAction
+      if (onLastRowKeyUp != null){
+        onLastRowKeyUp!.call(TrinaGridOnLastRowKeyUpEvent(
+          rowIdx: index,
+          row: row,
+          isRowDefault: isRowDefault,
+        ));
+      }
+      else {
+        if (configuration.lastRowKeyUpAction.isRemoveOne && isRowDefault && rows.length > 1){
+          // Esborrem la última fila si s'ha creat i no conté res i hi ha més d'una
+          // fila
+          removeRows([row]);
+        }
+      }
+    }
+    else if (mode != TrinaGridMode.readOnly
+        && direction.isUp
+        && index == 0) {
+
+      // If row changed notifiy changed row
+      // Put -1 so it detects it that we are changing the row
+      // we have to put it here because the cell won't move since it's
+      // on the top of the grid and it won't notify that the row changed
+      await notifyTrackingRow(-1);
     }
 
     final toMove = cellPositionToMove(cellPosition, direction);
@@ -153,12 +257,37 @@ mixin KeyboardState implements ITrinaGridState {
       direction: direction,
     );
 
+    if (moveToLeftEdge) {
+      moveCurrentCellToEdgeOfColumns(
+        TrinaMoveDirection.left,
+        force: true,
+        notify: false,
+      );
+    }
+
     if (direction.horizontal) {
       moveScrollByColumn(direction, cellPosition!.columnIdx);
     } else if (direction.vertical) {
       moveScrollByRow(direction, cellPosition!.rowIdx);
     }
+
     return;
+  }
+
+  bool _isRowDefault(TrinaRow row, TrinaGridStateManager stateManager, bool isInsert){
+    for (var element in refColumns) {
+      var cell = row.cells[element.field]!;
+
+      var value = element.type.defaultValue;
+      if (element.type.defaultValue is Function){
+        value = element.type.defaultValue.call();
+      }
+
+      if (value != cell.value) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @override
@@ -262,7 +391,7 @@ mixin KeyboardState implements ITrinaGridState {
     final TrinaGridCellPosition? cellPosition =
         currentSelectingPosition ?? currentCellPosition;
 
-    if (canNotMoveCell(cellPosition, direction)) {
+    if (canNotMoveCell(cellPosition, direction, this as TrinaGridStateManager)) {
       return;
     }
 

@@ -157,7 +157,7 @@ class MainColumnLayoutDelegate extends MultiChildLayoutDelegate {
     return Size(
       columns.fold(
         0,
-        (previousValue, element) => previousValue += element.width,
+            (previousValue, element) => previousValue += element.width,
       ),
       totalColumnsHeight,
     );
@@ -174,7 +174,7 @@ class MainColumnLayoutDelegate extends MultiChildLayoutDelegate {
       for (TrinaColumnGroupPair pair in items) {
         final double width = pair.columns.fold<double>(
           0,
-          (previousValue, element) => previousValue + element.width,
+              (previousValue, element) => previousValue + element.width,
         );
 
         if (hasChild(pair.key)) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 typedef TrinaCellRenderer =
-    Widget Function(TrinaCellRendererContext rendererContext);
+Widget Function(TrinaCellRendererContext rendererContext);
 
 class TrinaCellRendererContext {
   final TrinaColumn column;
@@ -41,9 +41,9 @@ class TrinaCell {
     this.padding,
     this.metadata,
   }) : _key = key ?? UniqueKey(),
-       _value = value,
-       _originalValue = value,
-       _oldValue = null;
+        _value = value,
+        _originalValue = value,
+        _oldValue = null;
 
   final Key _key;
 
@@ -58,6 +58,8 @@ class TrinaCell {
   bool _isTracking = false;
 
   dynamic _valueForSorting;
+
+  dynamic _valueForSearching;
 
   /// Custom renderer for this specific cell.
   /// If provided, this will be used instead of the column renderer.
@@ -155,6 +157,15 @@ class TrinaCell {
       return;
     }
     _value = changed;
+
+    _valueForSorting = null;
+    _valueForSearching = null;
+  }
+
+  dynamic get valueForSearching {
+    _valueForSearching ??= _getValueForSearching();
+
+    return _valueForSearching;
   }
 
   /// Helper method to store the old value when change tracking is enabled
@@ -174,6 +185,7 @@ class TrinaCell {
   void setColumn(TrinaColumn column) {
     _column = column;
     _valueForSorting = _getValueForSorting();
+    _valueForSearching = _getValueForSearching();
     _needToApplyFormatOnInit = _column?.type.applyFormatOnInit == true;
   }
 
@@ -204,15 +216,29 @@ class TrinaCell {
 
     _needToApplyFormatOnInit = false;
   }
+
+  dynamic _getValueForSearching() {
+    if (_column == null) {
+      return _value;
+    }
+
+    if (_needToApplyFormatOnInit) {
+      _applyFormatOnInit();
+    }
+
+    return _column!.type.makeCompareValue(_value);
+  }
+
+
 }
 
 void _assertUnInitializedCell(bool flag) {
   assert(
-    flag,
-    'TrinaCell is not initialized.'
-    'When adding a column or row, if it is not added through TrinaGridStateManager, '
-    'TrinaCell does not set the necessary information at runtime.'
-    'If you add a column or row through TrinaGridStateManager and this error occurs, '
-    'please contact Github issue.',
+  flag,
+  'TrinaCell is not initialized.'
+      'When adding a column or row, if it is not added through TrinaGridStateManager, '
+      'TrinaCell does not set the necessary information at runtime.'
+      'If you add a column or row through TrinaGridStateManager and this error occurs, '
+      'please contact Github issue.',
   );
 }

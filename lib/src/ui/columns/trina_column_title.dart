@@ -18,7 +18,7 @@ class TrinaColumnTitle extends TrinaStatefulWidget {
     required this.column,
     double? height,
   }) : height = height ?? stateManager.columnHeight,
-       super(key: ValueKey('column_title_${column.key}'));
+        super(key: ValueKey('column_title_${column.key}'));
 
   @override
   TrinaColumnTitleState createState() => TrinaColumnTitleState();
@@ -30,12 +30,15 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
 
   bool _isPointMoving = false;
 
-  TrinaColumnSort _sort = TrinaColumnSort.none;
+  TrinaColumnSorting _sort = const TrinaColumnSorting(
+    sortOrder: TrinaColumnSort.none,
+    sortPosition: null,
+  );
 
   bool get showContextIcon {
     return widget.column.enableContextMenu ||
         widget.column.enableDropToResize ||
-        !_sort.isNone;
+        !_sort.sortOrder.isNone;
   }
 
   bool get enableGesture {
@@ -64,7 +67,7 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
 
   @override
   void updateState(TrinaNotifierEvent event) {
-    _sort = update<TrinaColumnSort>(_sort, widget.column.sort);
+    _sort = update<TrinaColumnSorting>(_sort, widget.column.sort);
   }
 
   void _showContextMenu(BuildContext context, Offset position) async {
@@ -133,6 +136,11 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
     final style = stateManager.configuration.style;
     final bool isCustom = widget.column.hasTitleRenderer;
 
+    final resizeWithoutIcon = MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: SizedBox(width: 8, height: widget.height),
+    );
+
     var contextMenuIcon = _buildContextMenuIcon(style);
     contextMenuIcon = _buildContextMenuWidget(
       contextMenuIcon,
@@ -178,6 +186,16 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
       return title;
     }
 
+    Widget menuIconWidget = contextMenuIcon;
+    if (!widget.column.enableContextMenu && style.hideResizeIcon) {
+      menuIconWidget = enableGesture ? Listener(
+        onPointerDown: _handleOnPointDown,
+        onPointerMove: _handleOnPointMove,
+        onPointerUp: _handleOnPointUp,
+        child: resizeWithoutIcon,
+      ) : resizeWithoutIcon;
+    }
+
     return Stack(
       children: [
         Positioned(left: 0, right: 0, child: title),
@@ -185,7 +203,7 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
           Positioned.directional(
             textDirection: stateManager.textDirection,
             end: -3,
-            child: contextMenuIcon,
+            child: menuIconWidget,
           ),
       ],
     );
@@ -218,8 +236,8 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
   }
 
   TrinaColumnTitleRendererContext _createTitleRendererContext(
-    Widget contextMenuIcon,
-  ) {
+      Widget contextMenuIcon,
+      ) {
     final isFiltered = stateManager.isFilteredColumn(widget.column);
 
     return TrinaColumnTitleRendererContext(
@@ -242,9 +260,9 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
   /// propagating to the parent `_SortableWidget`, which would otherwise
   /// trigger a column sort when the context menu icon is clicked.
   Widget _buildContextMenuWidget(
-    Widget contextMenuIcon, {
-    bool hasTitleRenderer = false,
-  }) {
+      Widget contextMenuIcon, {
+        bool hasTitleRenderer = false,
+      }) {
     if (!enableGesture) {
       return contextMenuIcon;
     }
@@ -269,7 +287,7 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
 }
 
 class TrinaGridColumnIcon extends StatelessWidget {
-  final TrinaColumnSort? sort;
+  final TrinaColumnSorting? sort;
 
   final Color color;
 
@@ -293,23 +311,137 @@ class TrinaGridColumnIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (sort) {
+    return Icon(
+      icon,
+      color: color,
+    );
+
+    // switch (sort?.sortOrder) {
+    //   case TrinaColumnSort.ascending:
+    //     return ascendingIcon == null
+    //         ? Transform.rotate(
+    //       angle: 90 * pi / 90,
+    //       child: const Icon(Icons.sort, color: Colors.green),
+    //     )
+    //         : ascendingIcon!;
+    //   case TrinaColumnSort.descending:
+    //     return descendingIcon == null
+    //         ? const Icon(Icons.sort, color: Colors.red)
+    //         : descendingIcon!;
+    //   default:
+    //     return customResizeWidget ?? Icon(icon, color: color);
+    // }
+  }
+}
+
+class TrinaGridColumnIconSort extends StatelessWidget {
+  final TrinaColumnSorting? sort;
+
+  final Color color;
+
+  final Widget? ascendingIcon;
+
+  final Widget? descendingIcon;
+
+  const TrinaGridColumnIconSort({
+    this.sort,
+    this.color = Colors.black26,
+    this.ascendingIcon,
+    this.descendingIcon,
+    super.key,
+  });
+
+  _iconWithNumber(Widget child, int number) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        child,
+        Positioned(
+          child:  Container(
+            padding: EdgeInsets.all(4.0),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              number.toString(),
+              style: TextStyle(fontSize: 10),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (sort == null) {
+      return const SizedBox(height: 0, width: 0,);
+    }
+
+    int sortPosition = (sort!.sortPosition ?? 0) + 1;
+
+    switch (sort!.sortOrder) {
       case TrinaColumnSort.ascending:
         return ascendingIcon == null
-            ? Transform.rotate(
-                angle: 90 * pi / 90,
-                child: const Icon(Icons.sort, color: Colors.green),
-              )
-            : ascendingIcon!;
+            ? _iconWithNumber(Transform.rotate(
+          angle: 90 * pi / 90,
+          child: const Icon(
+            Icons.sort,
+            color: Colors.green,
+          ),
+        ), sortPosition)
+            : _iconWithNumber(ascendingIcon!, sortPosition);
       case TrinaColumnSort.descending:
         return descendingIcon == null
-            ? const Icon(Icons.sort, color: Colors.red)
-            : descendingIcon!;
+            ? _iconWithNumber(const Icon(
+          Icons.sort,
+          color: Colors.red,
+        ), sortPosition)
+            : _iconWithNumber(descendingIcon!, sortPosition);
       default:
-        return customResizeWidget ?? Icon(icon, color: color);
+        return const SizedBox(height: 0, width: 0,);
     }
   }
 }
+
+class _IconWithNumber extends StatelessWidget {
+  final IconData icon;
+  final int number;
+  final double iconSize;
+  final TextStyle textStyle;
+
+  _IconWithNumber({
+    required this.icon,
+    required this.number,
+    this.iconSize = 24.0,
+    this.textStyle = const TextStyle(
+      fontSize: 16.0,
+      fontWeight: FontWeight.bold,
+      color: Colors.black,
+    ),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Icon(
+          icon,
+          size: iconSize,
+        ),
+        Positioned(
+          child: Text(
+            number.toString(),
+            style: textStyle,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 class _DraggableWidget extends StatelessWidget {
   final TrinaGridStateManager stateManager;
@@ -355,7 +487,7 @@ class _DraggableWidget extends StatelessWidget {
             width: TrinaGridSettings.minColumnWidth,
             height: stateManager.columnHeight,
             backgroundColor:
-                stateManager.configuration.style.gridBackgroundColor,
+            stateManager.configuration.style.gridBackgroundColor,
             borderColor: stateManager.configuration.style.gridBorderColor,
             child: Text(
               column.title,
@@ -393,14 +525,14 @@ class _SortableWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
+    return column.enableSorting ? MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         key: const ValueKey('ColumnTitleSortableGesture'),
         onTap: _onTap,
         child: child,
       ),
-    );
+    ) : child;
   }
 }
 
@@ -419,11 +551,11 @@ class _DefaultColumnTitleContent extends StatelessWidget {
 
   EdgeInsets get padding =>
       column.titlePadding ??
-      stateManager.configuration.style.defaultColumnTitlePadding;
+          stateManager.configuration.style.defaultColumnTitlePadding;
 
   bool get showSizedBoxForIcon =>
       column.isShowRightIcon &&
-      (column.titleTextAlign.isRight || stateManager.isRTL);
+          (column.titleTextAlign.isRight || stateManager.isRTL);
 
   TrinaGridStyleConfig get style => stateManager.style;
 
@@ -549,6 +681,11 @@ class _ColumnTextWidget extends TrinaStatefulWidget {
 
 class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
   bool _isFilteredList = false;
+  bool _focusInColumn = false;
+  TrinaColumnSorting _sort = const TrinaColumnSorting(
+    sortOrder: TrinaColumnSort.none,
+    sortPosition: null,
+  );
 
   @override
   TrinaGridStateManager get stateManager => widget.stateManager;
@@ -566,6 +703,22 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
       _isFilteredList,
       stateManager.isFilteredColumn(widget.column),
     );
+
+    bool inColumn = false;
+    var ci = stateManager.columnIndex(widget.column);
+    var ccp = stateManager.currentCellPosition;
+    if (ccp != null && ccp.columnIdx == ci){
+      inColumn = true;
+    }
+    _focusInColumn = update<bool>(
+      _focusInColumn,
+      inColumn,
+    );
+
+    _sort = update<TrinaColumnSorting>(
+      _sort,
+      widget.column.sort,
+    );
   }
 
   void _handleOnPressedFilter() {
@@ -575,38 +728,79 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
   String? get _title =>
       widget.column.titleSpan == null ? widget.column.title : null;
 
-  List<InlineSpan> get _children => [
-    if (widget.column.titleSpan != null) widget.column.titleSpan!,
-    if (_isFilteredList &&
-        (stateManager.configuration.style.filterIconWidget != null ||
-            stateManager.configuration.style.filterIcon != null))
-      WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: stateManager.configuration.style.filterIconWidget != null
-            ? GestureDetector(
-                onTap: _handleOnPressedFilter,
-                child: stateManager.configuration.style.filterIconWidget,
-              )
-            : IconButton(
-                icon: Icon(
-                  stateManager.configuration.style.filterIcon!.icon,
-                  color:
-                      stateManager.configuration.style.filterHeaderIconColor ??
-                      stateManager.configuration.style.iconColor,
-                  size: stateManager.configuration.style.iconSize,
-                ),
-                onPressed: _handleOnPressedFilter,
-                constraints: BoxConstraints(
-                  maxHeight:
-                      widget.height +
-                      (widget.stateManager.style.cellHorizontalBorderWidth * 2),
-                ),
-              ),
-      ),
-  ];
+  List<InlineSpan> get _children {
+    TextStyle style = _focusInColumn ? stateManager.configuration.style.columnSelectedTextStyle : stateManager.configuration.style.columnTextStyle;
+    if (widget.column.highlight) {
+      style = style.copyWith(fontWeight: FontWeight.bold);
+    }
+
+    return [
+      if (_title != null && _title != "")
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Text(_title!, style: style,
+          ),
+        ),
+
+      if (widget.column.titleSpan != null) widget.column.titleSpan!,
+      if (_isFilteredList &&
+          (stateManager.configuration.style.filterIconWidget != null ||
+              stateManager.configuration.style.filterIcon != null))
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: stateManager.configuration.style.filterIconWidget != null
+              ? GestureDetector(
+            onTap: _handleOnPressedFilter,
+            child: stateManager.configuration.style.filterIconWidget,
+          )
+              : IconButton(
+            icon: Icon(
+              stateManager.configuration.style.filterIcon!.icon,
+              color:
+              stateManager.configuration.style.filterHeaderIconColor ??
+                  stateManager.configuration.style.iconColor,
+              size: stateManager.configuration.style.iconSize,
+            ),
+            onPressed: _handleOnPressedFilter,
+            constraints: BoxConstraints(
+              maxHeight:
+              widget.height +
+                  (widget.stateManager.style.cellHorizontalBorderWidth * 2),
+            ),
+          ),
+        ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    TextStyle style = _focusInColumn ? stateManager.configuration.style.columnSelectedTextStyle : stateManager.configuration.style.columnTextStyle;
+    if (widget.column.highlight) {
+      style = style.copyWith(fontWeight: FontWeight.bold);
+    }
+
+    return Row(
+      children: [
+        if (widget.column.enableSorting)
+          TrinaGridColumnIconSort(
+            sort: _sort,
+            color: stateManager.configuration.style.iconColor,
+            ascendingIcon: stateManager.configuration.style.columnAscendingIcon,
+            descendingIcon: stateManager.configuration.style.columnDescendingIcon,
+          ),
+        Expanded(
+          child: Text.rich(
+            TextSpan(/*text: _title,*/ children: _children),
+            style: stateManager.configuration.style.columnTextStyle,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            maxLines: 1,
+            textAlign: widget.column.titleTextAlign.value,
+          ),
+        )
+      ],
+    );
+
     return Text.rich(
       TextSpan(text: _title, children: _children),
       style: stateManager.configuration.style.columnTextStyle,

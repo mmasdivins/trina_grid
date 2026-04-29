@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:trina_grid/src/model/column_types/trina_column_type_percentage.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 import 'decimal_input_formatter.dart';

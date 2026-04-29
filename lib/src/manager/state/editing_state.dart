@@ -18,12 +18,12 @@ abstract class IEditingState {
   /// Custom renderer for the edit cell widget.
   /// This allows customizing the edit cell UI.
   Widget Function(
-    Widget defaultEditCellWidget,
-    TrinaCell cell,
-    TextEditingController controller,
-    FocusNode focusNode,
-    Function(dynamic value)? handleSelected,
-  )?
+      Widget defaultEditCellWidget,
+      TrinaCell cell,
+      TextEditingController controller,
+      FocusNode focusNode,
+      Function(dynamic value)? handleSelected,
+      )?
   get editCellRenderer;
 
   bool isEditableCell(TrinaCell cell);
@@ -48,13 +48,13 @@ abstract class IEditingState {
   /// [callOnChangedEvent] triggers a [TrinaOnChangedEventCallback] callback.
   /// [validate] determines whether to validate the value before setting it.
   void changeCellValue(
-    TrinaCell cell,
-    dynamic value, {
-    bool callOnChangedEvent = true,
-    bool force = false,
-    bool notify = true,
-    bool validate = true,
-  });
+      TrinaCell cell,
+      dynamic value, {
+        bool callOnChangedEvent = true,
+        bool force = false,
+        bool notify = true,
+        bool validate = true,
+      });
 
   /// Update multiple cell values in a row from a map of field names to values.
   ///
@@ -65,13 +65,13 @@ abstract class IEditingState {
   /// [values] is a map where keys are column field names and values are
   /// the new cell values.
   void updateRowCells(
-    TrinaRow row,
-    Map<String, dynamic> values, {
-    bool callOnChangedEvent = true,
-    bool force = false,
-    bool notify = true,
-    bool validate = true,
-  });
+      TrinaRow row,
+      Map<String, dynamic> values, {
+        bool callOnChangedEvent = true,
+        bool force = false,
+        bool notify = true,
+        bool validate = true,
+      });
 }
 
 class _State {
@@ -87,12 +87,12 @@ mixin EditingState implements ITrinaGridState {
 
   @override
   Widget Function(
-    Widget defaultEditCellWidget,
-    TrinaCell cell,
-    TextEditingController controller,
-    FocusNode focusNode,
-    Function(dynamic value)? handleSelected,
-  )?
+      Widget defaultEditCellWidget,
+      TrinaCell cell,
+      TextEditingController controller,
+      FocusNode focusNode,
+      Function(dynamic value)? handleSelected,
+      )?
   get editCellRenderer;
 
   @override
@@ -112,7 +112,7 @@ mixin EditingState implements ITrinaGridState {
 
   @override
   bool isEditableCell(TrinaCell cell) {
-    if (cell.column.enableEditingMode != true) {
+    if (cell.column.enableEditingMode?.call(cell) != true) {
       return false;
     }
 
@@ -253,6 +253,9 @@ mixin EditingState implements ITrinaGridState {
         column.type.applyFormat(value),
       );
     }
+    else if (column.type is TrinaColumnTypeWithCustomFormat) {
+      return (column.type as TrinaColumnTypeWithCustomFormat).applyFormat(value);
+    }
 
     return value;
   }
@@ -260,12 +263,12 @@ mixin EditingState implements ITrinaGridState {
   /// Validates a value against a column's validation rules
   /// Returns null if validation passes, or an error message if validation fails
   String? validateValue(
-    dynamic value,
-    TrinaColumn column,
-    TrinaRow row,
-    int rowIdx,
-    dynamic oldValue,
-  ) {
+      dynamic value,
+      TrinaColumn column,
+      TrinaRow row,
+      int rowIdx,
+      dynamic oldValue,
+      ) {
     // First check the column type's built-in validation
     if (!column.type.isValid(value)) {
       return 'Invalid value for ${column.title}';
@@ -289,13 +292,13 @@ mixin EditingState implements ITrinaGridState {
 
   @override
   void changeCellValue(
-    TrinaCell cell,
-    dynamic value, {
-    bool callOnChangedEvent = true,
-    bool force = false,
-    bool notify = true,
-    bool validate = true,
-  }) {
+      TrinaCell cell,
+      dynamic value, {
+        bool callOnChangedEvent = true,
+        bool force = false,
+        bool notify = true,
+        bool validate = true,
+      }) {
     final currentColumn = cell.column;
     final currentRow = cell.row;
     final dynamic oldValue = cell.value;
@@ -355,25 +358,36 @@ mixin EditingState implements ITrinaGridState {
     }
 
     currentRow.setState(TrinaRowState.updated);
+    // Abans d'actualitzar el cell value notifiquem
+    // de que la fila s'ha modificat
+    trackRowCell(
+        refRows.indexOf(currentRow),
+        currentRow
+    );
+
     cell.value = value;
     currentRow.incrementVersion();
 
-    final changedEvent = TrinaGridOnChangedEvent(
-      columnIdx: columnIndex(currentColumn)!,
-      column: currentColumn,
-      rowIdx: rowIdx,
-      row: currentRow,
-      cell: cell,
-      value: value,
-      oldValue: oldValue,
-    );
+    // Only call the on changed event if the column is not hide, if it's hide
+    // it will not find the index and will throw an error
+    if (!currentColumn.hide) {
+      final changedEvent = TrinaGridOnChangedEvent(
+        columnIdx: columnIndex(currentColumn)!,
+        column: currentColumn,
+        rowIdx: rowIdx,
+        row: currentRow,
+        cell: cell,
+        value: value,
+        oldValue: oldValue,
+      );
 
-    if (callOnChangedEvent == true && cell.onChanged != null) {
-      cell.onChanged!(changedEvent);
-    }
+      if (callOnChangedEvent == true && cell.onChanged != null) {
+        cell.onChanged!(changedEvent);
+      }
 
-    if (callOnChangedEvent == true && onChanged != null) {
-      onChanged!(changedEvent);
+      if (callOnChangedEvent == true && onChanged != null) {
+        onChanged!(changedEvent);
+      }
     }
 
     notifyListeners(notify, changeCellValue.hashCode);
@@ -381,13 +395,13 @@ mixin EditingState implements ITrinaGridState {
 
   @override
   void updateRowCells(
-    TrinaRow row,
-    Map<String, dynamic> values, {
-    bool callOnChangedEvent = true,
-    bool force = false,
-    bool notify = true,
-    bool validate = true,
-  }) {
+      TrinaRow row,
+      Map<String, dynamic> values, {
+        bool callOnChangedEvent = true,
+        bool force = false,
+        bool notify = true,
+        bool validate = true,
+      }) {
     if (values.isEmpty) return;
 
     final rowIdx = refRows.indexOf(row);
@@ -460,7 +474,7 @@ mixin EditingState implements ITrinaGridState {
       if (callOnChangedEvent) {
         final changedEvent = TrinaGridOnChangedEvent(
           columnIdx:
-              columnIndex(currentColumn) ?? refColumns.indexOf(currentColumn),
+          columnIndex(currentColumn) ?? refColumns.indexOf(currentColumn),
           column: currentColumn,
           rowIdx: rowIdx,
           row: row,
@@ -538,9 +552,9 @@ mixin EditingState implements ITrinaGridState {
       }
 
       for (
-        int columnIdx = columnStartIdx!;
-        columnIdx <= columnEndIdx!;
-        columnIdx += 1
+      int columnIdx = columnStartIdx!;
+      columnIdx <= columnEndIdx!;
+      columnIdx += 1
       ) {
         if (columnIdx > columnIndexes.length - 1) {
           break;
@@ -555,6 +569,11 @@ mixin EditingState implements ITrinaGridState {
         final currentCell = refRows[rowIdx].cells[currentColumn.field]!;
 
         dynamic newValue = textList[textRowIdx][textColumnIdx];
+
+        Map<String,dynamic> oldCellValues = <String,dynamic>{};
+        refRows[rowIdx].cells.forEach((key, cell) {
+          oldCellValues[key] = cell.value;
+        });
 
         final dynamic oldValue = currentCell.value;
 
@@ -577,13 +596,20 @@ mixin EditingState implements ITrinaGridState {
 
         // Store the old value if change tracking is enabled
         if (this case final TrinaGridStateManager stateManager
-            when stateManager.enableChangeTracking) {
+        when stateManager.enableChangeTracking) {
           if (!currentCell.isDirty) {
             currentCell.trackChange();
           }
         }
 
         refRows[rowIdx].setState(TrinaRowState.updated);
+
+        // Abans d'actualitzar el cell value notifiquem
+        // de que la fila s'ha modificat
+        trackRowCell(
+          refRows.indexOf(currentRow),
+          refRows[rowIdx],
+        );
 
         currentCell.value = newValue;
         refRows[rowIdx].incrementVersion();

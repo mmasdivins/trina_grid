@@ -29,15 +29,15 @@ abstract interface class PopupCellProps {
 }
 
 mixin PopupCellState<T extends PopupCell> on State<T>
-    implements PopupCellProps {
+implements PopupCellProps {
   late final TextEditingController textController;
   late final FocusNode textFocus;
 
   KeyEventResult handleOpeningPopupWithKeyboard(
-    FocusNode node,
-    KeyEvent event,
-    bool isPopupOpen,
-  ) {
+      FocusNode node,
+      KeyEvent event,
+      bool isPopupOpen,
+      ) {
     final trinaKeyEvent = TrinaKeyManagerEvent(focusNode: node, event: event);
 
     // Trigger onKeyPressed callback if it exists

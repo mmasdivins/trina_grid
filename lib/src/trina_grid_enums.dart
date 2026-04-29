@@ -54,6 +54,19 @@ enum TrinaGridMode {
   /// {@endtemplate}
   multiSelect,
 
+  /// {@template trina_grid_mode_multiSelectAlwaysOne}
+  /// Mode to select multiple rows with shift or control, and always have one row selected.
+  /// When a row is tapped, it is selected and the other rows are unselected. When shift or control is
+  /// pressed the rows tapped are also selected. [TrinaGrid.onSelected] callback is called.
+  /// [TrinaGridOnSelectedEvent.selectedRows] contains the selected rows.
+  /// When a row is selected with keyboard shift + arrowDown/Up keys,
+  /// the [TrinaGrid.onSelected] callback is called only when the Enter key is pressed.
+  /// When the Escape key is pressed,
+  /// the selected row is canceled and the [TrinaGrid.onSelected] callback is called
+  /// with a [TrinaGridOnSelectedEvent.selectedRows] value of null.
+  /// {@endtemplate}
+  multiSelectAlwaysOne,
+
   /// {@template trina_grid_mode_popup}
   /// This is a mode for popup type.
   /// It is used when calling a popup for filtering or column setting
@@ -70,7 +83,7 @@ enum TrinaGridMode {
 
   bool get isEditableMode => isNormal || isPopup;
 
-  bool get isSelectMode => isSingleSelectMode || isMultiSelectMode;
+  bool get isSelectMode => isSingleSelectMode || isMultiSelectMode || isMultiSelectAlwaysOne;
 
   bool get isSingleSelectMode => isSelect || isSelectWithOneTap;
 
@@ -81,6 +94,8 @@ enum TrinaGridMode {
   bool get isSelectWithOneTap => this == TrinaGridMode.selectWithOneTap;
 
   bool get isMultiSelect => this == TrinaGridMode.multiSelect;
+
+  bool get isMultiSelectAlwaysOne => this == TrinaGridMode.multiSelectAlwaysOne;
 
   bool get isPopup => this == TrinaGridMode.popup;
 }
@@ -108,6 +123,9 @@ enum TrinaGridLoadingLevel {
   /// {@macro trina_grid_loading_level_grid}
   grid,
 
+  /// {@macro trina_grid_loading_level_gridInvisible}
+  gridInvisible,
+
   /// {@macro trina_grid_loading_level_rows}
   rows,
 
@@ -115,6 +133,8 @@ enum TrinaGridLoadingLevel {
   rowsBottomCircular;
 
   bool get isGrid => this == TrinaGridLoadingLevel.grid;
+
+  bool get isGridInvisible => this == TrinaGridLoadingLevel.gridInvisible;
 
   bool get isRows => this == TrinaGridLoadingLevel.rows;
 

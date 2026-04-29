@@ -33,13 +33,19 @@ class TrinaScaledCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Transform.scale(
       scale: scale,
-      child: Checkbox(
-        value: value,
-        tristate: tristate,
-        onChanged: handleOnChanged,
-        activeColor: value == null ? unselectedColor : activeColor,
-        checkColor: checkColor,
-        side: side,
+      child: Theme(
+        data: ThemeData(
+          unselectedWidgetColor: unselectedColor,
+        ),
+        child: ExcludeFocus(
+          child: Checkbox(
+            value: value,
+            tristate: tristate,
+            onChanged: handleOnChanged,
+            activeColor: value == null ? unselectedColor : activeColor,
+            checkColor: checkColor,
+          ),
+        ),
       ),
     );
   }

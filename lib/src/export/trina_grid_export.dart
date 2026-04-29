@@ -1,4 +1,5 @@
 import 'package:trina_grid/src/manager/trina_grid_state_manager.dart';
+import 'package:trina_grid/trina_grid.dart';
 
 /// Interface for Trina Grid export functionality
 abstract class TrinaGridExport {
@@ -14,4 +15,6 @@ abstract class TrinaGridExport {
     bool includeHeaders = true,
     bool ignoreFixedRows = false,
   });
+
+
 }

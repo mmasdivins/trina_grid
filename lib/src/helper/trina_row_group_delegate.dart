@@ -29,7 +29,7 @@ enum TrinaRowGroupDelegateType {
 /// If [expanded] is true, the group row is expanded, if false, it is collapsed.
 /// {@endtemplate}
 typedef TrinaRowGroupOnToggled =
-    void Function({required TrinaRow row, required bool expanded});
+void Function({required TrinaRow row, required bool expanded});
 
 /// Abstract class that defines a base interface for grouping rows.
 ///
@@ -227,6 +227,8 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
   /// Column to group by.
   final List<TrinaColumn> columns;
 
+  final TrinaGridStateManager stateManager;
+
   /// {@macro trina_row_group_delegate_showFirstExpandableIon}
   @override
   final bool showFirstExpandableIcon;
@@ -240,6 +242,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
   final bool enableCompactCount;
 
   TrinaRowGroupByColumnDelegate({
+    required this.stateManager,
     required this.columns,
     this.showFirstExpandableIcon = false,
     this.showCount = true,
@@ -301,7 +304,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
     Iterator<MapEntry<String, List<TrinaRow>>>? currentIter;
     currentIter = groupBy<TrinaRow, String>(
       rows,
-      (r) => r.cells[groupFields[depth]]?.value?.toString() ?? '',
+          (r) => r.cells[groupFields[depth]]?.value?.toString() ?? '',
     ).entries.iterator;
 
     while (currentIter != null || stack.isNotEmpty) {
@@ -314,6 +317,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
         ];
 
         final row = _createRowGroup(
+          groupRows: currentIter.current.value,
           groupKeys: groupKeys,
           sortIdx: ++sortIdx,
           sampleRow: currentIter.current.value.first,
@@ -331,7 +335,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
         if (depth + 1 < maxDepth) {
           currentIter = groupBy<TrinaRow, String>(
             currentIter.current.value,
-            (r) => r.cells[groupFields[depth + 1]]?.value?.toString() ?? '',
+                (r) => r.cells[groupFields[depth + 1]]?.value?.toString() ?? '',
           ).entries.iterator;
         }
 
@@ -422,6 +426,7 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
   }
 
   TrinaRow _createRowGroup({
+    required List<TrinaRow> groupRows,
     required List<String> groupKeys,
     required int sortIdx,
     required TrinaRow sampleRow,
@@ -438,19 +443,39 @@ class TrinaRowGroupByColumnDelegate extends TrinaRowGroupDelegate {
     );
 
     for (var e in sampleRow.cells.entries) {
-      final sampleCell = e.value;
-      if (!sampleCell.initialized) continue;
-      cells[e.key] =
-          TrinaCell(
-              value:
-                  visibleColumns.firstWhereOrNull((c) => c.field == e.key) !=
-                      null
-                  ? sampleCell.value
-                  : null,
-              key: ValueKey('${groupKey}_${e.key}_cell'),
-            )
-            ..setColumn(sampleCell.column)
-            ..setRow(row);
+      var colGroup = stateManager.refColumns.firstWhereOrNull((c) => c.field == e.key);
+
+      cells[e.key] = TrinaCell(
+        renderer: colGroup?.groupRenderer != null ? (rendererContext) {
+          return colGroup!.groupRenderer!.call(
+              TrinaColumnGroupRendererContext(
+                column: rendererContext.column,
+                groupRows: groupRows,
+                stateManager: rendererContext.stateManager,
+              )
+          );
+        } : null,
+        value: visibleColumns.firstWhereOrNull((c) => c.field == e.key) != null
+            ? e.value.value
+            : null,
+        key: ValueKey('${groupKey}_${e.key}_cell'),
+      )
+        ..setColumn(e.value.column)
+        ..setRow(row);
+
+      // final sampleCell = e.value;
+      // if (!sampleCell.initialized) continue;
+      // cells[e.key] =
+      // TrinaCell(
+      //   value:
+      //   visibleColumns.firstWhereOrNull((c) => c.field == e.key) !=
+      //       null
+      //       ? sampleCell.value
+      //       : null,
+      //   key: ValueKey('${groupKey}_${e.key}_cell'),
+      // )
+      //   ..setColumn(sampleCell.column)
+      //   ..setRow(row);
     }
 
     return row;

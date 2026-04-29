@@ -510,7 +510,7 @@ void main() {
           field: 'header',
           readOnly: readOnly,
           type: TrinaColumnType.text(),
-          enableEditingMode: enableEditingMode,
+          enableEditingMode: (_) => enableEditingMode,
         );
 
         final TrinaRow row = TrinaRow(cells: {'header': cell});

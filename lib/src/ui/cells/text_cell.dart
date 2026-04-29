@@ -145,13 +145,19 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
     }
 
     if (selection.baseOffset == 0 && keyManager.isLeft) {
-      return true;
+      // No volem mouren's cap a l'esquerra encara que
+      // el cursor estigui al principi de la paraula
+      return false;
+      // return true;
     }
 
     final textLength = _textController.text.length;
 
     if (selection.baseOffset == textLength && keyManager.isRight) {
-      return true;
+      // No volem mouren's cap a la dreta encara que
+      // el cursor estigui al final de la paraula
+      return false;
+      // return true;
     }
 
     return false;
@@ -225,12 +231,12 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
     }
 
     final skip =
-        !(keyManager.isVertical ||
-            _moveHorizontal(keyManager) ||
-            keyManager.isEsc ||
-            keyManager.isTab ||
-            keyManager.isF3 ||
-            keyManager.isEnter);
+    !(keyManager.isVertical ||
+        _moveHorizontal(keyManager) ||
+        keyManager.isEsc ||
+        keyManager.isTab ||
+        keyManager.isF3 ||
+        keyManager.isEnter);
 
     // Movement and enter key, non-editable cell left and right movement, etc. key input is propagated to text field.
     if (skip) {
@@ -247,11 +253,18 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
     // Enter key is propagated to grid focus handler.
     if (keyManager.isEnter) {
       _handleOnComplete();
+      return KeyEventResult.ignored;
     }
 
     // ESC is propagated to grid focus handler.
     if (keyManager.isEsc) {
       _restoreText();
+    }
+
+    // Quan sortim de la cel·la perquè anem cap a la fila d'amunt o a la fila
+    // d'avall guardem els canvis de la cel·la
+    if (keyManager.isUp || keyManager.isDown) {
+      _handleOnComplete();
     }
 
     // KeyManager is delegated to handle the event.
@@ -271,6 +284,11 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
       cellFocus.requestFocus();
     }
 
+    TextStyle textStyle = widget.stateManager.configuration.style.cellTextStyle;
+    if (widget.column.highlight) {
+      textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
+    }
+
     Widget w = Container(
       alignment: Alignment.center,
       child: TextField(
@@ -281,7 +299,7 @@ mixin TextCellState<T extends TextCell> on State<T> implements TextFieldProps {
         onEditingComplete: _handleOnComplete,
         onSubmitted: (_) => _handleOnComplete(),
         onTap: _handleOnTap,
-        style: widget.stateManager.configuration.style.cellTextStyle,
+        style: textStyle,
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,

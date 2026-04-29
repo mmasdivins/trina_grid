@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 typedef SetFilterPopupHandler =
-    void Function(TrinaGridStateManager? stateManager);
+void Function(TrinaGridStateManager? stateManager);
 
 class FilterHelper {
   /// A value to identify all column searches when searching filters.
@@ -57,9 +57,9 @@ class FilterHelper {
 
   /// Converts rows containing filter information into comparison functions.
   static FilteredListFilter<TrinaRow?>? convertRowsToFilter(
-    List<TrinaRow?> rows,
-    List<TrinaColumn>? enabledFilterColumns,
-  ) {
+      List<TrinaRow?> rows,
+      List<TrinaColumn>? enabledFilterColumns,
+      ) {
     if (rows.isEmpty) {
       return null;
     }
@@ -75,7 +75,7 @@ class FilterHelper {
 
           row!.cells.forEach((key, value) {
             var foundColumn = enabledFilterColumns!.firstWhereOrNull(
-              (element) => element.field == key,
+                  (element) => element.field == key,
             );
 
             if (foundColumn != null) {
@@ -94,7 +94,7 @@ class FilterHelper {
           flag = compareAnd(flag, flagAllColumns);
         } else {
           var foundColumn = enabledFilterColumns!.firstWhereOrNull(
-            (element) => element.field == e.cells[filterFieldColumn]!.value,
+                (element) => element.field == e.cells[filterFieldColumn]!.value,
           );
 
           if (foundColumn != null) {
@@ -130,9 +130,9 @@ class FilterHelper {
   /// {column1: [{Contains: abc}]}
   /// ```
   static Map<String, List<Map<String, String>>> convertRowsToMap(
-    List<TrinaRow> filterRows, {
-    String allField = 'all',
-  }) {
+      List<TrinaRow> filterRows, {
+        String allField = 'all',
+      }) {
     final map = <String, List<Map<String, String>>>{};
 
     if (filterRows.isEmpty) return map;
@@ -168,9 +168,9 @@ class FilterHelper {
   /// If there is a search condition for all columns in [filteredRows],
   /// it is regarded as a filtering column.
   static bool isFilteredColumn(
-    TrinaColumn column,
-    List<TrinaRow?>? filteredRows,
-  ) {
+      TrinaColumn column,
+      List<TrinaRow?>? filteredRows,
+      ) {
     if (filteredRows == null || filteredRows.isEmpty) {
       return false;
     }
@@ -226,11 +226,11 @@ class FilterHelper {
 
       compare =
           compare ||
-          filterType.compare(
-            base: numberColumn.applyFormat(base),
-            search: search,
-            column: column,
-          );
+              filterType.compare(
+                base: numberColumn.applyFormat(base),
+                search: search,
+                column: column,
+              );
 
       search = search.replaceFirst(
         numberColumn.numberFormat.symbols.DECIMAL_SEP,
@@ -341,10 +341,10 @@ class FilterHelper {
   }
 
   static bool _compareWithRegExp(
-    String pattern,
-    String value, {
-    bool caseSensitive = false,
-  }) {
+      String pattern,
+      String value, {
+        bool caseSensitive = false,
+      }) {
     return RegExp(pattern, caseSensitive: caseSensitive).hasMatch(value);
   }
 
@@ -430,7 +430,7 @@ class FilterPopupState {
     this.height = 450,
     this.onClosed,
   }) : assert(columns.isNotEmpty),
-       _previousFilterRows = [...filterRows];
+        _previousFilterRows = [...filterRows];
 
   TrinaGridStateManager? _stateManager;
   List<TrinaRow?> _previousFilterRows;
@@ -500,7 +500,7 @@ class FilterPopupState {
   }) {
     Map<String, String> columnMap = {
       FilterHelper.filterFieldAllColumns:
-          configuration.localeText.filterAllColumns,
+      configuration.localeText.filterAllColumns,
     };
 
     columns.where((element) => element.enableFilterMenuItem).forEach((element) {
@@ -536,7 +536,7 @@ class FilterPopupState {
         type: TrinaColumnType.select(
           configuration.columnFilter.filters,
           // item is a [TrinaFilterType]
-          menuItemBuilder: (item) => Text(item.title.toString()),
+          menuItemBuilder: (item) => Text((item as TrinaFilterType).title.toString()),
         ),
         enableFilterMenuItem: false,
         applyFormatterInEditing: true,
@@ -619,11 +619,11 @@ class TrinaGridFilterPopupHeader extends StatelessWidget {
 /// [base] is the cell values of the column on which the search is based.
 /// [search] is the value entered by the user to search.
 typedef TrinaCompareFunction =
-    bool Function({
-      required String? base,
-      required String? search,
-      required TrinaColumn column,
-    });
+bool Function({
+required String? base,
+required String? search,
+required TrinaColumn column,
+});
 
 abstract class TrinaFilterType {
   String get title => throw UnimplementedError();
@@ -751,7 +751,7 @@ class TrinaFilterTypeMultiItems implements TrinaFilterType {
 
   @override
   TrinaCompareFunction get compare =>
-      ({
+          ({
         required String? base,
         required String? search,
         required TrinaColumn column,

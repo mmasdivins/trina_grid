@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:trina_grid/src/ui/cells/hint_triangle_cell.dart';
+
 import 'ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +29,7 @@ class TrinaBaseCell extends StatelessWidget
     required this.row,
     required this.stateManager,
   });
+
 
   @override
   double get width => column.width;
@@ -108,21 +113,30 @@ class TrinaBaseCell extends StatelessWidget
     return stateManager.onRowDoubleTap == null ? null : _handleOnDoubleTap;
   }
 
-  void Function(TapDownDetails details)? _onSecondaryTapOrNull() {
+  void _onSecondaryTapOrNull(TapDownDetails details) {
+    if (stateManager.onRightClickCell != null){
+      stateManager.onRightClickCell!.call(TrinaGridOnRightClickCellEvent(
+        cell: row.cells[column.field]!,
+        row: row,
+        rowIdx: rowIdx,
+        details: details,
+      ));
+    }
+
     return stateManager.onRowSecondaryTap == null
         ? null
-        : _handleOnSecondaryTap;
+        : _handleOnSecondaryTap(details);
   }
 
   @override
   Widget build(BuildContext context) {
-    final cellContainer = _CellContainer(
+    Widget cellContainer = _CellContainer(
       cell: cell,
       rowIdx: rowIdx,
       row: row,
       column: column,
       cellPadding:
-          cell.padding ??
+      cell.padding ??
           column.cellPadding ??
           stateManager.configuration.style.defaultCellPadding,
       stateManager: stateManager,
@@ -134,6 +148,18 @@ class TrinaBaseCell extends StatelessWidget
         cell: cell,
       ),
     );
+
+
+    if (stateManager.rightClickCellContextMenu != null) {
+      cellContainer = stateManager.rightClickCellContextMenu!(
+        TrinaGridRightClickCellContextMenuEvent(
+          rowIdx: rowIdx,
+          row: row,
+          cell: cell,
+          child: cellContainer,
+        ),
+      );
+    }
 
     // When drag selection is enabled, use a wrapper that handles both
     // tap and drag gestures using pan gesture recognizer
@@ -150,7 +176,7 @@ class TrinaBaseCell extends StatelessWidget
         onLongPressMoveUpdate: _handleOnLongPressMoveUpdate,
         onLongPressEnd: _handleOnLongPressEnd,
         onDoubleTap: _onDoubleTapOrNull(),
-        onSecondaryTapDown: _onSecondaryTapOrNull(),
+        onSecondaryTapDown: _onSecondaryTapOrNull,
         addGestureEvent: _addGestureEvent,
         child: cellContainer,
       );
@@ -164,7 +190,7 @@ class TrinaBaseCell extends StatelessWidget
       onLongPressMoveUpdate: _handleOnLongPressMoveUpdate,
       onLongPressEnd: _handleOnLongPressEnd,
       onDoubleTap: _onDoubleTapOrNull(),
-      onSecondaryTapDown: _onSecondaryTapOrNull(),
+      onSecondaryTapDown: _onSecondaryTapOrNull,
       child: cellContainer,
     );
   }
@@ -302,8 +328,8 @@ class _DragSelectableCellState extends State<_DragSelectableCell> {
     // Add tap recognizer for normal clicks, Ctrl/Shift selection, and secondary tap
     gestures[TapGestureRecognizer] =
         GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-          () => TapGestureRecognizer(debugOwner: this),
-          (TapGestureRecognizer instance) {
+              () => TapGestureRecognizer(debugOwner: this),
+              (TapGestureRecognizer instance) {
             instance
               ..onTapUp = widget.onTapUp
               ..onSecondaryTapDown = widget.onSecondaryTapDown;
@@ -313,8 +339,8 @@ class _DragSelectableCellState extends State<_DragSelectableCell> {
     // Add pan recognizer for drag selection
     gestures[PanGestureRecognizer] =
         GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-          () => PanGestureRecognizer(debugOwner: this),
-          (PanGestureRecognizer instance) {
+              () => PanGestureRecognizer(debugOwner: this),
+              (PanGestureRecognizer instance) {
             instance
               ..onDown = _handlePanDown
               ..onStart = _handlePanStart
@@ -328,11 +354,11 @@ class _DragSelectableCellState extends State<_DragSelectableCell> {
     if (widget.onLongPressStart != null) {
       gestures[LongPressGestureRecognizer] =
           GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
-            () => LongPressGestureRecognizer(
+                () => LongPressGestureRecognizer(
               debugOwner: this,
               duration: longPressDuration,
             ),
-            (LongPressGestureRecognizer instance) {
+                (LongPressGestureRecognizer instance) {
               instance
                 ..onLongPressStart = widget.onLongPressStart
                 ..onLongPressMoveUpdate = widget.onLongPressMoveUpdate
@@ -345,8 +371,8 @@ class _DragSelectableCellState extends State<_DragSelectableCell> {
     if (widget.onDoubleTap != null) {
       gestures[DoubleTapGestureRecognizer] =
           GestureRecognizerFactoryWithHandlers<DoubleTapGestureRecognizer>(
-            () => DoubleTapGestureRecognizer(debugOwner: this),
-            (DoubleTapGestureRecognizer instance) {
+                () => DoubleTapGestureRecognizer(debugOwner: this),
+                (DoubleTapGestureRecognizer instance) {
               instance.onDoubleTap = widget.onDoubleTap;
             },
           );
@@ -426,6 +452,8 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
 
     final isCurrentCell = stateManager.isCurrentCell(widget.cell);
 
+    final isSelectedRow = stateManager.isSelectedRow(widget.row.key);
+
     _decoration = update(
       _decoration,
       _boxDecoration(
@@ -438,8 +466,9 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
           widget.column,
           widget.rowIdx,
         ),
+        isSelectedRow: isSelectedRow,
         isGroupedRowCell:
-            stateManager.enabledRowGroups &&
+        stateManager.enabledRowGroups &&
             stateManager.rowGroupDelegate!.isExpandableCell(widget.cell),
         enableCellVerticalBorder: style.enableCellBorderVertical,
         borderColor: style.borderColor,
@@ -467,12 +496,12 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
     required Color cellColorInReadOnlyState,
     required TrinaGridSelectingMode selectingMode,
   }) {
-    if (!hasFocus) {
-      return gridBackgroundColor;
-    }
+    // if (!hasFocus) {
+    //   return gridBackgroundColor;
+    // }
 
     if (!isEditing) {
-      return selectingMode.isRow ? activatedColor : null;
+      return (selectingMode.isRow || selectingMode.isRowCell) ? activatedColor : null;
     }
 
     return readOnly == true ? cellColorInReadOnlyState : cellColorInEditState;
@@ -500,6 +529,7 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
     required bool isEditing,
     required bool isCurrentCell,
     required bool isSelectedCell,
+    required bool isSelectedRow,
     required bool isGroupedRowCell,
     required bool enableCellVerticalBorder,
     required Color borderColor,
@@ -523,15 +553,15 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
         color: isDirty
             ? dirtyColor
             : _currentCellColor(
-                hasFocus: hasFocus,
-                isEditing: isEditing,
-                readOnly: readOnly,
-                gridBackgroundColor: gridBackgroundColor,
-                activatedColor: activatedColor,
-                cellColorInReadOnlyState: cellColorInReadOnlyState,
-                cellColorInEditState: cellColorInEditState,
-                selectingMode: selectingMode,
-              ),
+          hasFocus: hasFocus,
+          isEditing: isEditing,
+          readOnly: readOnly,
+          gridBackgroundColor: gridBackgroundColor,
+          activatedColor: activatedColor,
+          cellColorInReadOnlyState: cellColorInReadOnlyState,
+          cellColorInEditState: cellColorInEditState,
+          selectingMode: selectingMode,
+        ),
         border: Border.all(
           color: hasFocus ? activatedBorderColor : inactivatedBorderColor,
           width: 1,
@@ -560,24 +590,24 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
         color: isDirty ? dirtyColor : cellCallbackColor ?? defaultColor,
         border: hasCustomColor
             ? Border(
-                right: BorderSide(
-                  color: borderColor,
-                  width: stateManager.style.cellVerticalBorderWidth,
-                ),
-                bottom: stateManager.style.enableCellBorderHorizontal
-                    ? BorderSide(
-                        color: borderColor,
-                        width: stateManager.style.cellHorizontalBorderWidth,
-                      )
-                    : BorderSide.none,
-              )
+          right: BorderSide(
+            color: borderColor,
+            width: stateManager.style.cellVerticalBorderWidth,
+          ),
+          bottom: stateManager.style.enableCellBorderHorizontal
+              ? BorderSide(
+            color: borderColor,
+            width: stateManager.style.cellHorizontalBorderWidth,
+          )
+              : BorderSide.none,
+        )
             : enableCellVerticalBorder
             ? BorderDirectional(
-                end: BorderSide(
-                  color: borderColor,
-                  width: stateManager.style.cellVerticalBorderWidth,
-                ),
-              )
+          end: BorderSide(
+            color: borderColor,
+            width: stateManager.style.cellVerticalBorderWidth,
+          ),
+        )
             : null,
       );
     }
@@ -585,9 +615,25 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
 
   @override
   Widget build(BuildContext context) {
+
+    Widget child = Padding(
+      padding: widget.cellPadding,
+      child: widget.child,
+    );
+
+    if (widget.column.showHint?.call(widget.row.cells) ?? false) {
+      child = HintTriangleCell(
+          hintValue: widget.column.hintValue?.call(widget.row.cells),//widget.cell.hintValue,
+          hintColor: widget.column.hintColor?.call(widget.row.cells),
+          width: widget.column.width,
+          height: widget.stateManager.rowHeight,
+          child: child
+      );
+    }
+
     return DecoratedBox(
       decoration: _decoration,
-      child: Padding(padding: widget.cellPadding, child: widget.child),
+      child: child,
     );
   }
 }

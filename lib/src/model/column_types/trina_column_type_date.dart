@@ -44,7 +44,7 @@ class TrinaColumnTypeDate
     this.popupIcon,
     this.closePopupOnSelection = false,
   }) : dateFormat = intl.DateFormat(format),
-       headerDateFormat = intl.DateFormat(headerFormat);
+        headerDateFormat = intl.DateFormat(headerFormat);
 
   @override
   final intl.DateFormat dateFormat;
@@ -77,7 +77,7 @@ class TrinaColumnTypeDate
     return TrinaGeneralHelper.compareWithNull(
       a,
       b,
-      () => a.toString().compareTo(b.toString()),
+          () => a.toString().compareTo(b.toString()),
     );
   }
 
@@ -98,7 +98,7 @@ class TrinaColumnTypeDate
     } else {
       date =
           dateFormat.tryParse(value.toString()) ??
-          DateTime.tryParse(value.toString());
+              DateTime.tryParse(value.toString());
     }
 
     if (date == null) return '';
@@ -108,11 +108,11 @@ class TrinaColumnTypeDate
 
   @override
   Widget buildCell(
-    TrinaGridStateManager stateManager,
-    TrinaCell cell,
-    TrinaColumn column,
-    TrinaRow row,
-  ) {
+      TrinaGridStateManager stateManager,
+      TrinaCell cell,
+      TrinaColumn column,
+      TrinaRow row,
+      ) {
     return TrinaDateCell(
       stateManager: stateManager,
       cell: cell,

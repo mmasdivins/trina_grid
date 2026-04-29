@@ -1,3 +1,5 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:trina_grid/trina_grid.dart';
 
@@ -49,6 +51,136 @@ class TrinaGridOnChangedEvent {
   }
 }
 
+class TrinaGridOnRowChangedEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final Map<String,dynamic> oldCellValues;
+
+  const TrinaGridOnRowChangedEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.oldCellValues,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnRowChangedEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: oldCellValues : $oldCellValues\n';
+    out += '::: row : $row';
+    return out;
+  }
+}
+
+class TrinaGridOnLastRowKeyDownEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final bool isRowDefault;
+
+  const TrinaGridOnLastRowKeyDownEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.isRowDefault,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnLastRowKeyDownEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: isRowDefault : $isRowDefault\n';
+    out += '::: row : $row';
+    return out;
+  }
+}
+
+class TrinaGridOnLastRowKeyUpEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final bool isRowDefault;
+
+  const TrinaGridOnLastRowKeyUpEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.isRowDefault,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnLastRowKeyUpEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: isRowDefault : $isRowDefault\n';
+    out += '::: row : $row';
+    return out;
+  }
+}
+
+class TrinaGridOnRightClickCellEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final TrinaCell cell;
+  final TapDownDetails details;
+
+  const TrinaGridOnRightClickCellEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.cell,
+    required this.details,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnRightClickCellEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: cell : $cell\n';
+    out += '::: row : $row';
+    out += '::: details : $details';
+    return out;
+  }
+}
+
+class TrinaGridRightClickCellContextMenuEvent {
+  final int rowIdx;
+  final TrinaRow row;
+  final TrinaCell cell;
+  final Widget child;
+
+  const TrinaGridRightClickCellContextMenuEvent({
+    required this.rowIdx,
+    required this.row,
+    required this.cell,
+    required this.child,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridRightClickCellContextMenuEvent] ';
+    out += 'RowIndex : $rowIdx\n';
+    out += '::: cell : $cell\n';
+    out += '::: row : $row';
+    out += '::: child : $child';
+    return out;
+  }
+}
+
+class TrinaGridOnSelectedCellChangedEvent {
+  final TrinaCell? oldCell;
+  final TrinaCell cell;
+
+  const TrinaGridOnSelectedCellChangedEvent({
+    required this.oldCell,
+    required this.cell,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridOnSelectedCellChangedEvent] ';
+    out += 'oldCell : $oldCell\n';
+    out += 'cell : $cell\n';
+    return out;
+  }
+}
+
+
 /// This is the argument value of the [TrinaGrid.onSelected] callback
 /// that is called when the [TrinaGrid.mode] value is in select mode.
 ///
@@ -82,7 +214,7 @@ class TrinaGridOnSelectedEvent {
 class TrinaGridOnSortedEvent {
   final TrinaColumn column;
 
-  final TrinaColumnSort oldSort;
+  final TrinaColumnSorting oldSort;
 
   const TrinaGridOnSortedEvent({required this.column, required this.oldSort});
 
@@ -130,7 +262,7 @@ class TrinaGridOnRowCheckedOneEvent extends TrinaGridOnRowCheckedEvent {
 /// Argument of [TrinaGrid.onRowChecked] callback when all checkboxes of the column are tapped.
 class TrinaGridOnRowCheckedAllEvent extends TrinaGridOnRowCheckedEvent {
   const TrinaGridOnRowCheckedAllEvent({super.isChecked})
-    : super(row: null, rowIdx: null);
+      : super(row: null, rowIdx: null);
 }
 
 /// The argument of the [TrinaGrid.onRowDoubleTap] callback
@@ -163,6 +295,18 @@ class TrinaGridOnRowSecondaryTapEvent {
   });
 }
 
+/// Argument of the [TrinaGrid.onRowInserted] callback
+/// to receive the event when a row is inserted.
+class TrinaGridOnRowInsertedEvent {
+  final TrinaRow row;
+  final int rowIdx;
+
+  const TrinaGridOnRowInsertedEvent({
+    required this.row,
+    required this.rowIdx,
+  });
+}
+
 /// Argument of [TrinaGrid.onRowEnter] callback
 /// to receive the event of entering the row with the mouse.
 class TrinaGridOnRowEnterEvent {
@@ -181,6 +325,16 @@ class TrinaGridOnRowExitEvent {
   const TrinaGridOnRowExitEvent({this.row, this.rowIdx});
 }
 
+/// Argument of [TrinaGrid.onRowMoveAccept] callback
+/// to receive the rows that we are trying to move and the
+/// position where we are trying to drop it
+class TrinaGridOnRowMoveAcceptEvent {
+  final int idx;
+  final List<TrinaRow> rows;
+
+  const TrinaGridOnRowMoveAcceptEvent({required this.idx, required this.rows});
+}
+
 /// Argument of [TrinaGrid.onRowsMoved] callback
 /// to receive the event of moving the row by dragging it.
 class TrinaGridOnRowsMovedEvent {
@@ -188,6 +342,26 @@ class TrinaGridOnRowsMovedEvent {
   final List<TrinaRow> rows;
 
   const TrinaGridOnRowsMovedEvent({required this.idx, required this.rows});
+}
+
+/// Argument of [TrinaGrid.onColumnTap] callback
+/// to move columns by dragging or receive left or right fixed events.
+///
+/// [TrinaGridStateManager.column].
+class TrinaGridOnColumnTapEvent {
+  final TrinaColumn column;
+
+  const TrinaGridOnColumnTapEvent({
+    required this.column,
+  });
+
+  @override
+  String toString() {
+    String text =
+        '[TrinaGridOnColumnTapEvent] idx: $column\n';
+
+    return text;
+  }
 }
 
 /// Argument of [TrinaGrid.onColumnsMoved] callback
@@ -395,7 +569,7 @@ class TrinaGridOnKeyEvent {
     out += 'Column: ${column.title}, RowIndex: $rowIdx\n';
     out += '::: Key: ${logicalKey.debugName}\n';
     out +=
-        '::: Modifiers: Shift=$isShiftPressed, Ctrl=$isCtrlPressed, Alt=$isAltPressed\n';
+    '::: Modifiers: Shift=$isShiftPressed, Ctrl=$isCtrlPressed, Alt=$isAltPressed\n';
     if (currentValue != null) {
       out += '::: Current value: $currentValue';
     }

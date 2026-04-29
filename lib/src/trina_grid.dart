@@ -11,74 +11,118 @@ import 'helper/platform_helper.dart';
 import 'ui/ui.dart';
 
 typedef TrinaOnLoadedEventCallback =
-    void Function(TrinaGridOnLoadedEvent event);
+void Function(TrinaGridOnLoadedEvent event);
 
 typedef TrinaOnChangedEventCallback =
-    void Function(TrinaGridOnChangedEvent event);
+void Function(TrinaGridOnChangedEvent event);
+
+typedef TrinaOnRowChangedEventCallback = Future<bool?> Function(
+    TrinaGridOnRowChangedEvent event);
+
+typedef TrinaOnLastRowKeyDownEventCallback = void Function(
+    TrinaGridOnLastRowKeyDownEvent event);
+
+typedef TrinaOnLastRowKeyUpEventCallback = void Function(
+    TrinaGridOnLastRowKeyUpEvent event);
+
+typedef TrinaOnRightClickCellEventCallback = Widget Function(
+    TrinaGridOnRightClickCellEvent event);
+
+typedef TrinaRightClickCellContextMenuEventCallback = Widget Function(
+    TrinaGridRightClickCellContextMenuEvent event);
+
+typedef TrinaOnSelectedCellChangedEventCallback = void Function(
+    TrinaGridOnSelectedCellChangedEvent event);
+
+typedef TrinaOnSelectedEventCallback = void Function(
+    TrinaGridOnSelectedEvent event);
+
+typedef TrinaOnSortedEventCallback = void Function(
+    TrinaGridOnSortedEvent event);
+
+typedef TrinaOnRowCheckedEventCallback = void Function(
+    TrinaGridOnRowCheckedEvent event);
+
+typedef TrinaOnRowDoubleTapEventCallback = void Function(
+    TrinaGridOnRowDoubleTapEvent event);
+
+typedef TrinaOnRowSecondaryTapEventCallback = void Function(
+    TrinaGridOnRowSecondaryTapEvent event);
+
+typedef TrinaOnRowInsertedEventCallback = void Function(
+    TrinaGridOnRowInsertedEvent event);
+
+typedef TrinaOnRowEnterEventCallback = void Function(
+    TrinaGridOnRowEnterEvent event);
+
+typedef TrinaOnRowExitEventCallback = void Function(
+    TrinaGridOnRowExitEvent event);
+
+typedef TrinaOnRowMoveAcceptEventCallback = bool Function(
+    TrinaGridOnRowMoveAcceptEvent event);
+
+typedef TrinaOnRowsMovedEventCallback = void Function(
+    TrinaGridOnRowsMovedEvent event);
+
+typedef TrinaOnColumnTapEventCallback = void Function(
+    TrinaGridOnColumnTapEvent event);
+
+typedef TrinaOnColumnsMovedEventCallback = void Function(
+    TrinaGridOnColumnsMovedEvent event);
+
+typedef CreateHeaderCallBack = Widget Function(
+    TrinaGridStateManager stateManager);
+
+typedef CreateColumnIndexCallBack = Widget? Function(int index,
+    TrinaGridStateManager stateManager);
+
+typedef CreateCornerWidgetCallBack = Widget? Function(
+    TrinaGridStateManager stateManager);
+
+typedef OnDeleteRowEventCallBack = void Function(TrinaRow row,
+    TrinaGridStateManager stateManager);
+
+typedef IsRowDefaultCallback = bool Function(TrinaRow row,
+    TrinaGridStateManager stateManager, bool isInsert);
+
+typedef CreateFooterCallBack = Widget Function(
+    TrinaGridStateManager stateManager);
+
+typedef TrinaRowColorCallback = Color Function(
+    TrinaRowColorContext rowColorContext);
+
+typedef TrinaSelectDateCallBack = Future<DateTime?> Function(
+    TrinaCell dateCell, TrinaColumn column);
+
+typedef TrinaEnableCheckSelectionCallBack = bool? Function(TrinaRow currentRow);
+
+typedef TrinaOnSearchCallBack = void Function(TrinaGridStateManager stateManager);
+
+typedef TrinaOnActiveCellChangedEventCallback = void Function(
+    TrinaGridOnActiveCellChangedEvent event);
+
+typedef TrinaOnValidationFailedCallback = void Function(
+    TrinaGridValidationEvent event);
+
+typedef TrinaOnLazyFetchCompletedEventCallback = void Function(
+    TrinaGridOnLazyFetchCompletedEvent event);
+
 
 typedef TrinaOnKeyPressedEventCallback =
-    void Function(TrinaGridOnKeyEvent event);
-
-typedef TrinaOnSelectedEventCallback =
-    void Function(TrinaGridOnSelectedEvent event);
-
-typedef TrinaOnSortedEventCallback =
-    void Function(TrinaGridOnSortedEvent event);
-
-typedef TrinaOnRowCheckedEventCallback =
-    void Function(TrinaGridOnRowCheckedEvent event);
-
-typedef TrinaOnRowDoubleTapEventCallback =
-    void Function(TrinaGridOnRowDoubleTapEvent event);
-
-typedef TrinaOnRowSecondaryTapEventCallback =
-    void Function(TrinaGridOnRowSecondaryTapEvent event);
-
-typedef TrinaOnRowEnterEventCallback =
-    void Function(TrinaGridOnRowEnterEvent event);
-
-typedef TrinaOnRowExitEventCallback =
-    void Function(TrinaGridOnRowExitEvent event);
-
-typedef TrinaOnRowsMovedEventCallback =
-    void Function(TrinaGridOnRowsMovedEvent event);
-
-typedef TrinaOnColumnsMovedEventCallback =
-    void Function(TrinaGridOnColumnsMovedEvent event);
-
-typedef CreateHeaderCallBack =
-    Widget Function(TrinaGridStateManager stateManager);
-
-typedef CreateFooterCallBack =
-    Widget Function(TrinaGridStateManager stateManager);
-
-typedef TrinaRowColorCallback =
-    Color Function(TrinaRowColorContext rowColorContext);
+void Function(TrinaGridOnKeyEvent event);
 
 typedef TrinaCellColorCallback =
-    Color? Function(TrinaCellColorContext cellColorContext);
-
-typedef TrinaSelectDateCallBack =
-    Future<DateTime?> Function(TrinaCell dateCell, TrinaColumn column);
+Color? Function(TrinaCellColorContext cellColorContext);
 
 typedef TrinaOnBeforeActiveCellChangeEventCallback =
-    bool Function(TrinaGridOnBeforeActiveCellChangeEvent event);
-
-typedef TrinaOnActiveCellChangedEventCallback =
-    void Function(TrinaGridOnActiveCellChangedEvent event);
-
-typedef TrinaOnValidationFailedCallback =
-    void Function(TrinaGridValidationEvent event);
-
-typedef TrinaOnLazyFetchCompletedEventCallback =
-    void Function(TrinaGridOnLazyFetchCompletedEvent event);
+bool Function(TrinaGridOnBeforeActiveCellChangeEvent event);
 
 typedef RowWrapper =
-    Widget Function(
-      BuildContext context,
-      Widget rowWidget,
-      TrinaRow rowData,
-      TrinaGridStateManager stateManager,
+Widget Function(
+    BuildContext context,
+    Widget rowWidget,
+    TrinaRow rowData,
+    TrinaGridStateManager stateManager,
     );
 
 /// [TrinaGrid] is a widget that receives columns and rows and is expressed as a grid-type UI.
@@ -94,25 +138,40 @@ class TrinaGrid extends TrinaStatefulWidget {
     super.key,
     required this.columns,
     required this.rows,
+    this.sortOrder = const [],
     this.rowsCacheExtent,
     this.rowWrapper,
     this.editCellRenderer,
     this.columnGroups,
     this.onLoaded,
     this.onChanged,
+    this.onRowChanged,
+    this.onLastRowKeyDown,
+    this.onLastRowKeyUp,
+    this.onRightClickCell,
+    this.onColumnTap,
+    this.rightClickCellContextMenu,
+    this.onSelectedCellChanged,
     this.onSelected,
     this.onSorted,
     this.onRowChecked,
     this.onRowDoubleTap,
     this.onRowSecondaryTap,
+    this.onRowInserted,
     this.onRowEnter,
     this.onRowExit,
+    this.onRowMoveAccept,
     this.onRowsMoved,
     this.onBeforeActiveCellChange,
     this.onActiveCellChanged,
     this.onColumnsMoved,
     this.createHeader,
     this.createFooter,
+    this.isRowDefault,
+    this.createColumnIndex,
+    this.createCornerWidget,
+    this.onDeleteRowEvent,
+    this.showColumnIndex = false,
     this.noRowsWidget,
     this.rowColorCallback,
     this.cellColorCallback,
@@ -121,6 +180,8 @@ class TrinaGrid extends TrinaStatefulWidget {
     this.configuration = const TrinaGridConfiguration(),
     this.notifierFilterResolver,
     this.mode = TrinaGridMode.normal,
+    this.enableCheckSelection,
+    this.onSearchCallback,
     this.onValidationFailed,
     this.onLazyFetchCompleted,
     this.scrollPhysics,
@@ -135,12 +196,12 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// This allows customizing the edit cell UI for all columns.
   /// Column-level editCellRenderer takes precedence if provided.
   final Widget Function(
-    Widget defaultEditCellWidget,
-    TrinaCell cell,
-    TextEditingController controller,
-    FocusNode focusNode,
-    Function(dynamic value)? handleSelected,
-  )?
+      Widget defaultEditCellWidget,
+      TrinaCell cell,
+      TextEditingController controller,
+      FocusNode focusNode,
+      Function(dynamic value)? handleSelected,
+      )?
   editCellRenderer;
 
   /// {@template trina_grid_property_columns}
@@ -154,6 +215,15 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// should also be provided to match in [TrinaColumnGroup.fields] as well.
   /// {@endtemplate}
   final List<TrinaColumn> columns;
+
+  /// {@template trina_grid_property_sortOrder}
+  /// The [TrinaColumn] sortOrder is the priority order of the column when sorting.
+  ///
+  /// The sort can be changed with [TrinaGridStateManager.setColumnsSortOrder].
+  ///
+  /// Each [field] value in [List] must be unique.
+  /// {@endtemplate}
+  final List<String> sortOrder;
 
   /// {@template trina_grid_property_rows}
   /// [rows] contains a call to the [TrinaGridStateManager.initializeRows] method
@@ -218,6 +288,38 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// {@endtemplate}
   final TrinaOnChangedEventCallback? onChanged;
 
+  /// {@template trina_grid_property_onRowChanged}
+  /// [onRowChanged] is called when the values of a row are changed.
+  ///
+  /// After changing a cell value of a row and changing the current cell to
+  /// another row
+  /// {@endtemplate}
+  final TrinaOnRowChangedEventCallback? onRowChanged;
+
+  /// {@template trina_grid_property_onLastRowKeyDown}
+  /// [onLastRowKeyDown] is called when the key down is pressed on the last row.
+  /// {@endtemplate}
+  final TrinaOnLastRowKeyDownEventCallback? onLastRowKeyDown;
+
+  /// {@template trina_grid_property_onLastRowKeyUp}
+  /// [onLastRowKeyUp] is called when the key up is pressed on the last row.
+  /// {@endtemplate}
+  final TrinaOnLastRowKeyUpEventCallback? onLastRowKeyUp;
+
+  /// {@template trina_grid_property_onRightClickCell}
+  /// [onRightClickCell] is called when the right clik of the mouse is pressed on a cell.
+  /// {@endtemplate}
+  final TrinaOnRightClickCellEventCallback? onRightClickCell;
+
+  /// {@template trina_grid_property_rightClickCellContextMenu}
+  /// [rightClickCellContextMenu] is called when the right clik of the mouse is
+  /// pressed on a cell to build a context menu.
+  /// {@endtemplate}
+  final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
+
+  /// Event que és crida quan és canvia la cel·la seleccionada
+  final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
+
   /// {@template trina_grid_property_onSelected}
   /// [onSelected] can receive a response only if [TrinaGrid.mode] is set to [TrinaGridMode.select] .
   ///
@@ -251,6 +353,11 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// {@endtemplate}
   final TrinaOnRowSecondaryTapEventCallback? onRowSecondaryTap;
 
+  /// {@template trina_grid_property_onRowInserted}
+  /// [onRowInserted] is called when a row is inserted on the grid.
+  /// {@endtemplate}
+  final TrinaOnRowInsertedEventCallback? onRowInserted;
+
   /// {@template trina_grid_property_onRowEnter}
   /// [onRowEnter] is called when the mouse enters the row.
   /// {@endtemplate}
@@ -261,11 +368,22 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// {@endtemplate}
   final TrinaOnRowExitEventCallback? onRowExit;
 
+  /// {@template trina_grid_property_onRowMoveAccept}
+  /// [onRowMoveAccept] is called before the row dragged is moved
+  /// if [TrinaColumn.enableRowDrag] is enabled.
+  /// {@endtemplate}
+  final TrinaOnRowMoveAcceptEventCallback? onRowMoveAccept;
+
   /// {@template trina_grid_property_onRowsMoved}
   /// [onRowsMoved] is called after the row is dragged and moved
   /// if [TrinaColumn.enableRowDrag] is enabled.
   /// {@endtemplate}
   final TrinaOnRowsMovedEventCallback? onRowsMoved;
+
+  /// {@template trina_grid_property_onColumnTap}
+  /// [onColumnTap] is called after the column is tapped
+  /// {@endtemplate}
+  final TrinaOnColumnTapEventCallback? onColumnTap;
 
   /// {@template trina_grid_property_onBeforeActiveCellChange}
   /// Callback for receiving events before the active cell changes.
@@ -338,6 +456,23 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// ```
   /// {@endtemplate}
   final CreateFooterCallBack? createFooter;
+
+  /// Modifica la columna dels index
+  final CreateColumnIndexCallBack? createColumnIndex;
+
+  /// Crea el widget de la cantonada
+  final CreateCornerWidgetCallBack? createCornerWidget;
+
+  /// Event d'esborrament de fila
+  final OnDeleteRowEventCallBack? onDeleteRowEvent;
+
+  /// {@template trina_grid_property_isRowDefalut}
+  /// Callback to check if a row is default
+  /// {@endtemplate}
+  final IsRowDefaultCallback? isRowDefault;
+
+  /// Indica si crea la columna index
+  final bool showColumnIndex;
 
   /// {@template trina_grid_property_noRowsWidget}
   /// Widget to be shown if there are no rows.
@@ -443,6 +578,12 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// {@macro trina_grid_mode_popup}
   final TrinaGridMode mode;
 
+  /// Controla si és pot o no seleccionar la fila
+  final TrinaEnableCheckSelectionCallBack? enableCheckSelection;
+
+  /// Callback quan fem control + F
+  final TrinaOnSearchCallBack? onSearchCallback;
+
   /// Callback triggered when cell validation fails
   final TrinaOnValidationFailedCallback? onValidationFailed;
 
@@ -498,6 +639,8 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
 
   bool _showColumnFooter = false;
 
+  bool _showColumnIndex = false;
+
   bool _showColumnGroups = false;
 
   bool _showFrozenColumn = false;
@@ -514,17 +657,21 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
 
   double _rightFrozenLeftOffset = 0.0;
 
+  int _lengthRows = 0;
+
   Widget? _header;
 
   Widget? _footer;
 
+  Widget? _columnIndex;
+
   final FocusNode _gridFocusNode = FocusNode();
 
   final LinkedScrollControllerGroup _verticalScroll =
-      LinkedScrollControllerGroup();
+  LinkedScrollControllerGroup();
 
   final LinkedScrollControllerGroup _horizontalScroll =
-      LinkedScrollControllerGroup();
+  LinkedScrollControllerGroup();
 
   final List<Function()> _disposeList = [];
 
@@ -550,6 +697,8 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
     _initSelectMode();
 
     _initHeaderFooter();
+
+    _initColumnIndex();
 
     _disposeList.add(() {
       _gridFocusNode.dispose();
@@ -605,6 +754,15 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       stateManager.showColumnFooter,
     );
 
+    _showColumnIndex = update<bool>(
+      _showColumnIndex,
+      stateManager.showColumnIndex,
+    );
+    _lengthRows = update<int>(
+      _lengthRows,
+      stateManager.refRows.length,
+    );
+
     _showColumnGroups = update<bool>(
       _showColumnGroups,
       stateManager.showColumnGroups,
@@ -641,12 +799,18 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       _rightFrozenLeftOffset,
       stateManager.rightFrozenLeftOffset,
     );
+
+    _lengthRows = update<int>(
+      _lengthRows,
+      stateManager.refRows.length,
+    );
   }
 
   void _initStateManager() {
     _stateManager = TrinaGridStateManager(
       columns: widget.columns,
       rows: widget.rows,
+      sortOrder: widget.sortOrder,
       gridFocusNode: _gridFocusNode,
       scroll: TrinaGridScrollController(
         vertical: _verticalScroll,
@@ -657,14 +821,23 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       editCellRenderer: widget.editCellRenderer,
       columnGroups: widget.columnGroups,
       onChanged: widget.onChanged,
+      onRowChanged: widget.onRowChanged,
+      onLastRowKeyDown: widget.onLastRowKeyDown,
+      onLastRowKeyUp: widget.onLastRowKeyUp,
+      onRightClickCell: widget.onRightClickCell,
+      rightClickCellContextMenu: widget.rightClickCellContextMenu,
+      onSelectedCellChanged: widget.onSelectedCellChanged,
       onSelected: widget.onSelected,
       onSorted: widget.onSorted,
       onRowChecked: widget.onRowChecked,
       onRowDoubleTap: widget.onRowDoubleTap,
       onRowSecondaryTap: widget.onRowSecondaryTap,
+      onRowInserted: widget.onRowInserted,
       onRowEnter: widget.onRowEnter,
       onRowExit: widget.onRowExit,
+      onRowMoveAccept: widget.onRowMoveAccept,
       onRowsMoved: widget.onRowsMoved,
+      onColumnTap: widget.onColumnTap,
       onBeforeActiveCellChange: widget.onBeforeActiveCellChange,
       onActiveCellChanged: widget.onActiveCellChanged,
       onColumnsMoved: widget.onColumnsMoved,
@@ -673,12 +846,19 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       selectDateCallback: widget.selectDateCallback,
       createHeader: widget.createHeader,
       createFooter: widget.createFooter,
+      createColumnIndex: widget.createColumnIndex,
+      createCornerWidget: widget.createCornerWidget,
+      onDeleteRowEvent: widget.onDeleteRowEvent,
+      isRowDefault: widget.isRowDefault,
+      showColumnIndex: widget.showColumnIndex,
       onValidationFailed: widget.onValidationFailed,
       onLazyFetchCompleted: widget.onLazyFetchCompleted,
       columnMenuDelegate: widget.columnMenuDelegate,
       notifierFilterResolver: widget.notifierFilterResolver,
       configuration: widget.configuration,
       mode: widget.mode,
+      enableCheckSelection: widget.enableCheckSelection,
+      onSearchCallback: widget.onSearchCallback,
     );
 
     // Dispose
@@ -748,6 +928,10 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
     }
   }
 
+  void _initColumnIndex() {
+    _stateManager.setShowColumnIndex(widget.showColumnIndex, notify: true);
+  }
+
   KeyEventResult _handleGridFocusOnKey(FocusNode focusNode, KeyEvent event) {
     // Get the current primary focus
     final FocusNode? primaryFocus = FocusManager.instance.primaryFocus;
@@ -778,7 +962,7 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
 
   bool _isRegisteredShortcut(KeyEvent keyEvent) {
     return stateManager.configuration.shortcut.actions.entries.any(
-      (element) => element.key.accepts(keyEvent, HardwareKeyboard.instance),
+          (element) => element.key.accepts(keyEvent, HardwareKeyboard.instance),
     );
   }
 
@@ -804,16 +988,20 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
 
             final bool showLeftFrozen =
                 _stateManager.showFrozenColumn &&
-                _stateManager.hasLeftFrozenColumns;
+                    _stateManager.hasLeftFrozenColumns;
 
             final bool showRightFrozen =
                 _stateManager.showFrozenColumn &&
-                _stateManager.hasRightFrozenColumns;
+                    _stateManager.hasRightFrozenColumns;
 
             final bool showColumnRowDivider =
                 _stateManager.showColumnTitle || _stateManager.showColumnFilter;
 
             final bool showColumnFooter = _stateManager.showColumnFooter;
+
+            final bool showColumnIndex = _stateManager.showColumnIndex;
+
+            final lenghtRows = _stateManager.rows;
 
             return CustomMultiChildLayout(
               key: _stateManager.gridKey,
@@ -827,6 +1015,18 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
                   id: _StackName.bodyRows,
                   child: TrinaBodyRows(_stateManager),
                 ),
+
+                if (showColumnIndex) ...[
+                  LayoutId(
+                    id: _StackName.columnsIndex,
+                    child: TrinaColumnIndex(_stateManager),
+                  ),
+                  LayoutId(
+                    id: _StackName.columnsIndexBody,
+                    child: TrinaColumnIndexBody(_stateManager),
+                  ),
+                ],
+
                 LayoutId(
                   id: _StackName.bodyColumns,
                   child: TrinaBodyColumns(_stateManager),
@@ -945,7 +1145,7 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
                   LayoutId(
                     id: _StackName.loading,
                     child:
-                        _stateManager.customLoadingWidget ??
+                    _stateManager.customLoadingWidget ??
                         TrinaLoading(
                           level: _stateManager.loadingLevel,
                           backgroundColor: style.gridBackgroundColor,
@@ -979,7 +1179,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
   final TextDirection _textDirection;
 
   TrinaGridLayoutDelegate(this._stateManager, this._textDirection)
-    : super(relayout: _stateManager.resizingChangeNotifier) {
+      : super(relayout: _stateManager.resizingChangeNotifier) {
     // set textDirection before the first frame is laid-out
     _stateManager.setTextDirection(_textDirection);
   }
@@ -992,6 +1192,15 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
     double columnsTopOffset = 0;
     double bodyLeftOffset = 0;
     double bodyRightOffset = 0;
+    double cornerOffset = 0;
+    double widthIndexColumn = _calculateTextWidth("${_stateManager.rows.length}");
+    if (widthIndexColumn < 35) {
+      widthIndexColumn = 35;
+    }
+    // If there is no columnsIndex the width is 0
+    if (!hasChild(_StackName.columnsIndex)) {
+      widthIndexColumn = 0;
+    }
 
     // first layout header and footer and see what remains for the scrolling part
     if (hasChild(_StackName.header)) {
@@ -1055,7 +1264,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
         BoxConstraints.loose(size),
       );
 
-      final double posX = isLTR ? 0 : size.width - s.width;
+      final double posX = isLTR ? widthIndexColumn : size.width - s.width + widthIndexColumn;
 
       positionChild(
         _StackName.leftFrozenColumns,
@@ -1081,7 +1290,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       );
 
       final double posX = isLTR
-          ? bodyLeftOffset
+          ? bodyLeftOffset + widthIndexColumn
           : size.width - bodyRightOffset - gridBorderWidth;
 
       positionChild(
@@ -1143,20 +1352,42 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       }
     }
 
+    if (hasChild(_StackName.columnsIndex)) {
+      var s = layoutChild(
+        _StackName.columnsIndex,
+        BoxConstraints.tight(
+          Size(widthIndexColumn, size.height),
+        ),
+      );
+
+      final double posX = isLTR ? 0 : size.width - s.width;
+
+      positionChild(
+        _StackName.columnsIndex,
+        Offset(posX, columnsTopOffset),
+      );
+
+      cornerOffset = s.width;
+      // if (isLTR) {
+      //   bodyLeftOffset = s.width;
+      // } else {
+      //   bodyRightOffset = s.width;
+      // }
+    }
+
     if (hasChild(_StackName.bodyColumns)) {
       var s = layoutChild(
         _StackName.bodyColumns,
         BoxConstraints.loose(
           Size(
-            _safe(size.width - bodyLeftOffset - bodyRightOffset),
+            _safe(size.width - bodyLeftOffset - bodyRightOffset - cornerOffset),
             size.height,
           ),
         ),
       );
 
-      final double posX = isLTR
-          ? bodyLeftOffset
-          : size.width - s.width - bodyRightOffset;
+      final double posX =
+      isLTR ? bodyLeftOffset + cornerOffset : size.width - s.width - bodyRightOffset;
 
       positionChild(_StackName.bodyColumns, Offset(posX, columnsTopOffset));
 
@@ -1168,7 +1399,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
         _StackName.bodyColumnFooters,
         BoxConstraints.loose(
           Size(
-            _safe(size.width - bodyLeftOffset - bodyRightOffset),
+            _safe(size.width - bodyLeftOffset - bodyRightOffset - cornerOffset),
             size.height,
           ),
         ),
@@ -1176,8 +1407,12 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
 
       _stateManager.columnFooterHeight = s.height;
 
-      final double posX = isLTR
-          ? bodyLeftOffset
+      // final double posX = isLTR
+      //     ? bodyLeftOffset
+      //     : size.width - s.width - bodyRightOffset;
+
+      final double posX =
+      isLTR ? bodyLeftOffset + cornerOffset
           : size.width - s.width - bodyRightOffset;
 
       positionChild(
@@ -1214,17 +1449,44 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       bodyRowsTopOffset += gridBorderWidth;
     }
 
+
+    if (hasChild(_StackName.columnsIndexBody)) {
+      var s = layoutChild(
+        _StackName.columnsIndexBody,
+        BoxConstraints.tight(
+          Size(
+            widthIndexColumn,
+            size.height - bodyRowsTopOffset - bodyRowsBottomOffset,
+            // _safe(size.height - columnsTopOffset - bodyRowsBottomOffset),
+          ),
+        ),
+      );
+
+      final double posX = isLTR
+          ? 0//bodyLeftOffset
+          : size.width - bodyRightOffset - TrinaGridSettings.gridBorderWidth;
+      positionChild(
+        _StackName.columnsIndexBody,
+        Offset(posX, bodyRowsTopOffset),
+      );
+
+      if (isLTR) {
+        bodyLeftOffset += s.width;
+      } else {
+        bodyRightOffset += s.width;
+      }
+    }
+
     if (hasChild(_StackName.leftFrozenRows)) {
       final double offset = isLTR ? bodyLeftOffset : bodyRightOffset;
-      final double posX = isLTR
-          ? 0
-          : size.width - bodyRightOffset + gridBorderWidth;
+      final double posX =
+      isLTR ? widthIndexColumn : size.width - bodyRightOffset + gridBorderWidth;
 
       layoutChild(
         _StackName.leftFrozenRows,
         BoxConstraints.loose(
           Size(
-            offset,
+            offset - widthIndexColumn,
             _safe(size.height - bodyRowsTopOffset - bodyRowsBottomOffset),
           ),
         ),
@@ -1235,9 +1497,8 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
 
     if (hasChild(_StackName.leftFrozenColumnFooters)) {
       final double offset = isLTR ? bodyLeftOffset : bodyRightOffset;
-      final double posX = isLTR
-          ? 0
-          : size.width - bodyRightOffset + gridBorderWidth;
+      final double posX =
+      isLTR ? 0 : size.width - bodyRightOffset + gridBorderWidth;
 
       layoutChild(
         _StackName.leftFrozenColumnFooters,
@@ -1254,9 +1515,8 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
 
     if (hasChild(_StackName.rightFrozenRows)) {
       final double offset = isLTR ? bodyRightOffset : bodyLeftOffset;
-      final double posX = isLTR
-          ? size.width - bodyRightOffset + gridBorderWidth
-          : 0;
+      final double posX =
+      isLTR ? size.width - bodyRightOffset + gridBorderWidth : 0;
 
       layoutChild(
         _StackName.rightFrozenRows,
@@ -1313,6 +1573,9 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
         case TrinaGridLoadingLevel.grid:
           loadingSize = size;
           break;
+        case TrinaGridLoadingLevel.gridInvisible:
+          loadingSize = size;
+          break;
         case TrinaGridLoadingLevel.rows:
           loadingSize = Size(size.width, 3);
           positionChild(_StackName.loading, Offset(0, bodyRowsTopOffset));
@@ -1353,6 +1616,16 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
   }
 
   double _safe(double value) => max(0, value);
+
+  double _calculateTextWidth(String text) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(text: text, style: TextStyle(fontSize: 16.0)),
+      textDirection: TextDirection.ltr,
+    )..layout(minWidth: 0, maxWidth: double.infinity);
+
+    return textPainter.size.width;
+  }
+
 }
 
 class _GridContainer extends StatelessWidget {
@@ -1447,9 +1720,9 @@ class TrinaScrollBehavior extends MaterialScrollBehavior {
     Set<PointerDeviceKind>? userDragDevices,
     this.scrollPhysics,
   }) : _dragDevices =
-           userDragDevices ??
-           (isMobile ? _mobileDragDevices : _desktopDragDevices),
-       super();
+      userDragDevices ??
+          (isMobile ? _mobileDragDevices : _desktopDragDevices),
+        super();
 
   final bool isMobile;
   final ScrollPhysics? scrollPhysics;
@@ -1474,10 +1747,10 @@ class TrinaScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Widget buildScrollbar(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
+      BuildContext context,
+      Widget child,
+      ScrollableDetails details,
+      ) {
     return child;
   }
 
@@ -1501,6 +1774,8 @@ enum _StackName {
   leftFrozenColumnFooters,
   leftFrozenRows,
   leftFrozenDivider,
+  columnsIndex,
+  columnsIndexBody,
   bodyColumns,
   bodyColumnFooters,
   bodyRows,

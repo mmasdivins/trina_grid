@@ -34,19 +34,19 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
 
   // Value notifiers for scroll info to avoid rebuilding the entire widget
   final ValueNotifier<double> _verticalScrollOffsetNotifier =
-      ValueNotifier<double>(0.0);
+  ValueNotifier<double>(0.0);
   final ValueNotifier<double> _verticalScrollExtentNotifier =
-      ValueNotifier<double>(1.0);
+  ValueNotifier<double>(1.0);
   final ValueNotifier<double> _verticalViewportExtentNotifier =
-      ValueNotifier<double>(1.0);
+  ValueNotifier<double>(1.0);
 
   // Value notifiers for horizontal scroll
   final ValueNotifier<double> _horizontalScrollOffsetNotifier =
-      ValueNotifier<double>(0.0);
+  ValueNotifier<double>(0.0);
   final ValueNotifier<double> _horizontalScrollExtentNotifier =
-      ValueNotifier<double>(1.0);
+  ValueNotifier<double>(1.0);
   final ValueNotifier<double> _horizontalViewportExtentNotifier =
-      ValueNotifier<double>(1.0);
+  ValueNotifier<double>(1.0);
 
   @override
   TrinaGridStateManager get stateManager => widget.stateManager;
@@ -183,11 +183,11 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
     );
 
     return stateManager.rowWrapper?.call(
-          context,
-          rowWidget,
-          row,
-          stateManager,
-        ) ??
+      context,
+      rowWidget,
+      row,
+      stateManager,
+    ) ??
         rowWidget;
   }
 
@@ -233,27 +233,27 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
                         // Scrollable rows
                         Expanded(
                           child:
-                              (scrollConfig.smoothScrolling
+                          (scrollConfig.smoothScrolling
                               ? TrinaSmoothListView.builder
                               : ListView.builder)(
-                                cacheExtent: stateManager.rowsCacheExtent,
-                                controller: _verticalScroll,
-                                scrollDirection: Axis.vertical,
-                                itemCount: _scrollableRows.length,
-                                itemExtent:
-                                    (stateManager.rowWrapper != null &&
-                                        !stateManager
-                                            .configuration
-                                            .rowWrapperIsConstantHeight)
-                                    ? null
-                                    : stateManager.rowTotalHeight,
-                                addRepaintBoundaries: false,
-                                itemBuilder: (ctx, i) => _buildRow(
-                                  context,
-                                  _scrollableRows[i],
-                                  i + _frozenTopRows.length,
-                                ),
-                              ),
+                            cacheExtent: stateManager.rowsCacheExtent,
+                            controller: _verticalScroll,
+                            scrollDirection: Axis.vertical,
+                            itemCount: _scrollableRows.length,
+                            itemExtent:
+                            (stateManager.rowWrapper != null &&
+                                !stateManager
+                                    .configuration
+                                    .rowWrapperIsConstantHeight)
+                                ? null
+                                : stateManager.rowTotalHeight,
+                            addRepaintBoundaries: false,
+                            itemBuilder: (ctx, i) => _buildRow(
+                              context,
+                              _scrollableRows[i],
+                              i + _frozenTopRows.length,
+                            ),
+                          ),
                         ),
                         // Frozen bottom rows
                         if (_frozenBottomRows.isNotEmpty)
@@ -263,13 +263,13 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
                                 .entries
                                 .map(
                                   (e) => _buildRow(
-                                    context,
-                                    e.value,
-                                    e.key +
-                                        _frozenTopRows.length +
-                                        _scrollableRows.length,
-                                  ),
-                                )
+                                context,
+                                e.value,
+                                e.key +
+                                    _frozenTopRows.length +
+                                    _scrollableRows.length,
+                              ),
+                            )
                                 .toList(),
                           ),
                       ],
@@ -288,11 +288,11 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
                         return TrinaVerticalScrollBar(
                           stateManager: stateManager,
                           verticalScrollExtentNotifier:
-                              _verticalScrollExtentNotifier,
+                          _verticalScrollExtentNotifier,
                           verticalViewportExtentNotifier:
-                              _verticalViewportExtentNotifier,
+                          _verticalViewportExtentNotifier,
                           verticalScrollOffsetNotifier:
-                              _verticalScrollOffsetNotifier,
+                          _verticalScrollOffsetNotifier,
                           context: context,
                           height: constraints.maxHeight,
                         );
@@ -310,11 +310,11 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
                 return TrinaHorizontalScrollBar(
                   stateManager: stateManager,
                   horizontalScrollExtentNotifier:
-                      _horizontalScrollExtentNotifier,
+                  _horizontalScrollExtentNotifier,
                   horizontalViewportExtentNotifier:
-                      _horizontalViewportExtentNotifier,
+                  _horizontalViewportExtentNotifier,
                   horizontalScrollOffsetNotifier:
-                      _horizontalScrollOffsetNotifier,
+                  _horizontalScrollOffsetNotifier,
                   context: context,
                   width: constraints.maxWidth,
                 );
@@ -332,7 +332,7 @@ class ListResizeDelegate extends SingleChildLayoutDelegate {
   List<TrinaColumn> columns;
 
   ListResizeDelegate(this.stateManager, this.columns)
-    : super(relayout: stateManager.resizingChangeNotifier);
+      : super(relayout: stateManager.resizingChangeNotifier);
 
   @override
   bool shouldRelayout(covariant SingleChildLayoutDelegate oldDelegate) {
@@ -342,7 +342,7 @@ class ListResizeDelegate extends SingleChildLayoutDelegate {
   double _getWidth() {
     return columns.fold(
       0,
-      (previousValue, element) => previousValue + element.width,
+          (previousValue, element) => previousValue + element.width,
     );
   }
 

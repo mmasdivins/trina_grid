@@ -1,7 +1,9 @@
 import 'dart:collection';
 import 'dart:math' as math;
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/model/trina_column_sorting.dart';
 
 import 'package:trina_grid/trina_grid.dart';
 import '../../ui/cells/trina_default_cell.dart';
@@ -21,6 +23,8 @@ abstract class IColumnState {
 
   /// Width of the entire column.
   double get columnsWidth;
+
+  List<String> get sortOrder;
 
   /// Left frozen columns.
   List<TrinaColumn> get leftFrozenColumns;
@@ -114,8 +118,22 @@ abstract class IColumnState {
   /// Hide or show the [column] with [hide] value.
   void hideColumn(TrinaColumn column, bool hide, {bool notify = true});
 
+  /// Highlights or remove the highlight of the [column] with [highlight] value.
+  void highlightColumn(
+      TrinaColumn column,
+      bool highlight, {
+        bool notify = true,
+      });
+
   /// Hide or show the [columns] with [hide] value.
   void hideColumns(List<TrinaColumn> columns, bool hide, {bool notify = true});
+
+  /// Highlight or remove highligths the [columns] with [highlight] value.
+  void highlightColumns(
+      List<TrinaColumn> columns,
+      bool highlight, {
+        bool notify = true,
+      });
 
   void sortAscending(TrinaColumn column, {bool notify = true});
 
@@ -141,6 +159,16 @@ abstract class IColumnState {
   ///
   /// [frozen] is the value you want to change.
   bool limitToggleFrozenColumn(TrinaColumn column, TrinaColumnFrozen frozen);
+
+  /// When changing a column from hidden state to unhidden state,
+  /// Check the constraint on the frozen column.
+  /// If the hidden column is a frozen column
+  /// The width of the currently frozen column is limited.
+  bool limitHideColumn(
+      TrinaColumn column,
+      bool hide, {
+        double accumulateWidth = 0,
+      });
 }
 
 mixin ColumnState implements ITrinaGridState {
@@ -289,7 +317,7 @@ mixin ColumnState implements ITrinaGridState {
   @override
   bool get hasSortedColumn {
     for (final column in refColumns) {
-      if (column.sort.isNone == false) {
+      if (column.sort.sortOrder.isNone == false) {
         return true;
       }
     }
@@ -300,7 +328,7 @@ mixin ColumnState implements ITrinaGridState {
   @override
   TrinaColumn? get getSortedColumn {
     for (final column in refColumns) {
-      if (column.sort.isNone == false) {
+      if (column.sort.sortOrder.isNone == false) {
         return column;
       }
     }
@@ -348,11 +376,34 @@ mixin ColumnState implements ITrinaGridState {
   void toggleSortColumn(TrinaColumn column) {
     final oldSort = column.sort;
 
-    if (column.sort.isNone) {
+    if (column.sort.sortOrder.isNone) {
       sortAscending(column, notify: false);
-    } else if (column.sort.isAscending) {
+    } else if (column.sort.sortOrder.isAscending) {
       sortDescending(column, notify: false);
     } else {
+      // Set the sort of the column to none
+      var col = refColumns.originalList.firstWhereOrNull((x) => x.field == column.field);
+      if (col != null) {
+        col.sort = const TrinaColumnSorting(
+            sortOrder: TrinaColumnSort.none,
+            sortPosition: null
+        );
+      }
+
+      var csort = refColumns.originalList
+          .where((x) => x.sort.sortOrder != TrinaColumnSort.none)
+          .sorted((a,b) {
+        if (a.sort.sortPosition == null && b.sort.sortPosition == null) return 0;
+        if (a.sort.sortPosition == null) return 1;
+        if (b.sort.sortPosition == null) return -1;
+        return a.sort.sortPosition!.compareTo(b.sort.sortPosition!);
+      });
+
+      int i = 0;
+      for (var c in csort) {
+        c.sort = c.sort.copyWith(sortPosition: i);
+      }
+
       sortBySortIdx(column, notify: false);
     }
 
@@ -425,7 +476,7 @@ mixin ColumnState implements ITrinaGridState {
     final removeKeys = Set.from(columns.map((e) => e.key));
 
     refColumns.removeWhereFromOriginal(
-      (column) => removeKeys.contains(column.key),
+          (column) => removeKeys.contains(column.key),
     );
 
     resetShowFrozenColumn();
@@ -586,26 +637,26 @@ mixin ColumnState implements ITrinaGridState {
 
     final calculatedTileWidth =
         titleTextWidth -
-        column.width +
-        [
-          (column.titlePadding ?? style.defaultColumnTitlePadding).horizontal,
-          if (column.enableRowChecked)
-            _getEffectiveButtonWidth(context, checkBox: true),
-          if (column.isShowRightIcon) style.iconSize,
-          8,
-        ].reduce((acc, a) => acc + a);
+            column.width +
+            [
+              (column.titlePadding ?? style.defaultColumnTitlePadding).horizontal,
+              if (column.enableRowChecked)
+                _getEffectiveButtonWidth(context, checkBox: true),
+              if (column.isShowRightIcon) style.iconSize,
+              8,
+            ].reduce((acc, a) => acc + a);
 
     final calculatedCellWidth =
         maxValueTextWidth -
-        column.width +
-        [
-          (column.cellPadding ?? style.defaultCellPadding).horizontal,
-          if (hasExpandableRowGroup) _getEffectiveButtonWidth(context),
-          if (column.enableRowChecked)
-            _getEffectiveButtonWidth(context, checkBox: true),
-          if (column.isShowRightIcon) style.iconSize,
-          2,
-        ].reduce((acc, a) => acc + a);
+            column.width +
+            [
+              (column.cellPadding ?? style.defaultCellPadding).horizontal,
+              if (hasExpandableRowGroup) _getEffectiveButtonWidth(context),
+              if (column.enableRowChecked)
+                _getEffectiveButtonWidth(context, checkBox: true),
+              if (column.isShowRightIcon) style.iconSize,
+              2,
+            ].reduce((acc, a) => acc + a);
 
     resizeColumn(column, math.max(calculatedTileWidth, calculatedCellWidth));
   }
@@ -625,6 +676,10 @@ mixin ColumnState implements ITrinaGridState {
       return;
     }
 
+    if (limitHideColumn(column, hide)) {
+      column.frozen = TrinaColumnFrozen.none;
+    }
+
     column.hide = hide;
     _updateAfterHideColumn(columns: [column], notify: notify);
 
@@ -632,6 +687,49 @@ mixin ColumnState implements ITrinaGridState {
       TrinaGridColumnHiddenEvent(columns: [column], isHidden: hide),
     );
   }
+
+
+  @override
+  void highlightColumn(
+      TrinaColumn column,
+      bool highlight, {
+        bool notify = true,
+      }) {
+    if (column.highlight == highlight) {
+      return;
+    }
+
+    column.highlight = highlight;
+
+    _updateAfterHighlightColumn(columns: [column], notify: notify);
+  }
+
+  int _getMaxSortPositionPlusOne(List<TrinaColumnSorting> list) {
+    bool hasNonZero = false;
+    bool hasNonNull = false;
+    int? maxValue = null;
+
+    for (var obj in list) {
+      if (obj.sortPosition != null) {
+        hasNonNull = true;
+        if (obj.sortPosition != 0) {
+          hasNonZero = true;
+        }
+        if (maxValue == null || obj.sortPosition! > maxValue) {
+          maxValue = obj.sortPosition;
+        }
+      }
+    }
+
+    if (!hasNonNull) {
+      return 0; // All values are null
+    } else if (!hasNonZero) {
+      return 1; // All non-null values are zero
+    } else {
+      return maxValue! + 1; // Maximum value plus one
+    }
+  }
+
 
   @override
   void hideColumns(List<TrinaColumn> columns, bool hide, {bool notify = true}) {
@@ -653,6 +751,7 @@ mixin ColumnState implements ITrinaGridState {
       return;
     }
 
+    _updateLimitedHideColumns(columns, hide);
     _updateAfterHideColumn(columns: columns, notify: notify);
 
     eventManager?.addEvent(
@@ -661,10 +760,38 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   @override
+  void highlightColumns(
+      List<TrinaColumn> columns,
+      bool highlight, {
+        bool notify = true,
+      }) {
+    if (columns.isEmpty) {
+      return;
+    }
+
+    for (final column in columns) {
+      if (highlight == column.highlight) {
+        continue;
+      }
+
+      column.highlight = highlight;
+    }
+
+
+    _updateAfterHighlightColumn(columns: columns, notify: notify);
+  }
+
+  @override
   void sortAscending(TrinaColumn column, {bool notify = true}) {
     _updateBeforeColumnSort();
 
-    column.sort = TrinaColumnSort.ascending;
+    int? position = column.sort.sortPosition;
+    position ??= _getMaxSortPositionPlusOne(refColumns.map((x) => x.sort).toList());
+
+    column.sort = column.sort.copyWith(
+      sortOrder: TrinaColumnSort.ascending,
+      sortPosition: position,
+    );
 
     if (sortOnlyEvent) return;
 
@@ -673,10 +800,29 @@ mixin ColumnState implements ITrinaGridState {
       b.cells[column.field]!.valueForSorting,
     );
 
+    int multiColumnCompare(dynamic a, dynamic b) {
+      for (int i = 0; i < columns.length; i++) {
+        final column = columns[i];
+        if (column.sort.sortOrder == TrinaColumnSort.none) {
+          continue;
+        }
+
+        final ascending = column.sort.sortOrder == TrinaColumnSort.ascending;
+        final comparison = column.type.compare(
+          a.cells[column.field]!.valueForSorting,
+          b.cells[column.field]!.valueForSorting,
+        );
+        if (comparison != 0) {
+          return ascending ? comparison : -comparison;
+        }
+      }
+      return 0; // All columns are equal
+    }
+
     if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: compare);
+      sortRowGroup(column: column, compare: multiColumnCompare);
     } else {
-      refRows.sort(compare);
+      refRows.sort(multiColumnCompare);
     }
 
     notifyListeners(notify, sortAscending.hashCode);
@@ -686,7 +832,14 @@ mixin ColumnState implements ITrinaGridState {
   void sortDescending(TrinaColumn column, {bool notify = true}) {
     _updateBeforeColumnSort();
 
-    column.sort = TrinaColumnSort.descending;
+    // int position = column.sort.sortPosition ?? refColumns.fold(0, (prev, element) => (element.sort.sortPosition ?? 0) > prev ? (element.sort.sortPosition ?? 0) : prev);
+    int? position = column.sort.sortPosition;
+    position ??= _getMaxSortPositionPlusOne(refColumns.map((x) => x.sort).toList());
+
+    column.sort = column.sort.copyWith(
+      sortOrder: TrinaColumnSort.descending,
+      sortPosition: position,
+    );
 
     if (sortOnlyEvent) return;
 
@@ -695,10 +848,29 @@ mixin ColumnState implements ITrinaGridState {
       b.cells[column.field]!.valueForSorting,
     );
 
+    int multiColumnCompare(dynamic a, dynamic b) {
+      for (int i = 0; i < columns.length; i++) {
+        final column = columns[i];
+        if (column.sort.sortOrder == TrinaColumnSort.none) {
+          continue;
+        }
+
+        final ascending = column.sort.sortOrder == TrinaColumnSort.ascending;
+        final comparison = column.type.compare(
+          a.cells[column.field]!.valueForSorting,
+          b.cells[column.field]!.valueForSorting,
+        );
+        if (comparison != 0) {
+          return ascending ? comparison : -comparison;
+        }
+      }
+      return 0; // All columns are equal
+    }
+
     if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: compare);
+      sortRowGroup(column: column, compare: multiColumnCompare);
     } else {
-      refRows.sort(compare);
+      refRows.sort(multiColumnCompare);
     }
 
     notifyListeners(notify, sortDescending.hashCode);
@@ -742,7 +914,7 @@ mixin ColumnState implements ITrinaGridState {
         field: titleField,
         type: TrinaColumnType.text(),
         enableRowChecked: true,
-        enableEditingMode: false,
+        enableEditingMode: (c) => false,
         enableDropToResize: true,
         enableContextMenu: false,
         enableColumnDrag: false,
@@ -769,7 +941,7 @@ mixin ColumnState implements ITrinaGridState {
       } else {
         final checkedField = event.row!.cells[columnField]!.value.toString();
         final checkedColumn = refColumns.originalList.firstWhere(
-          (column) => column.field == checkedField,
+              (column) => column.field == checkedField,
         );
         hideColumn(checkedColumn, event.isChecked != true);
       }
@@ -832,6 +1004,22 @@ mixin ColumnState implements ITrinaGridState {
     return _limitFrozenColumn(frozen, column.width);
   }
 
+  @override
+  bool limitHideColumn(
+      TrinaColumn column,
+      bool hide, {
+        double accumulateWidth = 0,
+      }) {
+    if (hide == true) {
+      return false;
+    }
+
+    return _limitFrozenColumn(
+      column.frozen,
+      column.width + accumulateWidth,
+    );
+  }
+
   /// Check the width limit before changing the TrinaColumnFrozen value.
   ///
   /// In the following situations, need to check the frozen column width limit.
@@ -860,9 +1048,15 @@ mixin ColumnState implements ITrinaGridState {
 
     clearCurrentSelecting(notify: false);
 
-    // Reset column sort to none.
-    for (var i = 0; i < refColumns.originalList.length; i += 1) {
-      refColumns.originalList[i].sort = TrinaColumnSort.none;
+    // If shift is not pressed we set all columns to sort none
+    if (!keyPressed.shift) {
+      // Reset column sort to none.
+      for (var i = 0; i < refColumns.originalList.length; i += 1) {
+        refColumns.originalList[i].sort = const TrinaColumnSorting(
+          sortOrder: TrinaColumnSort.none,
+          sortPosition: null,
+        );
+      }
     }
   }
 
@@ -901,7 +1095,7 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   /// [TrinaGrid.onSorted] Called when a callback is registered.
-  void _callOnSorted(TrinaColumn column, TrinaColumnSort oldSort) {
+  void _callOnSorted(TrinaColumn column, TrinaColumnSorting oldSort) {
     if (sortOnlyEvent) {
       eventManager!.addEvent(
         TrinaGridChangeColumnSortEvent(column: column, oldSort: oldSort),
@@ -922,7 +1116,12 @@ mixin ColumnState implements ITrinaGridState {
       final List<MapEntry<String, TrinaCell>> cells = [];
 
       for (var column in columns) {
-        final cell = TrinaCell(value: column.type.defaultValue)
+        var value = column.type.defaultValue;
+        if (column.type.defaultValue is Function){
+          value = column.type.defaultValue.call();
+        }
+
+        final cell = TrinaCell(value: value)
           ..setRow(row)
           ..setColumn(column);
 
@@ -961,6 +1160,32 @@ mixin ColumnState implements ITrinaGridState {
     }
   }
 
+
+  /// Change the value of [TrinaColumn.hide] of [columns] to [hide].
+  ///
+  /// When there is a frozen column when it is unhidden in a hidden state,
+  /// it is limited to the width of the frozen column area.
+  /// Updated to unfreeze [TrinaColumn.frozen].
+  void _updateLimitedHideColumns(List<TrinaColumn> columns, bool hide) {
+    double accumulateWidth = 0;
+
+    for (final column in columns) {
+      if (hide == column.hide) {
+        continue;
+      }
+
+      if (limitHideColumn(column, hide, accumulateWidth: accumulateWidth)) {
+        column.frozen = TrinaColumnFrozen.none;
+      }
+
+      if (column.frozen.isFrozen) {
+        accumulateWidth += column.width;
+      }
+
+      column.hide = hide;
+    }
+  }
+
   void _updateAfterHideColumn({
     required List<TrinaColumn> columns,
     required bool notify,
@@ -981,6 +1206,21 @@ mixin ColumnState implements ITrinaGridState {
 
     notifyListeners(notify, hideColumn.hashCode);
   }
+
+
+  void _updateAfterHighlightColumn({
+    required List<TrinaColumn> columns,
+    required bool notify,
+  }) {
+    refColumns.update();
+
+    resetCurrentState(notify: false);
+
+    updateVisibilityLayout();
+
+    notifyListeners(notify, highlightColumn.hashCode);
+  }
+
 
   bool _updateResizeColumns({
     required TrinaColumn column,
@@ -1004,9 +1244,9 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   double _getEffectiveButtonWidth(
-    BuildContext context, {
-    bool checkBox = false,
-  }) {
+      BuildContext context, {
+        bool checkBox = false,
+      }) {
     final theme = Theme.of(context);
     late double width;
     switch (theme.materialTapTargetSize) {

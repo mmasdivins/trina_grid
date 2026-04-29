@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/model/trina_column_sorting.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 typedef TrinaColumnValueFormatter = String Function(dynamic value);
@@ -8,6 +9,10 @@ typedef TrinaColumnRenderer =
 
 typedef TrinaColumnFooterRenderer =
     Widget Function(TrinaColumnFooterRendererContext context);
+
+/// Renderer for the column of the grouped row
+typedef TrinaColumnGroupRenderer = Widget Function(
+    TrinaColumnGroupRendererContext context);
 
 /// Renderer for customizing the column title widget
 typedef TrinaColumnTitleRenderer =
@@ -80,7 +85,7 @@ class TrinaColumn {
   TrinaColumnFrozen frozen;
 
   /// Set column sorting.
-  TrinaColumnSort sort;
+  TrinaColumnSorting sort;
 
   /// Formatter for display of cell values.
   TrinaColumnValueFormatter? formatter;
@@ -137,6 +142,18 @@ class TrinaColumn {
   /// ```
   TrinaColumnFooterRenderer? footerRenderer;
 
+  /// A callback that returns a widget
+  /// for expressing the widget for the column of the row group.
+  ///
+  /// ```dart
+  /// groupRenderer: (rendererContext) {
+  ///   return Container(
+  ///     child: Text("Test"),
+  ///   );
+  /// },
+  /// ```
+  TrinaColumnGroupRenderer? groupRenderer;
+
   /// If [TrinaAutoSizeMode] is enabled,
   /// column autoscaling is ignored if [suppressedAutoSize] is true.
   bool suppressedAutoSize;
@@ -146,6 +163,9 @@ class TrinaColumn {
 
   /// Change the position of the row by dragging the icon in the cell.
   bool enableRowDrag;
+
+  bool Function(TrinaRow row)? disableRowDragWhen;
+
 
   /// A checkbox appears in the cell of the column.
   bool enableRowChecked;
@@ -184,6 +204,27 @@ class TrinaColumn {
   /// Valid only when [enableContextMenu] is activated.
   bool enableFilterMenuItem;
 
+  ///Set hint text for filter field
+  String? filterHintText;
+
+  ///Set hint text color for filter field
+  Color? filterHintTextColor;
+
+  ///Set suffix icon for filter field
+  Icon? filterSuffixIcon;
+
+  ///Set custom widget
+  @Deprecated("Use new filterWidgetBuilder to provide some parameters")
+  Widget? filterWidget;
+
+  Widget Function(
+      FocusNode focusNode,
+      TextEditingController controller,
+      bool enabled,
+      void Function(String changed) handleOnChanged,
+      TrinaGridStateManager stateManager,
+      )? filterWidgetBuilder;
+
   /// Displays Hide column menu in the column context menu.
   /// Valid only when [enableContextMenu] is activated.
   bool enableHideColumnMenuItem;
@@ -195,10 +236,38 @@ class TrinaColumn {
   bool enableAutoEditing;
 
   /// Entering the Enter key or tapping the cell enters the Editing mode.
-  bool? enableEditingMode;
+  bool? Function(TrinaCell?)? enableEditingMode;
 
   /// Hide the column.
   bool hide;
+
+  LinearGradient? backgroundGradient;
+
+  /// Highlights the column.
+  bool highlight;
+
+  /// Valor de hint
+  String Function(Map<String, TrinaCell> cells)? hintValue;
+
+  /// Indica si ensenyem el hint
+  bool Function(Map<String, TrinaCell> cells)? showHint;
+
+  /// Color del hint
+  Color? Function(Map<String, TrinaCell> cells)? hintColor;
+
+  ///  Indica si la columna és obligatoria
+  bool required;
+
+  /// Indica si la columna s'exportarà o no
+  bool exportable;
+
+  String? formatExportExcel;
+
+  /// Value of the footer if it's exported and the footer renderer is not null
+  dynamic Function(TrinaColumnFooterRendererContext rendererContext)? footerExportValue;
+
+  /// Value of the group if it's exported and the group renderer is not null
+  dynamic Function(TrinaColumnGroupRendererContext rendererContext)? groupExportValue;
 
   /// The widget of the filter column, this can be customized with the multiple constructors, defaults to a [TrinaFilterColumnWidgetDelegate.initial()]
   TrinaFilterColumnWidgetDelegate? filterWidgetDelegate;
@@ -301,12 +370,13 @@ class TrinaColumn {
     this.textAlign = TrinaColumnTextAlign.start,
     this.titleTextAlign = TrinaColumnTextAlign.start,
     this.frozen = TrinaColumnFrozen.none,
-    this.sort = TrinaColumnSort.none,
+    this.sort = const TrinaColumnSorting(sortOrder: TrinaColumnSort.none, sortPosition: null),
     this.formatter,
     this.applyFormatterInEditing = false,
     this.backgroundColor,
     this.renderer,
     this.footerRenderer,
+    this.groupRenderer,
     this.titleRenderer,
     this.suppressedAutoSize = false,
     this.enableColumnDrag = true,
@@ -318,20 +388,42 @@ class TrinaColumn {
     this.enableContextMenu = true,
     this.enableDropToResize = true,
     this.enableFilterMenuItem = true,
+    this.filterHintText,
+    this.filterHintTextColor,
+    this.filterSuffixIcon,
+    @Deprecated("Use new filterWidgetBuilder to provide some parameters")
+    this.filterWidget,
     this.enableHideColumnMenuItem = true,
     this.enableSetColumnsMenuItem = true,
     this.enableAutoEditing = false,
-    this.enableEditingMode = true,
+    this.enableEditingMode,
     this.hide = false,
+    this.highlight = false,
+    this.hintValue,
+    this.showHint,
+    this.hintColor,
+    this.required = false,
+    this.exportable = true,
+    this.formatExportExcel,
+    this.footerExportValue,
+    this.groupExportValue,
+    this.backgroundGradient,
+    this.filterWidgetBuilder,
     this.filterWidgetDelegate =
         const TrinaFilterColumnWidgetDelegate.textField(),
     this.disableRowCheckboxWhen,
+    this.disableRowDragWhen,
     this.validator,
     this.editCellRenderer,
     this.filterEnterKeyAction,
     this.metadata,
   }) : _key = UniqueKey(),
-       _checkReadOnly = checkReadOnly;
+       _checkReadOnly = checkReadOnly
+  {
+    enableEditingMode = enableEditingMode ?? (c) => true;
+    showHint = showHint ?? (c) => false;
+    hintColor = hintColor ?? (c) => Colors.black;
+  }
 
   final Key _key;
 
@@ -357,7 +449,7 @@ class TrinaColumn {
       _defaultFilter ?? const TrinaFilterTypeContains();
 
   bool get isShowRightIcon =>
-      enableContextMenu || enableDropToResize || !sort.isNone;
+      enableContextMenu || enableDropToResize || !sort.sortOrder.isNone;
 
   TrinaColumnGroup? group;
 
@@ -576,6 +668,23 @@ class TrinaColumnFooterRendererContext {
     required this.stateManager,
   });
 }
+
+
+/// Context provided to the group renderer
+class TrinaColumnGroupRendererContext {
+  final TrinaColumn column;
+  final List<TrinaRow> groupRows;
+
+  final TrinaGridStateManager stateManager;
+
+  TrinaColumnGroupRendererContext({
+    required this.column,
+    required this.groupRows,
+    required this.stateManager,
+  });
+}
+
+
 
 /// Context provided to the titleRenderer function
 class TrinaColumnTitleRendererContext {

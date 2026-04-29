@@ -176,10 +176,10 @@ class _PopupContent extends StatelessWidget {
         final showAsVertical = screenSize.width < 640;
         final popupConstraints = showAsVertical
             ? const BoxConstraints(
-                maxWidth: 330,
-                maxHeight: 530,
-                minHeight: 440,
-              )
+          maxWidth: 330,
+          maxHeight: 530,
+          minHeight: 440,
+        )
             : const BoxConstraints(maxWidth: 560, maxHeight: 360);
 
         return SingleChildScrollView(

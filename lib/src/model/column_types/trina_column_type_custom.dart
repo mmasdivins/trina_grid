@@ -21,8 +21,8 @@ class TrinaColumnTypeCustom
     int Function(dynamic a, dynamic b)? compare,
     String Function(dynamic value)? toDisplayString,
   }) : _isValidCallback = isValid,
-       _compareCallback = compare,
-       _toDisplayStringCallback = toDisplayString;
+        _compareCallback = compare,
+        _toDisplayStringCallback = toDisplayString;
 
   String toDisplayString(dynamic value) {
     if (_toDisplayStringCallback != null) {
@@ -56,11 +56,11 @@ class TrinaColumnTypeCustom
 
   @override
   Widget buildCell(
-    TrinaGridStateManager stateManager,
-    TrinaCell cell,
-    TrinaColumn column,
-    TrinaRow row,
-  ) {
+      TrinaGridStateManager stateManager,
+      TrinaCell cell,
+      TrinaColumn column,
+      TrinaRow row,
+      ) {
     return TrinaTextCell(
       stateManager: stateManager,
       cell: cell,

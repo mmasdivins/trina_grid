@@ -10,6 +10,8 @@ abstract class ICellState {
 
   TrinaCell? get firstCell;
 
+  TrinaCell? get firstVisibleCell;
+
   void setCurrentCellPosition(
     TrinaGridCellPosition cellPosition, {
     bool notify = true,
@@ -41,11 +43,13 @@ abstract class ICellState {
   bool canMoveCell(
     TrinaGridCellPosition cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   );
 
   bool canNotMoveCell(
     TrinaGridCellPosition? cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   );
 
   /// Whether the cell is in a mutable state
@@ -100,6 +104,23 @@ mixin CellState implements ITrinaGridState {
     final columnField = refColumns[columnIndexes.first].field;
 
     return refRows.first.cells[columnField];
+  }
+
+  @override
+  TrinaCell? get firstVisibleCell {
+    if (refRows.isEmpty || refColumns.isEmpty) {
+      return null;
+    }
+
+    final columnIndexes = columnIndexesByShowFrozen;
+    for (var index in columnIndexes) {
+      if (refColumns[columnIndexes.first].hide) continue;
+
+      final columnField = refColumns[columnIndexes.first].field;
+      return refRows.first.cells[columnField];
+    }
+
+    return null;
   }
 
   @override
@@ -188,18 +209,49 @@ mixin CellState implements ITrinaGridState {
     notifyListeners(notify, clearCurrentCell.hashCode);
   }
 
+  void _selecting(int rowIdx, int? columnIdx) {
+    bool callOnSelected = mode.isMultiSelectMode || mode.isMultiSelectAlwaysOne;
+
+    final bool checkSelectedRow =
+        (selectingMode.isRow || selectingMode.isRowCell) &&
+            isSelectedRow(refRows[rowIdx].key);
+
+    if (keyPressed.shift) {
+      // final int? columnIdx = columnIdx;
+
+      setCurrentSelectingPosition(
+        cellPosition: TrinaGridCellPosition(
+          columnIdx: columnIdx,
+          rowIdx: rowIdx,
+        ),
+      );
+    } else if (keyPressed.ctrl) {
+      toggleSelectingRow(rowIdx);
+    } else if (!checkSelectedRow && mode.isMultiSelectAlwaysOne) {
+      toggleMultiSelectRow(rowIdx);
+    } else {
+      callOnSelected = false;
+    }
+
+    if (callOnSelected) {
+      handleOnSelected();
+    }
+  }
+
   @override
   void setCurrentCell(
     TrinaCell? cell,
     int? rowIdx, {
     bool notify = true,
     TrinaMoveDirection? direction,
-  }) {
+  }) async {
     if (cell == null ||
         rowIdx == null ||
         refRows.isEmpty ||
         rowIdx < 0 ||
-        rowIdx > refRows.length - 1) {
+        rowIdx > refRows.length - 1 ||
+        showLoading ||
+        isProcessingRowChanged) {
       return;
     }
 
@@ -225,6 +277,8 @@ mixin CellState implements ITrinaGridState {
       }
     }
 
+    var oldCell = _state._currentCell;
+    var oldRowIdx = _state._currentCellPosition?.rowIdx;
     _state._currentCell = cell;
 
     _state._currentCellPosition = TrinaGridCellPosition(
@@ -243,7 +297,45 @@ mixin CellState implements ITrinaGridState {
       clearCurrentSelecting(notify: false);
     }
 
+    if (selectingMode.isRowCell && (oldRowIdx == null || oldRowIdx != rowIdx)) {
+      _selecting(rowIdx, columnIdxByCellKeyAndRowIdx(cell.key, rowIdx));
+    }
+
     setEditing(autoEditing, notify: false);
+
+    onSelectedCellChanged?.call(TrinaGridOnSelectedCellChangedEvent(
+        oldCell: oldCell, cell: currentCell!));
+
+    var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
+
+    bool isRowDefaultResult = false;
+    if (oldCell != null) {
+      // SI la fila a la que ens estem movent és més gran que l'anterior vol dir que estem intentant insertar
+      isRowDefaultResult = isRowDefaultFunction(oldCell.row,
+          this as TrinaGridStateManager, (oldRowIdx ?? 0) < rowIdx);
+    }
+
+    if (mode != TrinaGridMode.readOnly &&
+        oldCell != null &&
+        oldCell.row != currentCell!.row &&
+        (oldRowIdx ?? 0) > rowIdx &&
+        configuration.lastRowKeyUpAction.isRemoveOne) {
+      if (isRowDefaultResult) {
+        removeRows([oldCell.row]);
+      }
+    }
+
+    if (mode != TrinaGridMode.readOnly) {
+      // If row changed notifiy changed row
+      await notifyTrackingRow(rowIdx);
+    }
+
+    if (oldRowIdx != rowIdx &&
+        rowIdx < refRows.length &&
+        currentCell != null &&
+        currentCell!.row.state == TrinaRowState.added) {
+      trackRowCell(rowIdx, currentCell!.row);
+    }
 
     notifyListeners(notify, setCurrentCell.hashCode);
 
@@ -252,10 +344,28 @@ mixin CellState implements ITrinaGridState {
     );
   }
 
+  bool _isRowDefault(
+      TrinaRow row, TrinaGridStateManager stateManager, bool isInsert) {
+    for (var element in stateManager.refColumns) {
+      var cell = row.cells[element.field]!;
+
+      var value = element.type.defaultValue;
+      if (element.type.defaultValue is Function) {
+        value = element.type.defaultValue.call();
+      }
+
+      if (value != cell.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   bool canMoveCell(
     TrinaGridCellPosition? cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   ) {
     if (cellPosition == null || !cellPosition.hasPosition) return false;
 
@@ -267,7 +377,23 @@ mixin CellState implements ITrinaGridState {
       case TrinaMoveDirection.up:
         return cellPosition.rowIdx! > 0;
       case TrinaMoveDirection.down:
-        return cellPosition.rowIdx! < refRows.length - 1;
+        {
+          var isRowDefaultFunction = stateManager.isRowDefault ?? _isRowDefault;
+          bool isRowDefault =
+              isRowDefaultFunction(currentCell!.row, stateManager, true);
+          // If we are editing and we try to move down we have to check the configuration of the last
+          // key row to know if we allow it or not
+          if (!(cellPosition.rowIdx! < refRows.length - 1) &&
+              mode != TrinaGridMode.readOnly) {
+            if (configuration.lastRowKeyDownAction.isAddMultiple) {
+              return true;
+            } else if (configuration.lastRowKeyDownAction.isAddOne) {
+              return !isRowDefault;
+            }
+          }
+
+          return (cellPosition.rowIdx! < refRows.length - 1);
+        }
     }
   }
 
@@ -275,8 +401,9 @@ mixin CellState implements ITrinaGridState {
   bool canNotMoveCell(
     TrinaGridCellPosition? cellPosition,
     TrinaMoveDirection direction,
+    TrinaGridStateManager stateManager,
   ) {
-    return !canMoveCell(cellPosition, direction);
+    return !canMoveCell(cellPosition, direction, stateManager);
   }
 
   @override
@@ -345,10 +472,10 @@ mixin CellState implements ITrinaGridState {
         );
 
         return TrinaDateTimeHelper.isValidRange(
-              date: parseNewValue,
-              start: column.type.date.startDate,
-              end: column.type.date.endDate,
-            )
+          date: parseNewValue,
+          start: column.type.date.startDate,
+          end: column.type.date.endDate,
+        )
             ? column.type.date.dateFormat.format(parseNewValue)
             : oldValue;
       } catch (e) {
