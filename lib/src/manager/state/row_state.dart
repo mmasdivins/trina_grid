@@ -2,39 +2,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
-/// Snapshot of a row's state at the moment it became the active row.
-/// Used to detect changes and fire [TrinaGridOnRowChangedEvent].
-class RowEditingState {
-  final int indexRow;
-  final TrinaRow row;
-  final Map<String, dynamic> originalCellValues;
-
-  const RowEditingState({
-    required this.indexRow,
-    required this.row,
-    required this.originalCellValues,
-  });
-
-  static RowEditingState capture(int indexRow, TrinaRow row) {
-    final snapshot = <String, dynamic>{};
-    row.cells.forEach((key, cell) {
-      snapshot[key] = cell.value;
-    });
-    return RowEditingState(
-      indexRow: indexRow,
-      row: row,
-      originalCellValues: snapshot,
-    );
-  }
-}
 
 abstract class IRowState {
   List<TrinaRow> get rows;
-
-  RowEditingState? get rowEditingState;
-
-  /// True while [onRowChanged] is being awaited. Blocks further cell moves.
-  bool get isProcessingRowChanged;
 
   /// [refRows] is a List&lt;TrinaRow&gt; type and holds the entire row data.
   ///
@@ -131,31 +101,13 @@ abstract class IRowState {
   /// Get the effective height of a specific row
   double getRowHeight(int rowIndex);
 
-  void resetRowEditingState();
-
-  /// Snapshot the row at [idxRow] as the currently tracked row (if not already set).
-  void trackRowCell(int idxRow, TrinaRow row);
-
-  /// Called when the active cell moves to a different row (or off-grid with idxRow == -1).
-  /// Fires [onRowChanged] if the row was modified. Blocks cell movement while awaiting.
-  /// If the callback returns false, restores focus to the previous row.
-  Future<void> notifyTrackingRow(int idxRow);
-
-  /// Manually commit the current row: fires [onRowChanged] if modified.
-  /// Equivalent to moving off the row programmatically.
-  Future<void> commitCurrentRow();
 }
 
 mixin RowState implements ITrinaGridState {
   @override
   List<TrinaRow> get rows => [...refRows];
 
-  RowEditingState? _rowEditingState;
-
   bool _processingRowChanged = false;
-
-  @override
-  RowEditingState? get rowEditingState => _rowEditingState;
 
   @override
   bool get isProcessingRowChanged => _processingRowChanged;
@@ -396,10 +348,6 @@ mixin RowState implements ITrinaGridState {
       refRows.removeAt(currentRowIdx!);
     }
 
-    if (_rowEditingState?.indexRow == currentRowIdx) {
-      _rowEditingState = null;
-    }
-
     resetCurrentState(notify: false);
 
     notifyListeners(true, removeCurrentRow.hashCode);
@@ -439,10 +387,6 @@ mixin RowState implements ITrinaGridState {
       refRows.removeWhereFromOriginal((row) => removeKeys.contains(row.key));
     }
 
-    if (_rowEditingState != null && rows.contains(_rowEditingState!.row)) {
-      _rowEditingState = null;
-    }
-
     updateCurrentCellPosition(notify: false);
 
     setCurrentSelectingPositionByCellKey(selectingCellKey, notify: false);
@@ -459,8 +403,6 @@ mixin RowState implements ITrinaGridState {
     }
 
     refRows.clearFromOriginal();
-
-    _rowEditingState = null;
 
     resetCurrentState(notify: false);
 
@@ -723,96 +665,4 @@ mixin RowState implements ITrinaGridState {
     }
   }
 
-  @override
-  void trackRowCell(int idxRow, TrinaRow row) {
-    // Only capture once: the first time we land on this row.
-    if (_rowEditingState != null) return;
-    if (idxRow < 0 || idxRow >= refRows.length) return;
-    _rowEditingState = RowEditingState.capture(idxRow, refRows[idxRow]);
-  }
-
-  @override
-  Future<void> notifyTrackingRow(int idxRow) async {
-    final state = _rowEditingState;
-    if (state == null || state.indexRow == idxRow) return;
-
-    // Block any further cell moves while we await the callback.
-    _processingRowChanged = true;
-
-    try {
-      final isRowDefaultResult =
-          isRowDefault?.call(state.row, this as TrinaGridStateManager, true) ??
-              false;
-      final isAddMultiple = configuration.lastRowKeyDownAction.isAddMultiple;
-      final hasChanges =
-          _rowHasChanges(state.row.cells, state.originalCellValues);
-
-      if (!hasChanges) {
-        if (!isRowDefaultResult || !isAddMultiple) {
-          // No changes — just commit dirty tracking and reset.
-          (this as TrinaGridStateManager).commitChanges();
-          resetRowEditingState();
-          return;
-        }
-      }
-
-      final result = await onRowChanged?.call(TrinaGridOnRowChangedEvent(
-        rowIdx: state.indexRow,
-        row: state.row,
-        oldCellValues: state.originalCellValues,
-      ));
-
-      if (result == null || result == true) {
-        (this as TrinaGridStateManager).commitChanges();
-        resetRowEditingState();
-      } else {
-        // Callback rejected the change — restore focus to the previous row.
-        // Must unblock before calling setCurrentCell or it will be ignored.
-        _processingRowChanged = false;
-        final prevRow = state.row;
-        final prevIdx = state.indexRow;
-        if (prevIdx < refRows.length && refRows[prevIdx].key == prevRow.key) {
-          final columnIndexes = columnIndexesByShowFrozen;
-          final colIdx = currentCellPosition?.columnIdx ?? columnIndexes.first;
-          final field = refColumns[columnIndexes[colIdx]].field;
-          setCurrentCell(prevRow.cells[field], prevIdx, notify: true);
-        }
-      }
-    } finally {
-      _processingRowChanged = false;
-    }
-  }
-
-  @override
-  Future<void> commitCurrentRow() async {
-    if (_rowEditingState == null) return;
-    // Use -1 as target idx to force notifyTrackingRow to fire.
-    await notifyTrackingRow(-1);
-  }
-
-  /// Returns true if any editable cell has changed from its original value.
-  bool _rowHasChanges(
-    Map<String, TrinaCell> cells,
-    Map<String, dynamic> original,
-  ) {
-    for (final entry in cells.entries) {
-      final cell = entry.value;
-
-      if (cell.initialized && cell.column.checkReadOnly(cell.row, cell)) {
-        continue;
-      }
-
-      if (cell.isDirty) return true;
-
-      if (!original.containsKey(entry.key)) return true;
-
-      if (original[entry.key] != cell.value) return true;
-    }
-    return false;
-  }
-
-  @override
-  void resetRowEditingState() {
-    _rowEditingState = null;
-  }
 }

@@ -20,9 +20,6 @@ class TrinaGridPopup {
   /// {@macro trina_grid_property_onChanged}
   final TrinaOnChangedEventCallback? onChanged;
 
-  /// {@macro trina_grid_property_onRowChanged}
-  final TrinaOnRowChangedEventCallback? onRowChanged;
-
   /// {@macro trina_grid_property_onLastRowKeyDown}
   final TrinaOnLastRowKeyDownEventCallback? onLastRowKeyDown;
 
@@ -120,7 +117,6 @@ class TrinaGridPopup {
     this.columnGroups,
     this.onLoaded,
     this.onChanged,
-    this.onRowChanged,
     this.onLastRowKeyDown,
     this.onLastRowKeyUp,
     this.onRightClickCell,
@@ -193,7 +189,6 @@ class TrinaGridPopup {
                     columnGroups: columnGroups,
                     onLoaded: onLoaded,
                     onChanged: onChanged,
-                    onRowChanged: onRowChanged,
                     onLastRowKeyDown: onLastRowKeyDown,
                     onLastRowKeyUp: onLastRowKeyUp,
                     onRightClickCell: onRightClickCell,

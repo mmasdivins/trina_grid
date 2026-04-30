@@ -154,8 +154,6 @@ mixin KeyboardState implements ITrinaGridState {
 
     var isRowDefaultFunction = isRowDefault ?? _isRowDefault;
 
-    bool moveToLeftEdge = false;
-
     if (mode != TrinaGridMode.readOnly
         && direction.isDown
         && rows.length == (index + 1)) {
@@ -184,15 +182,6 @@ mixin KeyboardState implements ITrinaGridState {
             index + 1,
             [getNewRow()],
           );
-
-
-          moveToLeftEdge = true;
-          // moveCurrentCell(direction, force: force);
-          // moveCurrentCellToEdgeOfColumns(
-          //   TrinaMoveDirection.left,
-          //   force: true,
-          //   notify: false,
-          // );
         }
         else if (configuration.lastRowKeyDownAction.isAddOne){
           if (!isRowDefault){
@@ -202,13 +191,6 @@ mixin KeyboardState implements ITrinaGridState {
               index + 1,
               [getNewRow()],
             );
-            moveToLeftEdge = true;
-            // moveCurrentCell(direction, force: force);
-            // moveCurrentCellToEdgeOfColumns(
-            //   TrinaMoveDirection.left,
-            //   force: true,
-            //   notify: false,
-            // );
           }
         }
       }
@@ -237,16 +219,16 @@ mixin KeyboardState implements ITrinaGridState {
         }
       }
     }
-    else if (mode != TrinaGridMode.readOnly
-        && direction.isUp
-        && index == 0) {
-
-      // If row changed notifiy changed row
-      // Put -1 so it detects it that we are changing the row
-      // we have to put it here because the cell won't move since it's
-      // on the top of the grid and it won't notify that the row changed
-      await notifyTrackingRow(-1);
-    }
+    // else if (mode != TrinaGridMode.readOnly
+    //     && direction.isUp
+    //     && index == 0) {
+    //
+    //   // If row changed notifiy changed row
+    //   // Put -1 so it detects it that we are changing the row
+    //   // we have to put it here because the cell won't move since it's
+    //   // on the top of the grid and it won't notify that the row changed
+    //   await notifyTrackingRow(-1);
+    // }
 
     final toMove = cellPositionToMove(cellPosition, direction);
 
@@ -256,14 +238,6 @@ mixin KeyboardState implements ITrinaGridState {
       notify: notify,
       direction: direction,
     );
-
-    if (moveToLeftEdge) {
-      moveCurrentCellToEdgeOfColumns(
-        TrinaMoveDirection.left,
-        force: true,
-        notify: false,
-      );
-    }
 
     if (direction.horizontal) {
       moveScrollByColumn(direction, cellPosition!.columnIdx);

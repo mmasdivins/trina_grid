@@ -250,8 +250,7 @@ mixin CellState implements ITrinaGridState {
         refRows.isEmpty ||
         rowIdx < 0 ||
         rowIdx > refRows.length - 1 ||
-        showLoading ||
-        isProcessingRowChanged) {
+        showLoading) {
       return;
     }
 
@@ -261,7 +260,7 @@ mixin CellState implements ITrinaGridState {
 
     // Call onBeforeActiveCellChange callback before changing state
     if (onBeforeActiveCellChange != null) {
-      final shouldProceed = onBeforeActiveCellChange!(
+      final shouldProceed = await onBeforeActiveCellChange!(
         TrinaGridOnBeforeActiveCellChangeEvent(
           oldCell: currentCell,
           oldRowIdx: currentCellPosition?.rowIdx,
@@ -319,22 +318,11 @@ mixin CellState implements ITrinaGridState {
         oldCell != null &&
         oldCell.row != currentCell!.row &&
         (oldRowIdx ?? 0) > rowIdx &&
+        (direction == TrinaMoveDirection.up || direction == null) &&
         configuration.lastRowKeyUpAction.isRemoveOne) {
       if (isRowDefaultResult) {
         removeRows([oldCell.row]);
       }
-    }
-
-    if (mode != TrinaGridMode.readOnly) {
-      // If row changed notifiy changed row
-      await notifyTrackingRow(rowIdx);
-    }
-
-    if (oldRowIdx != rowIdx &&
-        rowIdx < refRows.length &&
-        currentCell != null &&
-        currentCell!.row.state == TrinaRowState.added) {
-      trackRowCell(rowIdx, currentCell!.row);
     }
 
     notifyListeners(notify, setCurrentCell.hashCode);

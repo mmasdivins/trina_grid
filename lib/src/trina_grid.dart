@@ -16,9 +16,6 @@ void Function(TrinaGridOnLoadedEvent event);
 typedef TrinaOnChangedEventCallback =
 void Function(TrinaGridOnChangedEvent event);
 
-typedef TrinaOnRowChangedEventCallback = Future<bool?> Function(
-    TrinaGridOnRowChangedEvent event);
-
 typedef TrinaOnLastRowKeyDownEventCallback = void Function(
     TrinaGridOnLastRowKeyDownEvent event);
 
@@ -115,7 +112,7 @@ typedef TrinaCellColorCallback =
 Color? Function(TrinaCellColorContext cellColorContext);
 
 typedef TrinaOnBeforeActiveCellChangeEventCallback =
-bool Function(TrinaGridOnBeforeActiveCellChangeEvent event);
+Future<bool> Function(TrinaGridOnBeforeActiveCellChangeEvent event);
 
 typedef RowWrapper =
 Widget Function(
@@ -145,7 +142,6 @@ class TrinaGrid extends TrinaStatefulWidget {
     this.columnGroups,
     this.onLoaded,
     this.onChanged,
-    this.onRowChanged,
     this.onLastRowKeyDown,
     this.onLastRowKeyUp,
     this.onRightClickCell,
@@ -287,14 +283,6 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// The [onChanged] callback is not called.
   /// {@endtemplate}
   final TrinaOnChangedEventCallback? onChanged;
-
-  /// {@template trina_grid_property_onRowChanged}
-  /// [onRowChanged] is called when the values of a row are changed.
-  ///
-  /// After changing a cell value of a row and changing the current cell to
-  /// another row
-  /// {@endtemplate}
-  final TrinaOnRowChangedEventCallback? onRowChanged;
 
   /// {@template trina_grid_property_onLastRowKeyDown}
   /// [onLastRowKeyDown] is called when the key down is pressed on the last row.
@@ -821,7 +809,6 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       editCellRenderer: widget.editCellRenderer,
       columnGroups: widget.columnGroups,
       onChanged: widget.onChanged,
-      onRowChanged: widget.onRowChanged,
       onLastRowKeyDown: widget.onLastRowKeyDown,
       onLastRowKeyUp: widget.onLastRowKeyUp,
       onRightClickCell: widget.onRightClickCell,

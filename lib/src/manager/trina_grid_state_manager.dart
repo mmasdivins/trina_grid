@@ -81,7 +81,6 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     this.rowWrapper,
     this.editCellRenderer,
     this.onChanged,
-    this.onRowChanged,
     this.onLastRowKeyDown,
     this.onLastRowKeyUp,
     this.onRightClickCell,
@@ -172,9 +171,6 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
 
   @override
   final TrinaOnChangedEventCallback? onChanged;
-
-  @override
-  final TrinaOnRowChangedEventCallback? onRowChanged;
 
   @override
   final TrinaOnLastRowKeyDownEventCallback? onLastRowKeyDown;
@@ -399,7 +395,6 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     super.editCellRenderer,
     super.columnGroups,
     super.onChanged,
-    super.onRowChanged,
     super.onLastRowKeyDown,
     super.onLastRowKeyUp,
     super.onRightClickCell,

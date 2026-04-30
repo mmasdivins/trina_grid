@@ -51,27 +51,6 @@ class TrinaGridOnChangedEvent {
   }
 }
 
-class TrinaGridOnRowChangedEvent {
-  final int rowIdx;
-  final TrinaRow row;
-  final Map<String,dynamic> oldCellValues;
-
-  const TrinaGridOnRowChangedEvent({
-    required this.rowIdx,
-    required this.row,
-    required this.oldCellValues,
-  });
-
-  @override
-  String toString() {
-    String out = '[TrinaGridOnRowChangedEvent] ';
-    out += 'RowIndex : $rowIdx\n';
-    out += '::: oldCellValues : $oldCellValues\n';
-    out += '::: row : $row';
-    return out;
-  }
-}
-
 class TrinaGridOnLastRowKeyDownEvent {
   final int rowIdx;
   final TrinaRow row;

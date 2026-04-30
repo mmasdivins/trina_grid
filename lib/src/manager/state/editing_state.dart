@@ -358,12 +358,6 @@ mixin EditingState implements ITrinaGridState {
     }
 
     currentRow.setState(TrinaRowState.updated);
-    // Abans d'actualitzar el cell value notifiquem
-    // de que la fila s'ha modificat
-    trackRowCell(
-        refRows.indexOf(currentRow),
-        currentRow
-    );
 
     cell.value = value;
     currentRow.incrementVersion();
@@ -603,13 +597,6 @@ mixin EditingState implements ITrinaGridState {
         }
 
         refRows[rowIdx].setState(TrinaRowState.updated);
-
-        // Abans d'actualitzar el cell value notifiquem
-        // de que la fila s'ha modificat
-        trackRowCell(
-          refRows.indexOf(currentRow),
-          refRows[rowIdx],
-        );
 
         currentCell.value = newValue;
         refRows[rowIdx].incrementVersion();

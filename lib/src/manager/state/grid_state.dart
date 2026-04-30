@@ -14,8 +14,6 @@ abstract class IGridState {
 
   TrinaOnChangedEventCallback? get onChanged;
 
-  TrinaOnRowChangedEventCallback? get onRowChanged;
-
   TrinaOnLastRowKeyDownEventCallback? get onLastRowKeyDown;
 
   TrinaOnLastRowKeyUpEventCallback? get onLastRowKeyUp;
