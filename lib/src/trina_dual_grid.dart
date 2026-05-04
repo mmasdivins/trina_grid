@@ -209,6 +209,8 @@ class TrinaDualGridState extends State<TrinaDualGrid> {
         noRowsWidget: props.noRowsWidget,
         rowColorCallback: props.rowColorCallback,
         cellColorCallback: props.cellColorCallback,
+        rowTextStyleCallback: props.rowTextStyleCallback,
+        cellTextStyleCallback: props.cellTextStyleCallback,
         columnMenuDelegate: props.columnMenuDelegate,
         configuration: props.configuration,
         mode: mode,
@@ -646,6 +648,12 @@ class TrinaDualGridProps {
   /// {@macro trina_grid_property_cellColorCallback}
   final TrinaCellColorCallback? cellColorCallback;
 
+  /// {@macro trina_grid_property_rowTextStyleCallback}
+  final TrinaRowTextStyleCallback? rowTextStyleCallback;
+
+  /// {@macro trina_grid_property_cellTextStyleCallback}
+  final TrinaCellTextStyleCallback? cellTextStyleCallback;
+
   /// {@macro trina_grid_property_columnMenuDelegate}
   final TrinaColumnMenuDelegate? columnMenuDelegate;
 
@@ -688,6 +696,8 @@ class TrinaDualGridProps {
     this.noRowsWidget,
     this.rowColorCallback,
     this.cellColorCallback,
+    this.rowTextStyleCallback,
+    this.cellTextStyleCallback,
     this.columnMenuDelegate,
     this.configuration = const TrinaGridConfiguration(),
     this.mode,
@@ -716,6 +726,8 @@ class TrinaDualGridProps {
     TrinaOptional<Widget?>? noRowsWidget,
     TrinaOptional<TrinaRowColorCallback?>? rowColorCallback,
     TrinaOptional<TrinaCellColorCallback?>? cellColorCallback,
+    TrinaOptional<TrinaRowTextStyleCallback?>? rowTextStyleCallback,
+    TrinaOptional<TrinaCellTextStyleCallback?>? cellTextStyleCallback,
     TrinaOptional<TrinaColumnMenuDelegate?>? columnMenuDelegate,
     TrinaGridConfiguration? configuration,
     TrinaOptional<TrinaGridMode?>? mode,
@@ -768,6 +780,12 @@ class TrinaDualGridProps {
       cellColorCallback: cellColorCallback == null
           ? this.cellColorCallback
           : cellColorCallback.value,
+      rowTextStyleCallback: rowTextStyleCallback == null
+          ? this.rowTextStyleCallback
+          : rowTextStyleCallback.value,
+      cellTextStyleCallback: cellTextStyleCallback == null
+          ? this.cellTextStyleCallback
+          : cellTextStyleCallback.value,
       columnMenuDelegate: columnMenuDelegate == null
           ? this.columnMenuDelegate
           : columnMenuDelegate.value,
