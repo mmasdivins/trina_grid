@@ -1403,7 +1403,7 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
     if (hasChild(_StackName.columnsIndex)) {
       var s = layoutChild(
         _StackName.columnsIndex,
-        BoxConstraints.tight(
+        BoxConstraints.loose(
           Size(widthIndexColumn, size.height),
         ),
       );

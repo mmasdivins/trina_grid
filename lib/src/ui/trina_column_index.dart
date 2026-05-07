@@ -8,16 +8,15 @@ class TrinaColumnIndex extends TrinaStatefulWidget {
   final TrinaGridStateManager stateManager;
 
   const TrinaColumnIndex(
-      this.stateManager, {
-        super.key,
-      });
+    this.stateManager, {
+    super.key,
+  });
 
   @override
   TrinaColumnIndexState createState() => TrinaColumnIndexState();
 }
 
 class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
-
   late final ScrollController _verticalScroll;
 
   @override
@@ -52,25 +51,28 @@ class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
 
     var w = widget.stateManager.createCornerWidget;
 
+    final double totalHeight = stateManager.columnHeight +
+        (stateManager.showColumnFilter ? stateManager.columnFilterHeight : 0);
+
     return SizedBox(
-      height: stateManager.columnHeight,
+      height: totalHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
           // color: Colors.green,
-          border: style.enableCellBorderVertical ? BorderDirectional(
-              end: BorderSide(
-                color: style.borderColor,
-                width: 1.0,
-              ),
-              bottom: BorderSide(
-                width: TrinaGridSettings.cellVerticalBorderWidth ,
-                color: style.borderColor,
-              )
-          ) : null,
+          border: style.enableCellBorderVertical
+              ? BorderDirectional(
+                  end: BorderSide(
+                    color: style.borderColor,
+                    width: 1.0,
+                  ),
+                  bottom: BorderSide(
+                    width: TrinaGridSettings.cellVerticalBorderWidth,
+                    color: style.borderColor,
+                  ))
+              : null,
         ),
         child: w?.call(stateManager),
       ),
     );
   }
-
 }

@@ -821,7 +821,7 @@ class _ApplyCellForSetColumnRow implements _Apply {
         cell = TrinaCell(value: element.type.defaultValue);
         row.cells[element.field] = cell;
       }
-      
+
       cell
         ..setColumn(element)
         ..setRow(row);
