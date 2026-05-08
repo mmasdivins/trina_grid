@@ -71,7 +71,7 @@ class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
                   ))
               : null,
         ),
-        child: w?.call(stateManager),
+        child: w?.call(stateManager) ?? Container(),
       ),
     );
   }

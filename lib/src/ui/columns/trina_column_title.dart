@@ -17,8 +17,8 @@ class TrinaColumnTitle extends TrinaStatefulWidget {
     required this.stateManager,
     required this.column,
     double? height,
-  })  : height = height ?? stateManager.columnHeight,
-        super(key: ValueKey('column_title_${column.key}'));
+  }) : height = height ?? stateManager.columnHeight,
+       super(key: ValueKey('column_title_${column.key}'));
 
   @override
   TrinaColumnTitleState createState() => TrinaColumnTitleState();
@@ -249,8 +249,9 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
       showContextIcon: showContextIcon,
       contextMenuIcon: contextMenuIcon,
       isFiltered: isFiltered,
-      showContextMenu:
-          mounted && widget.column.enableContextMenu ? _showContextMenu : null,
+      showContextMenu: mounted && widget.column.enableContextMenu
+          ? _showContextMenu
+          : null,
     );
   }
 
@@ -318,10 +319,7 @@ class TrinaGridColumnIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      icon,
-      color: color,
-    );
+    return Icon(icon, color: color);
 
     // switch (sort?.sortOrder) {
     //   case TrinaColumnSort.ascending:
@@ -370,10 +368,7 @@ class TrinaGridColumnIconSort extends StatelessWidget {
               color: Colors.white.withOpacity(0.8),
               shape: BoxShape.circle,
             ),
-            child: Text(
-              number.toString(),
-              style: TextStyle(fontSize: 10),
-            ),
+            child: Text(number.toString(), style: TextStyle(fontSize: 10)),
           ),
         ),
       ],
@@ -383,10 +378,7 @@ class TrinaGridColumnIconSort extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (sort == null) {
-      return const SizedBox(
-        height: 0,
-        width: 0,
-      );
+      return const SizedBox(height: 0, width: 0);
     }
 
     int sortPosition = (sort!.sortPosition ?? 0) + 1;
@@ -397,27 +389,20 @@ class TrinaGridColumnIconSort extends StatelessWidget {
             ? _iconWithNumber(
                 Transform.rotate(
                   angle: 90 * pi / 90,
-                  child: const Icon(
-                    Icons.sort,
-                    color: Colors.green,
-                  ),
+                  child: const Icon(Icons.sort, color: Colors.green),
                 ),
-                sortPosition)
+                sortPosition,
+              )
             : _iconWithNumber(ascendingIcon!, sortPosition);
       case TrinaColumnSort.descending:
         return descendingIcon == null
             ? _iconWithNumber(
-                const Icon(
-                  Icons.sort,
-                  color: Colors.red,
-                ),
-                sortPosition)
+                const Icon(Icons.sort, color: Colors.red),
+                sortPosition,
+              )
             : _iconWithNumber(descendingIcon!, sortPosition);
       default:
-        return const SizedBox(
-          height: 0,
-          width: 0,
-        );
+        return const SizedBox(height: 0, width: 0);
     }
   }
 }
@@ -444,16 +429,8 @@ class _IconWithNumber extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        Icon(
-          icon,
-          size: iconSize,
-        ),
-        Positioned(
-          child: Text(
-            number.toString(),
-            style: textStyle,
-          ),
-        ),
+        Icon(icon, size: iconSize),
+        Positioned(child: Text(number.toString(), style: textStyle)),
       ],
     );
   }
@@ -603,13 +580,23 @@ class _DefaultColumnTitleContentState
 
   TrinaGridStyleConfig get style => stateManager.style;
 
+  bool get _hasCheckbox =>
+      widget.column.enableRowChecked &&
+      widget.column.rowCheckBoxGroupDepth == 0 &&
+      widget.column.enableTitleChecked;
+
+  bool get _titleIsEmpty =>
+      (widget.column.title.isEmpty) && widget.column.titleSpan == null;
+
   @override
   Widget build(BuildContext context) {
+    final checkboxOnly = _hasCheckbox && _titleIsEmpty;
+
     return Container(
-      padding: padding,
+      padding: checkboxOnly ? EdgeInsets.zero : padding,
       height: widget.height,
       width: widget.column.width,
-      alignment: Alignment.centerLeft,
+      alignment: checkboxOnly ? Alignment.center : Alignment.centerLeft,
       decoration: BoxDecoration(
         color: _isFiltered && style.filterActiveColumnBackgroundColor != null
             ? style.filterActiveColumnBackgroundColor
@@ -620,24 +607,26 @@ class _DefaultColumnTitleContentState
               : BorderSide.none,
         ),
       ),
-      child: Row(
-        children: [
-          if (widget.column.enableRowChecked &&
-              widget.column.rowCheckBoxGroupDepth == 0 &&
-              widget.column.enableTitleChecked)
-            Flexible(
-              child: CheckboxAllSelectionWidget(stateManager: stateManager),
+      child: checkboxOnly
+          ? CheckboxAllSelectionWidget(stateManager: stateManager)
+          : Row(
+              children: [
+                if (_hasCheckbox)
+                  Flexible(
+                    child: CheckboxAllSelectionWidget(
+                      stateManager: stateManager,
+                    ),
+                  ),
+                Expanded(
+                  child: _ColumnTextWidget(
+                    column: widget.column,
+                    stateManager: stateManager,
+                    height: widget.height,
+                  ),
+                ),
+                if (showSizedBoxForIcon) SizedBox(width: style.iconSize),
+              ],
             ),
-          Expanded(
-            child: _ColumnTextWidget(
-              column: widget.column,
-              stateManager: stateManager,
-              height: widget.height,
-            ),
-          ),
-          if (showSizedBoxForIcon) SizedBox(width: style.iconSize),
-        ],
-      ),
     );
   }
 }
@@ -756,15 +745,9 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
     if (ccp != null && ccp.columnIdx == ci) {
       inColumn = true;
     }
-    _focusInColumn = update<bool>(
-      _focusInColumn,
-      inColumn,
-    );
+    _focusInColumn = update<bool>(_focusInColumn, inColumn);
 
-    _sort = update<TrinaColumnSorting>(
-      _sort,
-      widget.column.sort,
-    );
+    _sort = update<TrinaColumnSorting>(_sort, widget.column.sort);
   }
 
   void _handleOnPressedFilter() {
@@ -790,10 +773,7 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
       if (_title != null && _title != "")
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: Text(
-            _title!,
-            style: style,
-          ),
+          child: Text(_title!, style: style),
         ),
       if (widget.column.titleSpan != null) widget.column.titleSpan!,
       if (_isFilteredList &&
@@ -809,14 +789,18 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
               : IconButton(
                   icon: Icon(
                     stateManager.configuration.style.filterIcon!.icon,
-                    color: stateManager
-                            .configuration.style.filterHeaderIconColor ??
+                    color:
+                        stateManager
+                            .configuration
+                            .style
+                            .filterHeaderIconColor ??
                         stateManager.configuration.style.iconColor,
                     size: stateManager.configuration.style.iconSize,
                   ),
                   onPressed: _handleOnPressedFilter,
                   constraints: BoxConstraints(
-                    maxHeight: widget.height +
+                    maxHeight:
+                        widget.height +
                         (widget.stateManager.style.cellHorizontalBorderWidth *
                             2),
                   ),
@@ -857,7 +841,7 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
             maxLines: 1,
             textAlign: widget.column.titleTextAlign.value,
           ),
-        )
+        ),
       ],
     );
 
