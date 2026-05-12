@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
-import '../helper/platform_helper.dart';
 import 'ui.dart';
 
 class TrinaColumnIndex extends TrinaStatefulWidget {
@@ -49,7 +48,13 @@ class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
   Widget build(BuildContext context) {
     final style = stateManager.style;
 
-    var w = widget.stateManager.createCornerWidget;
+    Widget? corner = null;
+
+    if (widget.stateManager.createCornerWidget != null) {
+      corner = widget.stateManager.createCornerWidget!.call(stateManager);
+    }
+
+    corner ??= Container();
 
     final double totalHeight = stateManager.columnHeight +
         (stateManager.showColumnFilter ? stateManager.columnFilterHeight : 0);
@@ -71,7 +76,7 @@ class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
                   ))
               : null,
         ),
-        child: w?.call(stateManager) ?? Container(),
+        child: corner,
       ),
     );
   }
