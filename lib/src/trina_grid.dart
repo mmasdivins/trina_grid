@@ -16,7 +16,7 @@ void Function(TrinaGridOnLoadedEvent event);
 typedef TrinaOnChangedEventCallback =
 void Function(TrinaGridOnChangedEvent event);
 
-typedef TrinaOnLastRowKeyDownEventCallback = void Function(
+typedef TrinaOnLastRowKeyDownEventCallback = Future<void> Function(
     TrinaGridOnLastRowKeyDownEvent event);
 
 typedef TrinaOnLastRowKeyUpEventCallback = void Function(

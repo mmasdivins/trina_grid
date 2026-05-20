@@ -168,11 +168,12 @@ mixin KeyboardState implements ITrinaGridState {
       // Si tenim definit l'event onLastRowKeyDown no fem cas de la configuració
       // lastRowKeyDownAction
       if (onLastRowKeyDown != null){
-        onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
+        await onLastRowKeyDown!.call(TrinaGridOnLastRowKeyDownEvent(
           rowIdx: index,
           row: currentCell!.row,
           isRowDefault: isRowDefault,
         ));
+        return;
       }
       else {
         if (configuration.lastRowKeyDownAction.isAddMultiple) {

@@ -32,7 +32,7 @@ abstract class ICellState {
   /// [direction] is the movement direction that triggered this cell change.
   /// Pass this when navigating via keyboard to allow callbacks to distinguish
   /// between keyboard navigation and mouse clicks.
-  void setCurrentCell(
+  Future<void> setCurrentCell(
     TrinaCell? cell,
     int? rowIdx, {
     bool notify = true,
@@ -239,7 +239,7 @@ mixin CellState implements ITrinaGridState {
   }
 
   @override
-  void setCurrentCell(
+  Future<void> setCurrentCell(
     TrinaCell? cell,
     int? rowIdx, {
     bool notify = true,
