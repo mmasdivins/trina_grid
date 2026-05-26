@@ -476,6 +476,7 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
         activatedColor: style.activatedColor,
         inactivatedBorderColor: style.inactivatedBorderColor,
         gridBackgroundColor: style.gridBackgroundColor,
+        unfocusedSelectionColor: style.unfocusedSelectionColor,
         cellColorInEditState: style.cellColorInEditState,
         cellColorInReadOnlyState: style.cellColorInReadOnlyState,
         cellColorGroupedRow: style.cellColorGroupedRow,
@@ -492,13 +493,14 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
     required bool isEditing,
     required Color activatedColor,
     required Color gridBackgroundColor,
+    Color? unfocusedSelectionColor,
     required Color cellColorInEditState,
     required Color cellColorInReadOnlyState,
     required TrinaGridSelectingMode selectingMode,
   }) {
-    // if (!hasFocus) {
-    //   return gridBackgroundColor;
-    // }
+    if (!hasFocus) {
+      return unfocusedSelectionColor ?? gridBackgroundColor;
+    }
 
     if (!isEditing) {
       return (selectingMode.isRow || selectingMode.isRowCell) ? activatedColor : null;
@@ -537,6 +539,7 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
     required Color activatedColor,
     required Color inactivatedBorderColor,
     required Color gridBackgroundColor,
+    Color? unfocusedSelectionColor,
     required Color cellColorInEditState,
     required Color cellColorInReadOnlyState,
     required Color? cellColorGroupedRow,
@@ -557,6 +560,7 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
           isEditing: isEditing,
           readOnly: readOnly,
           gridBackgroundColor: gridBackgroundColor,
+          unfocusedSelectionColor: unfocusedSelectionColor,
           activatedColor: activatedColor,
           cellColorInReadOnlyState: cellColorInReadOnlyState,
           cellColorInEditState: cellColorInEditState,
@@ -569,7 +573,11 @@ class _CellContainerState extends TrinaStateWithChange<_CellContainer> {
       );
     } else if (isSelectedCell) {
       return BoxDecoration(
-        color: isDirty ? dirtyColor : activatedColor,
+        color: isDirty
+            ? dirtyColor
+            : (hasFocus
+                  ? activatedColor
+                  : (unfocusedSelectionColor ?? activatedColor)),
         border: Border.all(
           color: hasFocus ? activatedBorderColor : inactivatedBorderColor,
           width: 1,

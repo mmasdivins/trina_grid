@@ -423,6 +423,7 @@ class TrinaGridStyleConfig {
     this.filterIcon = const Icon(Icons.filter_alt_outlined),
     this.filterIconWidget,
     this.gridBackgroundColor = Colors.white,
+    this.unfocusedSelectionColor,
     this.rowColor = Colors.white,
     this.oddRowColor,
     this.evenRowColor,
@@ -517,6 +518,7 @@ class TrinaGridStyleConfig {
     this.filterIcon = const Icon(Icons.filter_alt_outlined),
     this.filterIconWidget,
     this.gridBackgroundColor = const Color(0xFF111111),
+    this.unfocusedSelectionColor = const Color(0xFF4A4A4A),
     this.rowColor = const Color(0xFF111111),
     this.oddRowColor,
     this.evenRowColor,
@@ -638,6 +640,15 @@ class TrinaGridStyleConfig {
   final Widget? filterIconWidget;
 
   final Color gridBackgroundColor;
+
+  /// Background color for the current cell (and selected cells) when the grid
+  /// loses focus.
+  ///
+  /// Useful in multi-grid layouts to visually distinguish which grid currently
+  /// holds keyboard focus. When `null`, the current cell falls back to
+  /// [gridBackgroundColor] on focus loss (matching pre-2.3.0 behavior) and
+  /// multi-cell selections keep their [activatedColor].
+  final Color? unfocusedSelectionColor;
 
   /// Default row background color
   ///
@@ -859,6 +870,7 @@ class TrinaGridStyleConfig {
     Icon? filterIcon,
     TrinaOptional<Widget?>? filterIconWidget,
     Color? gridBackgroundColor,
+    Color? unfocusedSelectionColor,
     Color? rowColor,
     TrinaOptional<Color?>? oddRowColor,
     TrinaOptional<Color?>? evenRowColor,
@@ -939,6 +951,8 @@ class TrinaGridStyleConfig {
             ? this.filterIconWidget
             : filterIconWidget.value,
         gridBackgroundColor: gridBackgroundColor ?? this.gridBackgroundColor,
+        unfocusedSelectionColor:
+            unfocusedSelectionColor ?? this.unfocusedSelectionColor,
         rowColor: rowColor ?? this.rowColor,
         oddRowColor: oddRowColor == null ? this.oddRowColor : oddRowColor.value,
         evenRowColor:
@@ -1038,6 +1052,8 @@ class TrinaGridStyleConfig {
             ? this.filterIconWidget
             : filterIconWidget.value,
         gridBackgroundColor: gridBackgroundColor ?? this.gridBackgroundColor,
+        unfocusedSelectionColor:
+            unfocusedSelectionColor ?? this.unfocusedSelectionColor,
         rowColor: rowColor ?? this.rowColor,
         oddRowColor: oddRowColor == null ? this.oddRowColor : oddRowColor.value,
         evenRowColor:
@@ -1200,6 +1216,7 @@ class TrinaGridStyleConfig {
         filterIcon,
         filterIconWidget,
         gridBackgroundColor,
+        unfocusedSelectionColor,
         rowColor,
         oddRowColor,
         evenRowColor,
@@ -1687,6 +1704,9 @@ class TrinaGridLocaleText {
   // Common
   final String loadingText;
 
+  /// Hint shown in the search field of select-with-search dropdowns.
+  final String selectSearchHint;
+
   final String multiLineFilterHint;
   final String multiLineFilterEditTitle;
   final String multiLineFilterOkButton;
@@ -1746,6 +1766,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minute',
     // Common
     this.loadingText = 'Loading',
+    this.selectSearchHint = 'Search...',
     this.multiLineFilterHint = 'Filter',
     this.multiLineFilterEditTitle = 'Edit Filter',
     this.multiLineFilterOkButton = 'Ok',
@@ -1805,6 +1826,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minute',
     // Common
     this.loadingText = 'Chargement',
+    this.selectSearchHint = 'Rechercher...',
     this.multiLineFilterHint = 'Filtrer',
     this.multiLineFilterEditTitle = 'Modifier le filtre',
     this.multiLineFilterOkButton = 'Ok',
@@ -1865,6 +1887,7 @@ class TrinaGridLocaleText {
     this.minute = '分',
     // Common
     this.loadingText = '加载中',
+    this.selectSearchHint = '搜索...',
     this.multiLineFilterHint = '筛选',
     this.multiLineFilterEditTitle = '编辑筛选',
     this.multiLineFilterOkButton = '确定',
@@ -1923,6 +1946,7 @@ class TrinaGridLocaleText {
     this.minute = '분',
     // Common
     this.loadingText = '로딩중',
+    this.selectSearchHint = '검색...',
     this.multiLineFilterHint = '필터',
     this.multiLineFilterEditTitle = '필터 편집',
     this.multiLineFilterOkButton = '확인',
@@ -1981,6 +2005,7 @@ class TrinaGridLocaleText {
     this.minute = 'Минуты',
     // Common
     this.loadingText = 'Загрузка',
+    this.selectSearchHint = 'Поиск...',
     this.multiLineFilterHint = 'Фильтр',
     this.multiLineFilterEditTitle = 'Редактировать фильтр',
     this.multiLineFilterOkButton = 'Ок',
@@ -2040,6 +2065,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minuta',
     // Common
     this.loadingText = 'Načítání',
+    this.selectSearchHint = 'Hledat...',
     this.multiLineFilterHint = 'Filtr',
     this.multiLineFilterEditTitle = 'Upravit filtr',
     this.multiLineFilterOkButton = 'Ok',
@@ -2099,6 +2125,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minuto',
     // Common
     this.loadingText = 'Carregando',
+    this.selectSearchHint = 'Buscar...',
     this.multiLineFilterHint = 'Filtro',
     this.multiLineFilterEditTitle = 'Editar filtro',
     this.multiLineFilterOkButton = 'Ok',
@@ -2158,6 +2185,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minuto',
     // Common
     this.loadingText = 'Cargando',
+    this.selectSearchHint = 'Buscar...',
     this.multiLineFilterHint = 'Filtro',
     this.multiLineFilterEditTitle = 'Editar filtro',
     this.multiLineFilterOkButton = 'Ok',
@@ -2217,6 +2245,7 @@ class TrinaGridLocaleText {
     this.minute = 'دقیقه',
     // Common
     this.loadingText = 'در حال بارگیری',
+    this.selectSearchHint = 'جستجو...',
     this.multiLineFilterHint = 'فیلتر',
     this.multiLineFilterEditTitle = 'ویرایش فیلتر',
     this.multiLineFilterOkButton = 'تأیید',
@@ -2276,6 +2305,7 @@ class TrinaGridLocaleText {
     this.minute = 'دقيقي',
     // Common
     this.loadingText = 'جاري التحميل',
+    this.selectSearchHint = 'بحث...',
     this.multiLineFilterHint = 'تصفية',
     this.multiLineFilterEditTitle = 'تعديل التصفية',
     this.multiLineFilterOkButton = 'موافق',
@@ -2334,6 +2364,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minutt',
     // Common
     this.loadingText = 'Laster',
+    this.selectSearchHint = 'Søk...',
     this.multiLineFilterHint = 'Filter',
     this.multiLineFilterEditTitle = 'Rediger filter',
     this.multiLineFilterOkButton = 'Ok',
@@ -2393,6 +2424,7 @@ class TrinaGridLocaleText {
     this.minute = 'Minute',
     // Common
     this.loadingText = 'Lädt',
+    this.selectSearchHint = 'Suche...',
     this.multiLineFilterHint = 'Filter',
     this.multiLineFilterEditTitle = 'Filter bearbeiten',
     this.multiLineFilterOkButton = 'Ok',
@@ -2454,6 +2486,7 @@ class TrinaGridLocaleText {
     this.minute = 'Dakika',
     // Common
     this.loadingText = 'Yükleniyor',
+    this.selectSearchHint = 'Ara...',
     this.multiLineFilterHint = 'Filtre',
     this.multiLineFilterEditTitle = 'Filtreyi Düzenle',
     this.multiLineFilterOkButton = 'Tamam',
@@ -2513,6 +2546,7 @@ class TrinaGridLocaleText {
     this.minute = '分',
     // Common
     this.loadingText = 'にゃ〜',
+    this.selectSearchHint = '検索...',
     this.multiLineFilterHint = 'フィルター',
     this.multiLineFilterEditTitle = 'フィルターを編集',
     this.multiLineFilterOkButton = 'OK',
@@ -2569,6 +2603,7 @@ class TrinaGridLocaleText {
             hour == other.hour &&
             minute == other.minute &&
             loadingText == other.loadingText &&
+            selectSearchHint == other.selectSearchHint &&
             multiLineFilterHint == other.multiLineFilterHint &&
             multiLineFilterEditTitle == other.multiLineFilterEditTitle &&
             multiLineFilterOkButton == other.multiLineFilterOkButton;
@@ -2607,6 +2642,7 @@ class TrinaGridLocaleText {
         hour,
         minute,
         loadingText,
+        selectSearchHint,
         multiLineFilterHint,
         multiLineFilterEditTitle,
         multiLineFilterOkButton,
