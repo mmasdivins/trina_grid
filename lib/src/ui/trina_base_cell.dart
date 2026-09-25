@@ -56,6 +56,11 @@ class TrinaBaseCell extends StatelessWidget
     if (PlatformHelper.isDesktop &&
         TrinaDoubleTapDetector.isDoubleTap(cell) &&
         stateManager.onRowDoubleTap != null) {
+      // In editable modes the second click must still be processed as a tap,
+      // otherwise a fast double click never enters editing mode.
+      if (stateManager.mode.isEditableMode) {
+        _addGestureEvent(TrinaGridGestureType.onTapUp, details.globalPosition);
+      }
       _handleOnDoubleTap();
       return;
     }
