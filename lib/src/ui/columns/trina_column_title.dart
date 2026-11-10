@@ -18,7 +18,7 @@ class TrinaColumnTitle extends TrinaStatefulWidget {
     required this.column,
     double? height,
   }) : height = height ?? stateManager.columnHeight,
-       super(key: ValueKey('column_title_${column.key}'));
+        super(key: ValueKey('column_title_${column.key}'));
 
   @override
   TrinaColumnTitleState createState() => TrinaColumnTitleState();
@@ -30,15 +30,16 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
 
   bool _isPointMoving = false;
 
-  TrinaColumnSorting _sort = const TrinaColumnSorting(
-    sortOrder: TrinaColumnSort.none,
-    sortPosition: null,
-  );
+  TrinaColumnSort _sort = TrinaColumnSort.none;
+
+  int _sortPriority = 0;
+
+  bool _hasMultipleSorts = false;
 
   bool get showContextIcon {
     return widget.column.enableContextMenu ||
         widget.column.enableDropToResize ||
-        !_sort.sortOrder.isNone;
+        !_sort.isNone;
   }
 
   bool get enableGesture {
@@ -67,7 +68,12 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
 
   @override
   void updateState(TrinaNotifierEvent event) {
-    _sort = update<TrinaColumnSorting>(_sort, widget.column.sort);
+    _sort = update<TrinaColumnSort>(_sort, widget.column.sort);
+    _sortPriority = update<int>(_sortPriority, widget.column.sortPriority);
+    _hasMultipleSorts = update<bool>(
+      _hasMultipleSorts,
+      stateManager.sortedColumns.length > 1,
+    );
   }
 
   void _showContextMenu(BuildContext context, Offset position) async {
@@ -141,6 +147,7 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
       child: SizedBox(width: 8, height: widget.height),
     );
 
+
     var contextMenuIcon = _buildContextMenuIcon(style);
     contextMenuIcon = _buildContextMenuWidget(
       contextMenuIcon,
@@ -201,11 +208,11 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
     if (!widget.column.enableContextMenu && style.hideResizeIcon) {
       menuIconWidget = enableGesture
           ? Listener(
-              onPointerDown: _handleOnPointDown,
-              onPointerMove: _handleOnPointMove,
-              onPointerUp: _handleOnPointUp,
-              child: resizeWithoutIcon,
-            )
+        onPointerDown: _handleOnPointDown,
+        onPointerMove: _handleOnPointMove,
+        onPointerUp: _handleOnPointUp,
+        child: resizeWithoutIcon,
+      )
           : resizeWithoutIcon;
     }
 
@@ -230,6 +237,7 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
         child: IconButton(
           icon: TrinaGridColumnIcon(
             sort: _sort,
+            sortPriority: _hasMultipleSorts ? _sortPriority : null,
             color: style.iconColor,
             customResizeWidget: widget.column.enableContextMenu
                 ? null
@@ -242,15 +250,29 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
           ),
           iconSize: style.iconSize,
           mouseCursor: contextMenuCursor,
-          onPressed: null,
+          hoverColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          // Only act as a sort toggle when the icon is the sort/resize icon
+          // (no context menu). When the context menu is enabled the tap is
+          // handled by the Listener in `_buildContextMenuWidget`, so keep the
+          // button disabled here instead of leaving an enabled no-op.
+          onPressed:
+          widget.column.enableSorting && !widget.column.enableContextMenu
+              ? () {
+            if (mounted) {
+              stateManager.toggleSortColumn(widget.column);
+            }
+          }
+              : null,
         ),
       ),
     );
   }
 
   TrinaColumnTitleRendererContext _createTitleRendererContext(
-    Widget contextMenuIcon,
-  ) {
+      Widget contextMenuIcon,
+      ) {
     final isFiltered = stateManager.isFilteredColumn(widget.column);
 
     return TrinaColumnTitleRendererContext(
@@ -276,9 +298,9 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
   /// column-reorder drag from the icon — matching the default header layout,
   /// where the icon sits outside the draggable subtree (see #318).
   Widget _buildContextMenuWidget(
-    Widget contextMenuIcon, {
-    bool hasTitleRenderer = false,
-  }) {
+      Widget contextMenuIcon, {
+        bool hasTitleRenderer = false,
+      }) {
     if (!enableGesture) {
       return contextMenuIcon;
     }
@@ -306,7 +328,9 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
 }
 
 class TrinaGridColumnIcon extends StatelessWidget {
-  final TrinaColumnSorting? sort;
+  final TrinaColumnSort? sort;
+
+  final int? sortPriority;
 
   final Color color;
 
@@ -320,6 +344,7 @@ class TrinaGridColumnIcon extends StatelessWidget {
 
   const TrinaGridColumnIcon({
     this.sort,
+    this.sortPriority,
     this.color = Colors.black26,
     this.icon = Icons.dehaze,
     this.customResizeWidget,
@@ -330,120 +355,47 @@ class TrinaGridColumnIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Icon(icon, color: color);
+    Widget iconWidget;
+    Color sortColor = color;
 
-    // switch (sort?.sortOrder) {
-    //   case TrinaColumnSort.ascending:
-    //     return ascendingIcon == null
-    //         ? Transform.rotate(
-    //       angle: 90 * pi / 90,
-    //       child: const Icon(Icons.sort, color: Colors.green),
-    //     )
-    //         : ascendingIcon!;
-    //   case TrinaColumnSort.descending:
-    //     return descendingIcon == null
-    //         ? const Icon(Icons.sort, color: Colors.red)
-    //         : descendingIcon!;
-    //   default:
-    //     return customResizeWidget ?? Icon(icon, color: color);
-    // }
-  }
-}
-
-class TrinaGridColumnIconSort extends StatelessWidget {
-  final TrinaColumnSorting? sort;
-
-  final Color color;
-
-  final Widget? ascendingIcon;
-
-  final Widget? descendingIcon;
-
-  const TrinaGridColumnIconSort({
-    this.sort,
-    this.color = Colors.black26,
-    this.ascendingIcon,
-    this.descendingIcon,
-    super.key,
-  });
-
-  _iconWithNumber(Widget child, int number) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        child,
-        Positioned(
-          child: Container(
-            padding: EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
-              shape: BoxShape.circle,
-            ),
-            child: Text(number.toString(), style: TextStyle(fontSize: 10)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (sort == null) {
-      return const SizedBox(height: 0, width: 0);
-    }
-
-    int sortPosition = (sort!.sortPosition ?? 0) + 1;
-
-    switch (sort!.sortOrder) {
+    switch (sort) {
       case TrinaColumnSort.ascending:
-        return ascendingIcon == null
-            ? _iconWithNumber(
-                Transform.rotate(
-                  angle: 90 * pi / 90,
-                  child: const Icon(Icons.sort, color: Colors.green),
-                ),
-                sortPosition,
-              )
-            : _iconWithNumber(ascendingIcon!, sortPosition);
+        iconWidget = ascendingIcon ??
+            Transform.rotate(
+              angle: 90 * pi / 90,
+              child: const Icon(Icons.sort, color: Colors.green),
+            );
+        sortColor = Colors.green;
+        break;
       case TrinaColumnSort.descending:
-        return descendingIcon == null
-            ? _iconWithNumber(
-                const Icon(Icons.sort, color: Colors.red),
-                sortPosition,
-              )
-            : _iconWithNumber(descendingIcon!, sortPosition);
+        iconWidget = descendingIcon ??
+            const Icon(Icons.sort, color: Colors.red);
+        sortColor = Colors.red;
+        break;
       default:
-        return const SizedBox(height: 0, width: 0);
+        return customResizeWidget ?? Icon(icon, color: color);
     }
-  }
-}
 
-class _IconWithNumber extends StatelessWidget {
-  final IconData icon;
-  final int number;
-  final double iconSize;
-  final TextStyle textStyle;
+    if (sortPriority != null && sortPriority! > 0) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          iconWidget,
+          const SizedBox(width: 1),
+          Text(
+            '$sortPriority',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: sortColor,
+            ),
+          ),
+        ],
+      );
+    }
 
-  _IconWithNumber({
-    required this.icon,
-    required this.number,
-    this.iconSize = 24.0,
-    this.textStyle = const TextStyle(
-      fontSize: 16.0,
-      fontWeight: FontWeight.bold,
-      color: Colors.black,
-    ),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Icon(icon, size: iconSize),
-        Positioned(child: Text(number.toString(), style: textStyle)),
-      ],
-    );
+    return iconWidget;
   }
 }
 
@@ -491,7 +443,7 @@ class _DraggableWidget extends StatelessWidget {
             width: TrinaGridSettings.minColumnWidth,
             height: stateManager.columnHeight,
             backgroundColor:
-                stateManager.configuration.style.gridBackgroundColor,
+            stateManager.configuration.style.gridBackgroundColor,
             borderColor: stateManager.configuration.style.gridBorderColor,
             child: Text(
               column.title,
@@ -529,16 +481,14 @@ class _SortableWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return column.enableSorting
-        ? MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              key: const ValueKey('ColumnTitleSortableGesture'),
-              onTap: _onTap,
-              child: child,
-            ),
-          )
-        : child;
+    return column.enableSorting ? MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        key: const ValueKey('ColumnTitleSortableGesture'),
+        onTap: _onTap,
+        child: child,
+      ),
+    ) : child;
   }
 }
 
@@ -583,18 +533,18 @@ class _DefaultColumnTitleContentState
 
   EdgeInsets get padding =>
       widget.column.titlePadding ??
-      stateManager.configuration.style.defaultColumnTitlePadding;
+          stateManager.configuration.style.defaultColumnTitlePadding;
 
   bool get showSizedBoxForIcon =>
       widget.column.isShowRightIcon &&
-      (widget.column.titleTextAlign.isRight || stateManager.isRTL);
+          (widget.column.titleTextAlign.isRight || stateManager.isRTL);
 
   TrinaGridStyleConfig get style => stateManager.style;
 
   bool get _hasCheckbox =>
       widget.column.enableRowChecked &&
-      widget.column.rowCheckBoxGroupDepth == 0 &&
-      widget.column.enableTitleChecked;
+          widget.column.rowCheckBoxGroupDepth == 0 &&
+          widget.column.enableTitleChecked;
 
   bool get _titleIsEmpty =>
       (widget.column.title.isEmpty) && widget.column.titleSpan == null;
@@ -621,23 +571,23 @@ class _DefaultColumnTitleContentState
       child: checkboxOnly
           ? CheckboxAllSelectionWidget(stateManager: stateManager)
           : Row(
-              children: [
-                if (_hasCheckbox)
-                  Flexible(
-                    child: CheckboxAllSelectionWidget(
-                      stateManager: stateManager,
-                    ),
-                  ),
-                Expanded(
-                  child: _ColumnTextWidget(
-                    column: widget.column,
-                    stateManager: stateManager,
-                    height: widget.height,
-                  ),
-                ),
-                if (showSizedBoxForIcon) SizedBox(width: style.iconSize),
-              ],
+        children: [
+          if (_hasCheckbox)
+            Flexible(
+              child: CheckboxAllSelectionWidget(
+                stateManager: stateManager,
+              ),
             ),
+          Expanded(
+            child: _ColumnTextWidget(
+              column: widget.column,
+              stateManager: stateManager,
+              height: widget.height,
+            ),
+          ),
+          if (showSizedBoxForIcon) SizedBox(width: style.iconSize),
+        ],
+      ),
     );
   }
 }
@@ -728,10 +678,8 @@ class _ColumnTextWidget extends TrinaStatefulWidget {
 class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
   bool _isFilteredList = false;
   bool _focusInColumn = false;
-  TrinaColumnSorting _sort = const TrinaColumnSorting(
-    sortOrder: TrinaColumnSort.none,
-    sortPosition: null,
-  );
+  TrinaColumnSort _sort = TrinaColumnSort.none;
+  int _sortPriority = 0;
 
   @override
   TrinaGridStateManager get stateManager => widget.stateManager;
@@ -758,7 +706,8 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
     }
     _focusInColumn = update<bool>(_focusInColumn, inColumn);
 
-    _sort = update<TrinaColumnSorting>(_sort, widget.column.sort);
+    _sort = update<TrinaColumnSort>(_sort, widget.column.sort);
+    _sortPriority = update<int>(_sortPriority, widget.column.sortPriority);
   }
 
   void _handleOnPressedFilter() {
@@ -794,28 +743,28 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
           alignment: PlaceholderAlignment.middle,
           child: stateManager.configuration.style.filterIconWidget != null
               ? GestureDetector(
-                  onTap: _handleOnPressedFilter,
-                  child: stateManager.configuration.style.filterIconWidget,
-                )
+            onTap: _handleOnPressedFilter,
+            child: stateManager.configuration.style.filterIconWidget,
+          )
               : IconButton(
-                  icon: Icon(
-                    stateManager.configuration.style.filterIcon!.icon,
-                    color:
-                        stateManager
-                            .configuration
-                            .style
-                            .filterHeaderIconColor ??
-                        stateManager.configuration.style.iconColor,
-                    size: stateManager.configuration.style.iconSize,
-                  ),
-                  onPressed: _handleOnPressedFilter,
-                  constraints: BoxConstraints(
-                    maxHeight:
-                        widget.height +
-                        (widget.stateManager.style.cellHorizontalBorderWidth *
-                            2),
-                  ),
-                ),
+            icon: Icon(
+              stateManager.configuration.style.filterIcon!.icon,
+              color:
+              stateManager
+                  .configuration
+                  .style
+                  .filterHeaderIconColor ??
+                  stateManager.configuration.style.iconColor,
+              size: stateManager.configuration.style.iconSize,
+            ),
+            onPressed: _handleOnPressedFilter,
+            constraints: BoxConstraints(
+              maxHeight:
+              widget.height +
+                  (widget.stateManager.style.cellHorizontalBorderWidth *
+                      2),
+            ),
+          ),
         ),
     ];
   }
@@ -838,10 +787,11 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
         if (widget.column.enableSorting)
           TrinaGridColumnIconSort(
             sort: _sort,
+            sortPriority: _sortPriority,
             color: stateManager.configuration.style.iconColor,
             ascendingIcon: stateManager.configuration.style.columnAscendingIcon,
             descendingIcon:
-                stateManager.configuration.style.columnDescendingIcon,
+            stateManager.configuration.style.columnDescendingIcon,
           ),
         Expanded(
           child: Text.rich(
@@ -864,6 +814,79 @@ class _ColumnTextWidgetState extends TrinaStateWithChange<_ColumnTextWidget> {
       maxLines: 1,
       textAlign: widget.column.titleTextAlign.value,
     );
+  }
+}
+
+class TrinaGridColumnIconSort extends StatelessWidget {
+  final TrinaColumnSort? sort;
+
+  final int? sortPriority;
+
+  final Color color;
+
+  final Widget? ascendingIcon;
+
+  final Widget? descendingIcon;
+
+  const TrinaGridColumnIconSort({
+    this.sort,
+    this.sortPriority,
+    this.color = Colors.black26,
+    this.ascendingIcon,
+    this.descendingIcon,
+    super.key,
+  });
+
+  _iconWithNumber(Widget child, int number) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        child,
+        Positioned(
+          child: Container(
+            padding: EdgeInsets.all(4.0),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              shape: BoxShape.circle,
+            ),
+            child: Text(number.toString(), style: TextStyle(fontSize: 10)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (sort == null) {
+      return const SizedBox(height: 0, width: 0);
+    }
+
+    // sortPriority comença a 1 (0 = encara sense prioritat assignada).
+    final int sortPosition =
+        (sortPriority != null && sortPriority! > 0) ? sortPriority! : 1;
+
+    switch (sort) {
+      case TrinaColumnSort.ascending:
+        return ascendingIcon == null
+            ? _iconWithNumber(
+          Transform.rotate(
+            angle: 90 * pi / 90,
+            child: const Icon(Icons.sort, color: Colors.green),
+          ),
+          sortPosition,
+        )
+            : _iconWithNumber(ascendingIcon!, sortPosition);
+      case TrinaColumnSort.descending:
+        return descendingIcon == null
+            ? _iconWithNumber(
+          const Icon(Icons.sort, color: Colors.red),
+          sortPosition,
+        )
+            : _iconWithNumber(descendingIcon!, sortPosition);
+      default:
+        return const SizedBox(height: 0, width: 0);
+    }
   }
 }
 

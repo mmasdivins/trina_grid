@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ import 'state/row_group_state.dart';
 import 'state/row_state.dart';
 import 'state/scroll_state.dart';
 import 'state/selecting_state.dart';
+import 'state/sidebar_state.dart';
 import 'state/visibility_layout_state.dart';
 import 'state/hovering_state.dart';
 import 'state/search_state.dart';
@@ -45,6 +47,7 @@ abstract class ITrinaGridState
         IRowState,
         IScrollState,
         ISelectingState,
+        ISidebarState,
         IVisibilityLayoutState,
         IHoveringState,
         ISearchState {}
@@ -67,6 +70,7 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
         RowState,
         ScrollState,
         SelectingState,
+        SidebarState,
         VisibilityLayoutState,
         HoveringState,
         SearchState {
@@ -346,6 +350,17 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
   }
 
   void _initialize() {
+    // Columns sorted in their constructors without a sortPriority are ranked
+    // in column order, after the ones that set it.
+    final sorted = refColumns.originalList.where((c) => !c.sort.isNone);
+    int nextPriority =
+        sorted.fold<int>(0, (max, c) => math.max(max, c.sortPriority)) + 1;
+    for (final column in sorted) {
+      if (column.sortPriority == 0) {
+        column.sortPriority = nextPriority++;
+      }
+    }
+
     TrinaGridStateManager.initializeRows(
       refColumns.originalList,
       refRows.originalList,

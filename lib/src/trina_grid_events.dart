@@ -193,9 +193,10 @@ class TrinaGridOnSelectedEvent {
 class TrinaGridOnSortedEvent {
   final TrinaColumn column;
 
-  final TrinaColumnSorting oldSort;
+  final TrinaColumnSort oldSort;
+  final int oldSortPriority;
 
-  const TrinaGridOnSortedEvent({required this.column, required this.oldSort});
+  const TrinaGridOnSortedEvent({required this.column, required this.oldSort, required this.oldSortPriority});
 
   @override
   String toString() {

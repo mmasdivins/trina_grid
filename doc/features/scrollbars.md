@@ -75,6 +75,26 @@ The `TrinaGridScrollbarConfig` class provides the following key options for scro
 | `trackHoverColor` | `Color?` | `null` | Color of the scrollbar track when hovered (defaults to a more opaque version of trackColor if null). |
 | `isDraggable` | `bool` | `true` | Whether scrollbar thumbs can be dragged with mouse or touch to scroll content. |
 | `smoothScrolling` | `bool` | `true` | Whether to use smooth scrolling animation for mouse wheel input. When enabled, scrolling animates smoothly instead of jumping instantly. |
+| `trackClickDuration` | `Duration` | `Duration(milliseconds: 200)` | Duration of the scroll animation when clicking the scrollbar track to jump to a position. Set to `Duration.zero` to jump instantly. |
+| `trackClickCurve` | `Curve` | `Curves.easeOutCubic` | Easing curve for the track-click jump animation. |
+
+### Layout footprint
+
+Scrollbars are drawn as overlays, but the grid still reserves space for them so that the last row and
+the last column are never left permanently underneath a scrollbar. Two read-only getters expose how
+much space that is:
+
+| Getter | Description |
+|--------|-------------|
+| `effectiveThickness` | Total cross axis space a scrollbar occupies: `thickness` plus 2px of padding on each side. This is the height of the horizontal scrollbar strip and the width of the vertical scrollbar overlay. |
+| `verticalScrollBarReservedWidth` | The trailing width reserved for the vertical scrollbar, or `0` when `showVertical` is `false`. |
+
+The column headers, the rows and the column footers all reserve the same trailing band, so they share
+one scroll extent and stay aligned when scrolled to the end. No column is drawn in that band, so set
+`TrinaGridStyleConfig.columnBackgroundColor` to fill it, and the rest of the header, with your header color.
+
+Increasing `thickness` therefore also increases the space the grid reserves. Use these getters
+instead of hardcoding the padding if you build custom layouts around the grid.
 
 ## Examples
 
@@ -160,6 +180,37 @@ TrinaGrid(
   configuration: TrinaGridConfiguration(
     scrollbar: TrinaGridScrollbarConfig(
       isDraggable: false, // Disable scrollbar thumb dragging
+    ),
+  ),
+)
+```
+
+### Customizing the Track-Click Animation
+
+When you click on the scrollbar track (not the thumb), the grid animates to that position. You can change how long that animation takes and which easing curve it uses:
+
+```dart
+TrinaGrid(
+  columns: columns,
+  rows: rows,
+  configuration: TrinaGridConfiguration(
+    scrollbar: TrinaGridScrollbarConfig(
+      trackClickDuration: Duration(milliseconds: 120), // Faster jump
+      trackClickCurve: Curves.linear,                  // Constant speed
+    ),
+  ),
+)
+```
+
+To disable the animation entirely and jump instantly, set the duration to `Duration.zero`:
+
+```dart
+TrinaGrid(
+  columns: columns,
+  rows: rows,
+  configuration: TrinaGridConfiguration(
+    scrollbar: TrinaGridScrollbarConfig(
+      trackClickDuration: Duration.zero, // Instant jump on track click
     ),
   ),
 )
@@ -298,6 +349,59 @@ TrinaGrid(
 )
 ```
 
+### Per-Axis Scroll Physics
+
+`scrollPhysics` applies to both axes at once, so blocking vertical scrolling with it blocks horizontal scrolling too. Use `horizontalScrollPhysics` and `verticalScrollPhysics` to control each axis on its own.
+
+The common case is a width-constrained grid inside a scrolling page: the page should own vertical scrolling while the grid keeps scrolling horizontally. Pair it with `fitContent: true` so the grid sizes itself to its content instead of needing a bounded height.
+
+```dart
+SingleChildScrollView(
+  child: TrinaGrid(
+    columns: columns,
+    rows: rows,
+    fitContent: true,
+    verticalScrollPhysics: const NeverScrollableScrollPhysics(),
+  ),
+)
+```
+
+The reverse works the same way, for a grid inside a horizontally scrolling parent:
+
+```dart
+TrinaGrid(
+  columns: columns,
+  rows: rows,
+  horizontalScrollPhysics: const NeverScrollableScrollPhysics(),
+)
+```
+
+#### Precedence
+
+For each axis, the physics is resolved in this order:
+
+1. `verticalScrollPhysics` / `horizontalScrollPhysics`, if set for that axis
+2. `scrollPhysics`, if set
+3. The platform default from `MaterialScrollBehavior`
+
+A per-axis value replaces the fallback for its axis rather than layering on top of it, so it can re-enable an axis that `scrollPhysics` disabled:
+
+```dart
+// Nothing scrolls except horizontally.
+TrinaGrid(
+  columns: columns,
+  rows: rows,
+  scrollPhysics: const NeverScrollableScrollPhysics(),
+  horizontalScrollPhysics: const ClampingScrollPhysics(),
+)
+```
+
+#### Limitation
+
+Only the parts of `ScrollPhysics` that receive scroll metrics can be resolved per axis, because that is where the axis is known. The axis-agnostic ones (fling velocity thresholds, the spring description, the drag start threshold) come from `scrollPhysics` or the platform default instead. None of Flutter's built-in physics differ through those values, so this only matters for custom `ScrollPhysics` subclasses that override them.
+
+Internally this is implemented by `TrinaAxisScrollPhysics`, which is exported and can be used directly anywhere a `ScrollPhysics` is accepted.
+
 ### Combining Scroll Physics
 
 You can combine multiple scroll physics using the `applyTo` method for more complex behaviors:
@@ -363,6 +467,7 @@ TrinaGrid(
 
 7. **Scroll Physics**: Choose appropriate scroll physics based on your use case:
    - Use `NeverScrollableScrollPhysics()` when the grid is inside a scrollable parent to prevent scroll conflicts
+   - Reach for `verticalScrollPhysics` / `horizontalScrollPhysics` instead of `scrollPhysics` when only one axis should be affected, so the other axis keeps working
    - Use platform-specific physics (default) for the most native feel on each platform
    - Consider `AlwaysScrollableScrollPhysics()` if you need scrolling gestures to work even when content fits the viewport
 

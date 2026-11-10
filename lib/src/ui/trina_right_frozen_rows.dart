@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trina_grid/trina_grid.dart';
 
+import 'miscellaneous/row_extent.dart';
 import 'ui.dart';
 
 class TrinaRightFrozenRows extends TrinaStatefulWidget {
@@ -20,6 +21,7 @@ class TrinaRightFrozenRowsState
   List<TrinaRow> _frozenTopRows = [];
   List<TrinaRow> _frozenBottomRows = [];
   List<TrinaRow> _scrollableRows = [];
+  TrinaRowExtent _rowExtent = const TrinaRowExtent();
 
   late final ScrollController _scroll;
 
@@ -61,6 +63,8 @@ class TrinaRightFrozenRowsState
     _scrollableRows = _rows
         .where((row) => row.frozen == TrinaRowFrozen.none)
         .toList();
+
+    _rowExtent = TrinaRowExtent.resolve(_scrollableRows, stateManager);
   }
 
   Widget _buildRow(BuildContext context, TrinaRow row, int index) {
@@ -101,17 +105,8 @@ class TrinaRightFrozenRowsState
             scrollDirection: Axis.vertical,
             physics: const ClampingScrollPhysics(),
             itemCount: _scrollableRows.length,
-            itemExtentBuilder:
-                (stateManager.rowWrapper != null &&
-                    !stateManager.configuration.rowWrapperIsConstantHeight)
-                ? null
-                : (index, _) =>
-                      (_scrollableRows[index].height ??
-                          stateManager.configuration.style.rowHeight) +
-                      stateManager
-                          .configuration
-                          .style
-                          .cellHorizontalBorderWidth,
+            itemExtent: _rowExtent.itemExtent,
+            itemExtentBuilder: _rowExtent.itemExtentBuilder,
             itemBuilder: (ctx, i) =>
                 _buildRow(ctx, _scrollableRows[i], i + _frozenTopRows.length),
           ),
@@ -130,6 +125,15 @@ class TrinaRightFrozenRowsState
                   ),
                 )
                 .toList(),
+          ),
+        // Match the footprint of the body's horizontal scrollbar so that every
+        // list in the vertical scroll controller group has the same viewport
+        // height and therefore the same maxScrollExtent. Without this, scrolling
+        // the group to the body's maxScrollExtent overscrolls this list, whose
+        // ClampingScrollPhysics then springs back and drags the body with it.
+        if (stateManager.configuration.scrollbar.showHorizontal)
+          SizedBox(
+            height: stateManager.configuration.scrollbar.effectiveThickness,
           ),
       ],
     );

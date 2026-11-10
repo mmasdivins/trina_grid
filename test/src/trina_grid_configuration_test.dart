@@ -180,6 +180,97 @@ void main() {
     );
   });
 
+  group('scrollbar', () {
+    test(
+      'The default track-click animation should preserve the legacy behavior.',
+      () {
+        const config = TrinaGridScrollbarConfig();
+
+        expect(config.trackClickDuration, const Duration(milliseconds: 200));
+        expect(config.trackClickCurve, Curves.easeOutCubic);
+      },
+    );
+
+    test(
+      'When the trackClickDuration is different, the comparison should be false.',
+      () {
+        const configA = TrinaGridScrollbarConfig();
+
+        const configB = TrinaGridScrollbarConfig(
+          trackClickDuration: Duration(milliseconds: 120),
+        );
+
+        expect(configA == configB, false);
+        expect(configA.hashCode == configB.hashCode, false);
+      },
+    );
+
+    test(
+      'When the trackClickCurve is different, the comparison should be false.',
+      () {
+        const configA = TrinaGridScrollbarConfig();
+
+        const configB = TrinaGridScrollbarConfig(
+          trackClickCurve: Curves.linear,
+        );
+
+        expect(configA == configB, false);
+        expect(configA.hashCode == configB.hashCode, false);
+      },
+    );
+
+    test(
+      'When the track-click values are the same, the comparison should be true.',
+      () {
+        const configA = TrinaGridScrollbarConfig(
+          trackClickDuration: Duration(milliseconds: 350),
+          trackClickCurve: Curves.easeInOut,
+        );
+
+        const configB = TrinaGridScrollbarConfig(
+          trackClickDuration: Duration(milliseconds: 350),
+          trackClickCurve: Curves.easeInOut,
+        );
+
+        expect(configA == configB, true);
+        expect(configA.hashCode == configB.hashCode, true);
+      },
+    );
+
+    test('The effective thickness should include the surrounding padding.', () {
+      expect(const TrinaGridScrollbarConfig().effectiveThickness, 12.0);
+
+      expect(
+        const TrinaGridScrollbarConfig(thickness: 20).effectiveThickness,
+        24.0,
+      );
+    });
+
+    test(
+      'The reserved width should follow the visibility of the vertical scrollbar.',
+      () {
+        expect(
+          const TrinaGridScrollbarConfig().verticalScrollBarReservedWidth,
+          12.0,
+        );
+
+        expect(
+          const TrinaGridScrollbarConfig(
+            thickness: 20,
+          ).verticalScrollBarReservedWidth,
+          24.0,
+        );
+
+        expect(
+          const TrinaGridScrollbarConfig(
+            showVertical: false,
+          ).verticalScrollBarReservedWidth,
+          0.0,
+        );
+      },
+    );
+  });
+
   group('style', () {
     test(
       'When the values of style A and B are the same, the comparison should be true.',
@@ -580,5 +671,33 @@ void main() {
 
       expect(locale.loadingText, 'にゃ〜');
     });
+
+    test('When the locale is called, the value should be correct.', () {
+      const locale = TrinaGridLocaleText.hungarian();
+
+      expect(locale.loadingText, 'Betöltés');
+    });
+
+    test(
+      'When only a pagination field differs, the comparison should be false.',
+      () {
+        const localeA = TrinaGridLocaleText(paginationGoButton: 'Go');
+        const localeB = TrinaGridLocaleText(paginationGoButton: 'Ugrik');
+
+        expect(localeA == localeB, false);
+        expect(localeA.hashCode == localeB.hashCode, false);
+      },
+    );
+
+    test(
+      'When only a time picker field differs, the comparison should be false.',
+      () {
+        const localeA = TrinaGridLocaleText(timePickerHourLabel: 'Hour');
+        const localeB = TrinaGridLocaleText(timePickerHourLabel: 'Óra');
+
+        expect(localeA == localeB, false);
+        expect(localeA.hashCode == localeB.hashCode, false);
+      },
+    );
   });
 }

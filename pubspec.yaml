@@ -1,6 +1,6 @@
 name: trina_grid
 description: A data grid that can be controlled by the keyboard on desktop and web. Of course, it works well on Android and IOS. (DataGrid, DataTable, Data Grid, Data Table, Sticky)
-version: 2.3.0
+version: 2.4.0
 repository: https://github.com/doonfrs/trina_grid
 issue_tracker: https://github.com/doonfrs/trina_grid/issues
 
@@ -37,7 +37,7 @@ dependencies:
     git:
       url: https://github.com/justkawal/excel
       ref: 37e0807f97fe8c293bdf75441cf21413b322882d
-  shadcn_ui: ^0.43.0
+  shadcn_ui: '>=0.43.0 <0.58.0'
 
 dev_dependencies:
   flutter_test:

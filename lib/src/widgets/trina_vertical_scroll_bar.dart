@@ -241,8 +241,8 @@ class _TrinaVerticalScrollBarState extends State<TrinaVerticalScrollBar>
             // Use animateTo for smooth scrolling instead of jumpTo
             scrollController.animateTo(
               clampedOffset,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
+              duration: scrollConfig.trackClickDuration,
+              curve: scrollConfig.trackClickCurve,
             );
           },
           onPanDown: (_) {
@@ -293,7 +293,7 @@ class _TrinaVerticalScrollBarState extends State<TrinaVerticalScrollBar>
                             (widget.height - thumbHeight);
 
                         return SizedBox(
-                          width: scrollConfig.thickness + 4, // Add padding
+                          width: scrollConfig.effectiveThickness,
                           height: widget.height,
                           child: Stack(
                             children: [

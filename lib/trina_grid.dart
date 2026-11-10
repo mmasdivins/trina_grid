@@ -44,6 +44,7 @@ export './src/plugin/trina_aggregate_column_footer.dart';
 export './src/plugin/trina_infinity_scroll_rows.dart';
 export './src/plugin/trina_lazy_pagination.dart';
 export './src/plugin/trina_pagination.dart';
+export './src/trina_axis_scroll_physics.dart';
 export './src/trina_dual_grid.dart';
 export './src/trina_dual_grid_popup.dart';
 export './src/trina_grid.dart';
@@ -74,7 +75,6 @@ export 'src/model/column_types/trina_column_type_custom.dart';
 export 'src/model/trina_column_type_has_format.dart';
 export 'src/model/trina_dropdown_menu_filter.dart';
 export 'src/ui/widgets/trina_dropdown_menu.dart' show TrinaDropdownMenuVariant;
-export 'src/model/trina_column_sorting.dart';
 
 // Export grid export functionality
 export './src/export/trina_grid_export.dart';

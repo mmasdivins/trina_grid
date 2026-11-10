@@ -1,6 +1,6 @@
-import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:trina_grid/src/helper/trina_general_helper.dart';
 import 'package:trina_grid/trina_grid.dart';
 
 typedef SetFilterPopupHandler =
@@ -24,7 +24,9 @@ class FilterHelper {
 
   static const List<TrinaFilterType> defaultFilters = [
     TrinaFilterTypeContains(),
+    TrinaFilterTypeDoesNotContain(),
     TrinaFilterTypeEquals(),
+    TrinaFilterTypeNotEquals(),
     TrinaFilterTypeStartsWith(),
     TrinaFilterTypeEndsWith(),
     TrinaFilterTypeGreaterThan(),
@@ -64,47 +66,71 @@ class FilterHelper {
       return null;
     }
 
+    // The filter type, target field and search text of each condition, and the
+    // column each field resolves to, are the same for every row. Resolving them
+    // once here instead of per cell of every row keeps a wide grid's filtering
+    // linear in its cell count. The column map is built on the first row, like
+    // the previous per-cell lookup, so a null column list still fails there.
+    final conditions = [
+      for (final e in rows)
+        (
+          filterType: e!.cells[filterFieldType]!.value as TrinaFilterType?,
+          field: e.cells[filterFieldColumn]!.value,
+          search: e.cells[filterFieldValue]!.value.toString(),
+        ),
+    ];
+    late final Map<String, TrinaColumn> columnsByField = () {
+      final byField = <String, TrinaColumn>{};
+      for (final column in enabledFilterColumns!) {
+        byField.putIfAbsent(column.field, () => column);
+      }
+      return byField;
+    }();
+
     return (TrinaRow? row) {
       bool? flag;
 
-      for (var e in rows) {
-        final filterType = e!.cells[filterFieldType]!.value as TrinaFilterType?;
-
-        if (e.cells[filterFieldColumn]!.value == filterFieldAllColumns) {
+      for (final condition in conditions) {
+        if (condition.field == filterFieldAllColumns) {
+          // A negated type over all columns keeps the rows where no column
+          // matches, rather than the rows where any one column does not.
+          final filterType = condition.filterType!;
+          final negated = filterType is TrinaNegatedFilterType;
           bool? flagAllColumns;
 
           row!.cells.forEach((key, value) {
-            var foundColumn = enabledFilterColumns!.firstWhereOrNull(
-                  (element) => element.field == key,
-            );
+
+          final foundColumn = columnsByField[key];
 
             if (foundColumn != null) {
               flagAllColumns = compareOr(
                 flagAllColumns,
                 compareByFilterType(
-                  filterType: filterType!,
+                  filterType: negated ? filterType.negates : filterType,
                   base: value.value.toString(),
-                  search: e.cells[filterFieldValue]!.value.toString(),
+                  search: condition.search,
                   column: foundColumn,
                 ),
               );
             }
           });
 
+          if (negated && flagAllColumns != null) {
+            flagAllColumns = !flagAllColumns!;
+          }
+
           flag = compareAnd(flag, flagAllColumns);
         } else {
-          var foundColumn = enabledFilterColumns!.firstWhereOrNull(
-                (element) => element.field == e.cells[filterFieldColumn]!.value,
-          );
+
+          final foundColumn = columnsByField[condition.field];
 
           if (foundColumn != null) {
             flag = compareAnd(
               flag,
               compareByFilterType(
-                filterType: filterType!,
-                base: row!.cells[e.cells[filterFieldColumn]!.value]!.value
-                    .toString(),
-                search: e.cells[filterFieldValue]!.value.toString(),
+                filterType: condition.filterType!,
+                base: row!.cells[condition.field]!.value.toString(),
+                search: condition.search,
                 column: foundColumn,
               ),
             );
@@ -219,7 +245,36 @@ class FilterHelper {
     required String search,
     required TrinaColumn column,
   }) {
+    // A cell matches when any of its representations below matches, so a
+    // negated type has to negate that whole match, not each representation.
+    if (filterType is TrinaNegatedFilterType) {
+      return !compareByFilterType(
+        filterType: filterType.negates,
+        base: base,
+        search: search,
+        column: column,
+      );
+    }
+
     bool compare = false;
+
+    if (column.type is TrinaColumnTypeBoolean) {
+      final booleanColumn = column.type as TrinaColumnTypeBoolean;
+
+      // Boolean cells hold a raw bool, so [base] is 'true'/'false' while the
+      // grid displays trueText/falseText. Compare against what the user
+      // actually sees as well, otherwise typing the visible text matches
+      // nothing.
+      if (base == 'true' || base == 'false') {
+        compare =
+            compare ||
+            filterType.compare(
+              base: booleanColumn.formatValue(base),
+              search: search,
+              column: column,
+            );
+      }
+    }
 
     if (column.type is TrinaColumnTypeWithNumberFormat) {
       final numberColumn = column.type as TrinaColumnTypeWithNumberFormat;
@@ -341,11 +396,14 @@ class FilterHelper {
   }
 
   static bool _compareWithRegExp(
-      String pattern,
-      String value, {
-        bool caseSensitive = false,
-      }) {
-    return RegExp(pattern, caseSensitive: caseSensitive).hasMatch(value);
+    String pattern,
+    String value, {
+    bool caseSensitive = false,
+  }) {
+    return TrinaGeneralHelper.cachedRegExp(
+      pattern,
+      caseSensitive: caseSensitive,
+    ).hasMatch(value);
   }
 
   /// Compare [base] with raw regex [search].
@@ -359,12 +417,14 @@ class FilterHelper {
     }
 
     try {
-      return RegExp(search).hasMatch(base);
+      return TrinaGeneralHelper.cachedRegExp(search).hasMatch(base);
     } catch (e) {
       // Return false if the regex pattern is invalid
       return false;
     }
   }
+
+  static final RegExp _multiItemsSeparator = RegExp(r'[\n,]');
 
   static bool compareMultiItems({
     required String? base,
@@ -374,7 +434,7 @@ class FilterHelper {
   }) {
     if (base == null || search == null) return false;
     final items = search
-        .split(RegExp(r'[\n,]'))
+        .split(_multiItemsSeparator)
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
@@ -656,6 +716,51 @@ class TrinaFilterTypeEquals implements TrinaFilterType {
   TrinaCompareFunction get compare => FilterHelper.compareEquals;
 
   const TrinaFilterTypeEquals();
+}
+
+/// A filter type that keeps the rows [negates] filters out, and the reverse.
+///
+/// [FilterHelper.compareByFilterType] negates the whole match of [negates], so
+/// a number cell is excluded when either its formatted or its raw value
+/// matches, and a search over all columns keeps the rows where no column
+/// matches.
+abstract class TrinaNegatedFilterType implements TrinaFilterType {
+  const TrinaNegatedFilterType();
+
+  /// The filter type whose matches this type excludes.
+  TrinaFilterType get negates;
+
+  @override
+  TrinaCompareFunction get compare =>
+      ({
+        required String? base,
+        required String? search,
+        required TrinaColumn column,
+      }) => !negates.compare(base: base, search: search, column: column);
+}
+
+class TrinaFilterTypeDoesNotContain extends TrinaNegatedFilterType {
+  static String name = 'Does not contain';
+
+  @override
+  String get title => TrinaFilterTypeDoesNotContain.name;
+
+  @override
+  TrinaFilterType get negates => const TrinaFilterTypeContains();
+
+  const TrinaFilterTypeDoesNotContain();
+}
+
+class TrinaFilterTypeNotEquals extends TrinaNegatedFilterType {
+  static String name = 'Not equals';
+
+  @override
+  String get title => TrinaFilterTypeNotEquals.name;
+
+  @override
+  TrinaFilterType get negates => const TrinaFilterTypeEquals();
+
+  const TrinaFilterTypeNotEquals();
 }
 
 class TrinaFilterTypeStartsWith implements TrinaFilterType {

@@ -6,6 +6,7 @@ import 'package:trina_grid/trina_grid.dart';
 
 import 'scrolls/trina_single_child_smooth_scroll_view.dart';
 import 'scrolls/trina_smooth_list_view.dart';
+import 'miscellaneous/row_extent.dart';
 import 'ui.dart';
 
 class TrinaBodyRows extends TrinaStatefulWidget {
@@ -24,6 +25,7 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
   List<TrinaRow> _frozenTopRows = [];
   List<TrinaRow> _frozenBottomRows = [];
   List<TrinaRow> _scrollableRows = [];
+  TrinaRowExtent _rowExtent = const TrinaRowExtent();
 
   late final ScrollController _verticalScroll;
   late final ScrollController _horizontalScroll;
@@ -78,8 +80,19 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
     updateState(TrinaNotifierEventForceUpdate.instance);
   }
 
+  /// Having clients does not mean the position has been laid out yet, and
+  /// [ScrollPosition.maxScrollExtent] and [ScrollPosition.viewportDimension]
+  /// both throw before that happens.
+  bool _isLaidOut(ScrollController controller) {
+    if (!controller.hasClients) return false;
+
+    final position = controller.position;
+
+    return position.hasContentDimensions && position.hasViewportDimension;
+  }
+
   void _updateVerticalScrollInfo() {
-    if (!_verticalScroll.hasClients) return;
+    if (!_isLaidOut(_verticalScroll)) return;
 
     // Update value notifiers without triggering setState
     _verticalScrollOffsetNotifier.value = _verticalScroll.offset;
@@ -90,7 +103,7 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
   }
 
   void _updateHorizontalScrollInfo() {
-    if (!_horizontalScroll.hasClients) return;
+    if (!_isLaidOut(_horizontalScroll)) return;
 
     // Update value notifiers without triggering setState
     _horizontalScrollOffsetNotifier.value = _horizontalScroll.offset;
@@ -139,6 +152,8 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
     _scrollableRows = _rows
         .where((row) => row.frozen == TrinaRowFrozen.none)
         .toList();
+
+    _rowExtent = TrinaRowExtent.resolve(_scrollableRows, stateManager);
 
     // Cancel existing timers before creating new ones
     _verticalScrollTimer?.cancel();
@@ -224,7 +239,7 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
                   child: Padding(
                     padding: scrollConfig.showVertical
                         ? EdgeInsetsDirectional.only(
-                            end: scrollConfig.thickness + 4,
+                            end: scrollConfig.effectiveThickness,
                           )
                         : EdgeInsets.zero,
                     child: CustomSingleChildLayout(
@@ -252,22 +267,9 @@ class TrinaBodyRowsState extends TrinaStateWithChange<TrinaBodyRows> {
                                   controller: _verticalScroll,
                                   scrollDirection: Axis.vertical,
                                   itemCount: _scrollableRows.length,
+                                  itemExtent: _rowExtent.itemExtent,
                                   itemExtentBuilder:
-                                      (stateManager.rowWrapper != null &&
-                                          !stateManager
-                                              .configuration
-                                              .rowWrapperIsConstantHeight)
-                                      ? null
-                                      : (index, _) =>
-                                            (_scrollableRows[index].height ??
-                                                stateManager
-                                                    .configuration
-                                                    .style
-                                                    .rowHeight) +
-                                            stateManager
-                                                .configuration
-                                                .style
-                                                .cellHorizontalBorderWidth,
+                                      _rowExtent.itemExtentBuilder,
                                   addRepaintBoundaries: false,
                                   itemBuilder: (ctx, i) => _buildRow(
                                     context,

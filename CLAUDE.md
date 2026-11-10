@@ -12,6 +12,8 @@ TrinaGrid is a Flutter package providing a keyboard-navigable data grid widget. 
 flutter pub get                      # Install dependencies
 flutter test                         # Run all tests
 flutter test test/path/to_test.dart  # Run a single test file
+cd example && flutter test integration_test -d windows  # Run the E2E tests in a real app window
+cd example && for f in integration_test/issue_*_test.dart; do flutter test "$f" -d windows; done  # All E2E files, one at a time (a multi-file run fails to relaunch the app on Windows)
 flutter test --coverage              # Run tests with coverage
 dart analyze                         # Check for analysis errors
 dart format .                        # Format all code
@@ -22,14 +24,20 @@ dart fix --apply                     # Apply automated fixes
 
 - **IMPORTANT: After finishing any code changes**, you MUST run `dart format` on the edited files and then run `dart analyze` to check for errors. Fix any issues found before considering the task done. Never skip this step.
 - If an API or feature was changed/added, check `/doc` for relevant documentation to update, and update `/doc/index.md` if a new doc page was added.
+- **Bug fixes are verified end to end.** For any bug that shows in the UI (layout, scrolling, alignment, rendering, focus, keyboard), follow `doc/contributing/e2e-testing.md`:
+  1. Reproduce it first with an E2E test in `example/integration_test/issue_<n>_<topic>_test.dart`, built on `e2e_harness.dart` (real window, real input, geometry assertions, PNG screenshots). Run it with `cd example && flutter test integration_test/<file> -d windows` and confirm it fails for the reported reason.
+  2. Fix, rerun, and **look at the saved screenshots** in `example/build/e2e_screenshots/` with the Read tool to validate the result visually. Revert the fix once to confirm the test fails without it.
+  3. Also add a widget test in `test/`, since CI does not run the E2E tests.
+  4. If the report does not reproduce on main, run the same E2E test against the reporter's release (git worktree of the release commit) before concluding.
 
 ## Git Workflow
 
-When asked to commit & push:
-1. Create a new branch from the current branch (never push directly to main).
+When asked to commit & push (including via `/push`):
+1. If on main, create a new branch first (never push directly to main). This overrides the "never create or switch branches" rule in the global `/push` command; do it without stopping to ask.
 2. Commit the changes. Don't add `## Test plan` to commit messages.
-3. Push the branch.
+3. Push the branch and open a PR with `gh pr create`.
 4. If fixing a GitHub issue, link it in the PR so it closes on merge.
+5. After pushing, switch back to main (`git switch main`) so the next task starts from there.
 
 ## Architecture
 
@@ -95,5 +103,5 @@ Uses `package:flutter_lints/flutter.yaml`. Excludes `**.mocks.dart` from analysi
 
 ### CI
 
-- `tests.yaml` — runs `flutter test` on PRs to master
-- `coverage.yml` — runs `flutter test --coverage` on push to master, uploads to codecov
+- `tests.yaml` — runs `dart analyze` and `flutter test` on PRs to main
+- `coverage.yml` — runs `flutter test --coverage` on push to main, uploads to codecov

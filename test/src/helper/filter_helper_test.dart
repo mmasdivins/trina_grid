@@ -184,6 +184,48 @@ void main() {
           isFalse,
         );
       });
+
+      test('filterFieldColumn : All, '
+          'filterFieldType : DoesNotContain, '
+          'keeps the row only when no column contains the search', () {
+        bool filter(String search) {
+          final filterRows = [
+            FilterHelper.createFilterRow(
+              filterType: const TrinaFilterTypeDoesNotContain(),
+              filterValue: search,
+            ),
+          ];
+
+          return FilterHelper.convertRowsToFilter(filterRows, columns)!(row);
+        }
+
+        expect(filter('column1'), isFalse);
+        expect(filter('value'), isFalse);
+        expect(filter('column4'), isTrue);
+      });
+
+      test('filterFieldColumn : column1, '
+          'filterFieldType : NotEquals, '
+          'combined with another condition', () {
+        bool filter(String notEquals) {
+          final filterRows = [
+            FilterHelper.createFilterRow(
+              columnField: 'column1',
+              filterType: const TrinaFilterTypeNotEquals(),
+              filterValue: notEquals,
+            ),
+            FilterHelper.createFilterRow(
+              columnField: 'column2',
+              filterValue: 'column2',
+            ),
+          ];
+
+          return FilterHelper.convertRowsToFilter(filterRows, columns)!(row);
+        }
+
+        expect(filter('column1 value'), isFalse);
+        expect(filter('column1'), isTrue);
+      });
     });
   });
 
@@ -488,6 +530,82 @@ void main() {
       });
     });
 
+    group('DoesNotContain', () {
+      late Function compare;
+
+      setUp(() {
+        compare = makeCompareFunction(const TrinaFilterTypeDoesNotContain());
+      });
+
+      test('apple does not contain banana', () {
+        expect(compare('apple', 'banana'), isTrue);
+      });
+
+      test('apple contains le, ignoring case', () {
+        expect(compare('apple', 'le'), isFalse);
+        expect(compare('apple', 'LE'), isFalse);
+      });
+    });
+
+    group('NotEquals', () {
+      late Function compare;
+
+      setUp(() {
+        compare = makeCompareFunction(const TrinaFilterTypeNotEquals());
+      });
+
+      test('apple is not equal to banana or app', () {
+        expect(compare('apple', 'banana'), isTrue);
+        expect(compare('apple', 'app'), isTrue);
+      });
+
+      test('apple equals apple, ignoring case', () {
+        expect(compare('apple', 'apple'), isFalse);
+        expect(compare('apple', 'APPLE'), isFalse);
+      });
+    });
+
+    group('negated types on formatted columns', () {
+      test('a number is excluded by its formatted and its raw value', () {
+        final column = TrinaColumn(
+          title: 'column',
+          field: 'column',
+          type: TrinaColumnType.number(),
+        );
+        final notEquals = makeCompareFunction(
+          const TrinaFilterTypeNotEquals(),
+          column: column,
+        );
+        final doesNotContain = makeCompareFunction(
+          const TrinaFilterTypeDoesNotContain(),
+          column: column,
+        );
+
+        expect(notEquals(1000, '1,000'), isFalse);
+        expect(notEquals(1000, '1000'), isFalse);
+        expect(notEquals(1000, '2,000'), isTrue);
+        expect(doesNotContain(1000, '1,0'), isFalse);
+        expect(doesNotContain(1000, '10'), isFalse);
+        expect(doesNotContain(1000, '5'), isTrue);
+      });
+
+      test('a boolean is excluded by its displayed and its raw value', () {
+        final notEquals = makeCompareFunction(
+          const TrinaFilterTypeNotEquals(),
+          column: TrinaColumn(
+            title: 'column',
+            field: 'column',
+            type: TrinaColumnType.boolean(),
+          ),
+        );
+
+        expect(notEquals(true, 'Yes'), isFalse);
+        expect(notEquals(true, 'true'), isFalse);
+        expect(notEquals(true, 'No'), isTrue);
+        expect(notEquals(false, 'Yes'), isTrue);
+      });
+    });
+
     group('StartsWith', () {
       late Function compare;
 
@@ -615,6 +733,159 @@ void main() {
 
       test('Invalid regex pattern returns false', () {
         expect(compare('apple', r'[unclosed'), isFalse);
+      });
+    });
+
+    group('the same search text through different filter types', () {
+      test('Contains ignores case while Regex keeps it, in any order', () {
+        final contains = makeCompareFunction(const TrinaFilterTypeContains());
+        final regex = makeCompareFunction(const TrinaFilterTypeRegex());
+        for (var round = 0; round < 3; round++) {
+          expect(contains('APPLE', 'apple'), isTrue);
+          expect(regex('APPLE', 'apple'), isFalse);
+          expect(regex('apple', 'apple'), isTrue);
+          expect(contains('apple', 'APPLE'), isTrue);
+        }
+      });
+
+      test(
+        'Equals, StartsWith, EndsWith and Contains keep their own anchors',
+        () {
+          final contains = makeCompareFunction(const TrinaFilterTypeContains());
+          final equals = makeCompareFunction(const TrinaFilterTypeEquals());
+          final startsWith = makeCompareFunction(
+            const TrinaFilterTypeStartsWith(),
+          );
+          final endsWith = makeCompareFunction(const TrinaFilterTypeEndsWith());
+          for (var round = 0; round < 3; round++) {
+            expect(contains('pineapple', 'apple'), isTrue);
+            expect(equals('pineapple', 'apple'), isFalse);
+            expect(startsWith('pineapple', 'apple'), isFalse);
+            expect(endsWith('pineapple', 'apple'), isTrue);
+            expect(startsWith('applesauce', 'apple'), isTrue);
+            expect(endsWith('applesauce', 'apple'), isFalse);
+            expect(equals('apple', 'apple'), isTrue);
+          }
+        },
+      );
+
+      test(
+        'results stay correct across hundreds of distinct searches, repeated',
+        () {
+          final contains = makeCompareFunction(const TrinaFilterTypeContains());
+          for (var round = 0; round < 3; round++) {
+            for (var i = 0; i < 200; i++) {
+              expect(contains('value$i', 'VALUE$i'), isTrue);
+              expect(contains('value$i', 'x$i'), isFalse);
+            }
+          }
+        },
+      );
+
+      test('MultiItems splits on commas and newlines every time', () {
+        final multi = makeCompareFunction(const TrinaFilterTypeMultiItems());
+        for (var round = 0; round < 3; round++) {
+          expect(multi('banana', 'apple, banana\ncherry'), isTrue);
+          expect(multi('kiwi', 'apple, banana\ncherry'), isFalse);
+          expect(multi('Banana', 'apple, banana'), isFalse);
+        }
+      });
+    });
+
+    group('Boolean column', () {
+      TrinaColumn booleanColumn({
+        String trueText = 'Yes',
+        String falseText = 'No',
+        bool allowEmpty = false,
+      }) {
+        return TrinaColumn(
+          title: 'column',
+          field: 'column',
+          type: TrinaColumnType.boolean(
+            trueText: trueText,
+            falseText: falseText,
+            allowEmpty: allowEmpty,
+          ),
+        );
+      }
+
+      test('true matches the default trueText', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeEquals(),
+          column: booleanColumn(),
+        );
+
+        expect(compare(true, 'Yes'), isTrue);
+        expect(compare(true, 'No'), isFalse);
+      });
+
+      test('false matches the default falseText', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeEquals(),
+          column: booleanColumn(),
+        );
+
+        expect(compare(false, 'No'), isTrue);
+        expect(compare(false, 'Yes'), isFalse);
+      });
+
+      test('the displayed text matching is case insensitive', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeEquals(),
+          column: booleanColumn(),
+        );
+
+        expect(compare(true, 'yes'), isTrue);
+        expect(compare(true, 'YES'), isTrue);
+      });
+
+      test('custom trueText and falseText are matched', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeEquals(),
+          column: booleanColumn(trueText: 'Active', falseText: 'Inactive'),
+        );
+
+        expect(compare(true, 'Active'), isTrue);
+        expect(compare(false, 'Inactive'), isTrue);
+        expect(compare(true, 'Inactive'), isFalse);
+      });
+
+      test('the raw true and false values still match', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeEquals(),
+          column: booleanColumn(trueText: 'Active', falseText: 'Inactive'),
+        );
+
+        expect(compare(true, 'true'), isTrue);
+        expect(compare(false, 'false'), isTrue);
+        expect(compare(true, 'false'), isFalse);
+      });
+
+      test('Contains matches a part of the displayed text', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeContains(),
+          column: booleanColumn(trueText: 'Active', falseText: 'Inactive'),
+        );
+
+        expect(compare(true, 'ctiv'), isTrue);
+        expect(compare(false, 'Inact'), isTrue);
+      });
+
+      test('a null value of an allowEmpty column does not match falseText', () {
+        final compare = makeCompareFunction(
+          const TrinaFilterTypeEquals(),
+          column: booleanColumn(allowEmpty: true),
+        );
+
+        expect(compare(null, 'No'), isFalse);
+        expect(compare(null, 'Yes'), isFalse);
+      });
+
+      test('a non boolean column is not affected', () {
+        final compare = makeCompareFunction(const TrinaFilterTypeEquals());
+
+        expect(compare(true, 'Yes'), isFalse);
+        expect(compare(true, 'true'), isTrue);
       });
     });
   });
@@ -924,7 +1195,7 @@ void main() {
         var columnType = filterColumn.type as TrinaColumnTypeSelect;
 
         // configuration's filter count should be created. (default 11)
-        expect(configuration.columnFilter.filters.length, 11);
+        expect(configuration.columnFilter.filters.length, 13);
         expect(
           columnType.items.length,
           configuration.columnFilter.filters.length,

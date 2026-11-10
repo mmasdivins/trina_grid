@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:trina_grid/src/model/trina_column_sorting.dart';
 
 import 'package:trina_grid/trina_grid.dart';
 import '../../ui/cells/trina_default_cell.dart';
@@ -81,7 +80,7 @@ abstract class IColumnState {
   ///
   /// [sortAscending], [sortDescending], [sortBySortIdx] also sort the column,
   /// but do not call the [TrinaGrid.onSorted] callback.
-  void toggleSortColumn(TrinaColumn column);
+  void toggleSortColumn(TrinaColumn column, {bool? multiSort});
 
   /// Index of [column] in [columns]
   ///
@@ -135,11 +134,15 @@ abstract class IColumnState {
         bool notify = true,
       });
 
-  void sortAscending(TrinaColumn column, {bool notify = true});
+  void sortAscending(TrinaColumn column, {bool notify = true, bool append = false});
 
-  void sortDescending(TrinaColumn column, {bool notify = true});
+  void sortDescending(TrinaColumn column, {bool notify = true, bool append = false});
 
   void sortBySortIdx(TrinaColumn column, {bool notify = true});
+
+  void clearSorting({bool notify = true});
+
+  List<TrinaColumn> get sortedColumns;
 
   void showSetColumnsPopup(BuildContext context);
 
@@ -317,7 +320,7 @@ mixin ColumnState implements ITrinaGridState {
   @override
   bool get hasSortedColumn {
     for (final column in refColumns) {
-      if (column.sort.sortOrder.isNone == false) {
+      if (column.sort.isNone == false) {
         return true;
       }
     }
@@ -327,13 +330,15 @@ mixin ColumnState implements ITrinaGridState {
 
   @override
   TrinaColumn? get getSortedColumn {
-    for (final column in refColumns) {
-      if (column.sort.sortOrder.isNone == false) {
-        return column;
-      }
-    }
-
-    return null;
+    // for (final column in refColumns) {
+    //   if (column.sort.isNone == false) {
+    //     return column;
+    //   }
+    // }
+    //
+    // return null;
+    final sorted = sortedColumns;
+    return sorted.isNotEmpty ? sorted.first : null;
   }
 
   @override
@@ -373,44 +378,109 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   @override
-  void toggleSortColumn(TrinaColumn column) {
+  void toggleSortColumn(TrinaColumn column, {bool? multiSort}) {
     final oldSort = column.sort;
+    final oldSortPriority = column.sortPriority;
+    final isMulti = multiSort ??
+        (configuration.enableMultiColumnSort && (keyPressed.shift || keyPressed.ctrl));
 
-    if (column.sort.sortOrder.isNone) {
-      sortAscending(column, notify: false);
-    } else if (column.sort.sortOrder.isAscending) {
-      sortDescending(column, notify: false);
+    if (column.sort.isNone) {
+      sortAscending(column, append: isMulti, notify: false);
+    } else if (column.sort.isAscending) {
+      sortDescending(column, append: isMulti, notify: false);
     } else {
-      // Set the sort of the column to none
-      var col = refColumns.originalList.firstWhereOrNull((x) => x.field == column.field);
-      if (col != null) {
-        col.sort = const TrinaColumnSorting(
-            sortOrder: TrinaColumnSort.none,
-            sortPosition: null
-        );
-      }
-
-      var csort = refColumns.originalList
-          .where((x) => x.sort.sortOrder != TrinaColumnSort.none)
-          .sorted((a,b) {
-        if (a.sort.sortPosition == null && b.sort.sortPosition == null) return 0;
-        if (a.sort.sortPosition == null) return 1;
-        if (b.sort.sortPosition == null) return -1;
-        return a.sort.sortPosition!.compareTo(b.sort.sortPosition!);
-      });
-
-      int i = 0;
-      for (var c in csort) {
-        c.sort = c.sort.copyWith(sortPosition: i);
-      }
-
       sortBySortIdx(column, notify: false);
     }
 
-    _callOnSorted(column, oldSort);
+    _callOnSorted(column, oldSort, oldSortPriority);
 
     notifyListeners(true, toggleSortColumn.hashCode);
   }
+
+  // @override
+  // void toggleSortColumn(TrinaColumn column) {
+  //   final oldSort = column.sort;
+  //   final oldSortPriority = column.sortPriority;
+  //
+  //   if (column.sort.isNone) {
+  //     sortAscending(column, notify: false);
+  //   } else if (column.sort.isAscending) {
+  //     sortDescending(column, notify: false);
+  //   } else {
+  //     // Set the sort of the column to none
+  //     var col = refColumns.originalList.firstWhereOrNull((x) => x.field == column.field);
+  //     if (col != null) {
+  //       col.sort = TrinaColumnSort.none;
+  //       col.sortPriority = 0;
+  //
+  //       // const TrinaColumnSorting(
+  //       //     sortOrder: TrinaColumnSort.none,
+  //       //     sortPosition: null
+  //       // );
+  //     }
+  //
+  //     var csort = refColumns.originalList
+  //         .where((x) => x.sort != TrinaColumnSort.none)
+  //         .sorted((a,b) {
+  //
+  //       return a.sortPriority.compareTo(b.sortPriority);
+  //     });
+  //
+  //     int i = 0;
+  //     for (var c in csort) {
+  //       c.sortPriority = i;// c.sort.copyWith(sortPosition: i);
+  //     }
+  //
+  //     sortBySortIdx(column, notify: false);
+  //   }
+  //
+  //   _callOnSorted(column, oldSort, oldSortPriority);
+  //
+  //   notifyListeners(true, toggleSortColumn.hashCode);
+  // }
+
+  // @override
+  // void toggleSortColumn(TrinaColumn column, {bool? multiSort}) {
+  //   final oldSort = column.sort;
+  //   final isMulti = multiSort ??
+  //       (configuration.enableMultiColumnSort && (keyPressed.shift || keyPressed.ctrl));
+  //
+  //   if (column.sort.sortOrder.isNone) {
+  //     sortAscending(column, notify: false);
+  //   } else if (column.sort.sortOrder.isAscending) {
+  //     sortDescending(column, notify: false);
+  //
+  //   } else {
+  //     // Set the sort of the column to none
+  //     var col = refColumns.originalList.firstWhereOrNull((x) => x.field == column.field);
+  //     if (col != null) {
+  //       col.sort = const TrinaColumnSorting(
+  //           sortOrder: TrinaColumnSort.none,
+  //           sortPosition: null
+  //       );
+  //     }
+  //
+  //     var csort = refColumns.originalList
+  //         .where((x) => x.sort.sortOrder != TrinaColumnSort.none)
+  //         .sorted((a,b) {
+  //       if (a.sort.sortPosition == null && b.sort.sortPosition == null) return 0;
+  //       if (a.sort.sortPosition == null) return 1;
+  //       if (b.sort.sortPosition == null) return -1;
+  //       return a.sort.sortPosition!.compareTo(b.sort.sortPosition!);
+  //     });
+  //
+  //     int i = 0;
+  //     for (var c in csort) {
+  //       c.sort = c.sort.copyWith(sortPosition: i);
+  //     }
+  //
+  //     sortBySortIdx(column, notify: false);
+  //   }
+  //
+  //   _callOnSorted(column, oldSort);
+  //
+  //   notifyListeners(true, toggleSortColumn.hashCode);
+  // }
 
   @override
   int? columnIndex(TrinaColumn column) {
@@ -437,6 +507,15 @@ mixin ColumnState implements ITrinaGridState {
     }
 
     _updateLimitedFrozenColumns(columns);
+
+    for (final col in columns) {
+      if (!col.sort.isNone && col.sortPriority == 0) {
+        final maxPriority = refColumns.originalList
+            .map((c) => c.sortPriority)
+            .fold<int>(0, math.max);
+        col.sortPriority = maxPriority + 1;
+      }
+    }
 
     if (columnIdx >= refColumns.originalLength) {
       refColumns.addAll(columns);
@@ -627,11 +706,19 @@ mixin ColumnState implements ITrinaGridState {
 
     // Get size after rendering virtually
     // https://stackoverflow.com/questions/54351655/flutter-textfield-width-should-match-width-of-contained-text
+    // The titles and cells are drawn with Text widgets, which apply the ambient
+    // text scale, so measure with it too.
+    final textScaler = MediaQuery.textScalerOf(context);
     final titleTextWidth = _visualTextWidth(
       column.title,
       style.columnTextStyle,
+      textScaler,
     );
-    final maxValueTextWidth = _visualTextWidth(maxValue, style.cellTextStyle);
+    final maxValueTextWidth = _visualTextWidth(
+      maxValue,
+      style.cellTextStyle,
+      textScaler,
+    );
 
     // todo : Handle (renderer) width
 
@@ -661,11 +748,12 @@ mixin ColumnState implements ITrinaGridState {
     resizeColumn(column, math.max(calculatedTileWidth, calculatedCellWidth));
   }
 
-  double _visualTextWidth(String text, TextStyle style) {
+  double _visualTextWidth(String text, TextStyle style, TextScaler textScaler) {
     if (text.isEmpty) return 0;
     final painter = TextPainter(
       text: TextSpan(style: style, text: text),
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      textScaler: textScaler,
     )..layout();
     return painter.width;
   }
@@ -703,34 +791,6 @@ mixin ColumnState implements ITrinaGridState {
 
     _updateAfterHighlightColumn(columns: [column], notify: notify);
   }
-
-  int _getMaxSortPositionPlusOne(List<TrinaColumnSorting> list) {
-    bool hasNonZero = false;
-    bool hasNonNull = false;
-    int? maxValue = null;
-
-    for (var obj in list) {
-      if (obj.sortPosition != null) {
-        hasNonNull = true;
-        if (obj.sortPosition != 0) {
-          hasNonZero = true;
-        }
-        if (maxValue == null || obj.sortPosition! > maxValue) {
-          maxValue = obj.sortPosition;
-        }
-      }
-    }
-
-    if (!hasNonNull) {
-      return 0; // All values are null
-    } else if (!hasNonZero) {
-      return 1; // All non-null values are zero
-    } else {
-      return maxValue! + 1; // Maximum value plus one
-    }
-  }
-
-
   @override
   void hideColumns(List<TrinaColumn> columns, bool hide, {bool notify = true}) {
     if (columns.isEmpty) {
@@ -782,125 +842,198 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   @override
-  void sortAscending(TrinaColumn column, {bool notify = true}) {
-    _updateBeforeColumnSort();
+  void sortAscending(
+      TrinaColumn column, {
+        bool notify = true,
+        bool append = false,
+      }) {
+    clearCurrentCell(notify: false);
+    clearCurrentSelecting(notify: false);
 
-    int? position = column.sort.sortPosition;
-    position ??= _getMaxSortPositionPlusOne(refColumns.map((x) => x.sort).toList());
-
-    column.sort = column.sort.copyWith(
-      sortOrder: TrinaColumnSort.ascending,
-      sortPosition: position,
-    );
-
-    if (sortOnlyEvent) return;
-
-    compare(a, b) => column.type.compare(
-      a.cells[column.field]!.valueForSorting,
-      b.cells[column.field]!.valueForSorting,
-    );
-
-    int multiColumnCompare(dynamic a, dynamic b) {
-      for (int i = 0; i < columns.length; i++) {
-        final column = columns[i];
-        if (column.sort.sortOrder == TrinaColumnSort.none) {
-          continue;
-        }
-
-        final ascending = column.sort.sortOrder == TrinaColumnSort.ascending;
-        final comparison = column.type.compare(
-          a.cells[column.field]!.valueForSorting,
-          b.cells[column.field]!.valueForSorting,
-        );
-        if (comparison != 0) {
-          return ascending ? comparison : -comparison;
+    if (!append) {
+      for (var col in refColumns.originalList) {
+        if (col.field != column.field) {
+          col.sort = TrinaColumnSort.none;
+          col.sortPriority = 0;
         }
       }
-      return 0; // All columns are equal
+      column.sortPriority = 1;
+    } else if (column.sortPriority == 0) {
+      final maxPriority = refColumns.originalList
+          .map((c) => c.sortPriority)
+          .fold<int>(0, math.max);
+      column.sortPriority = maxPriority + 1;
     }
 
-    if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: multiColumnCompare);
-    } else {
-      refRows.sort(multiColumnCompare);
-    }
+    column.sort = TrinaColumnSort.ascending;
+
+    _applyCompoundSort(primaryColumn: column);
 
     notifyListeners(notify, sortAscending.hashCode);
   }
 
   @override
-  void sortDescending(TrinaColumn column, {bool notify = true}) {
-    _updateBeforeColumnSort();
+  List<TrinaColumn> get sortedColumns => refColumns.originalList
+      .where((c) => !c.sort.isNone)
+      .toList()
+    ..sort((a, b) => a.sortPriority.compareTo(b.sortPriority));
 
-    // int position = column.sort.sortPosition ?? refColumns.fold(0, (prev, element) => (element.sort.sortPosition ?? 0) > prev ? (element.sort.sortPosition ?? 0) : prev);
-    int? position = column.sort.sortPosition;
-    position ??= _getMaxSortPositionPlusOne(refColumns.map((x) => x.sort).toList());
+  int _compareSortIdx(TrinaRow a, TrinaRow b) {
+    return a.sortIdx.compareTo(b.sortIdx);
+  }
 
-    column.sort = column.sort.copyWith(
-      sortOrder: TrinaColumnSort.descending,
-      sortPosition: position,
-    );
-
+  void _applyCompoundSort({TrinaColumn? primaryColumn}) {
     if (sortOnlyEvent) return;
 
-    compare(b, a) => column.type.compare(
-      a.cells[column.field]!.valueForSorting,
-      b.cells[column.field]!.valueForSorting,
-    );
+    final sorts = sortedColumns;
+    final targetColumn = primaryColumn ??
+        (sorts.isNotEmpty
+            ? sorts.first
+            : (refColumns.originalList.isNotEmpty
+            ? refColumns.originalList.first
+            : null));
 
-    int multiColumnCompare(dynamic a, dynamic b) {
-      for (int i = 0; i < columns.length; i++) {
-        final column = columns[i];
-        if (column.sort.sortOrder == TrinaColumnSort.none) {
-          continue;
+    int Function(TrinaRow, TrinaRow) compare;
+
+    if (sorts.isEmpty) {
+      compare = _compareSortIdx;
+    } else if (sorts.length == 1) {
+      final col = sorts.first;
+      final field = col.field;
+      final type = col.type;
+      final isAscending = col.sort.isAscending;
+
+      if (isAscending) {
+        compare = (TrinaRow a, TrinaRow b) {
+          final cellA = a.cells[field];
+          final cellB = b.cells[field];
+          if (cellA == null || cellB == null) {
+            if (cellA == null && cellB == null) return a.sortIdx.compareTo(b.sortIdx);
+            return cellA == null ? -1 : 1;
+          }
+          final cmp = type.compare(cellA.valueForSorting, cellB.valueForSorting);
+          return cmp != 0 ? cmp : a.sortIdx.compareTo(b.sortIdx);
+        };
+      } else {
+        compare = (TrinaRow a, TrinaRow b) {
+          final cellA = a.cells[field];
+          final cellB = b.cells[field];
+          if (cellA == null || cellB == null) {
+            if (cellA == null && cellB == null) return a.sortIdx.compareTo(b.sortIdx);
+            return cellA == null ? -1 : 1;
+          }
+          final cmp = type.compare(cellB.valueForSorting, cellA.valueForSorting);
+          return cmp != 0 ? cmp : a.sortIdx.compareTo(b.sortIdx);
+        };
+      }
+    } else {
+      final criteria = sorts
+          .map((c) => (field: c.field, type: c.type, isAscending: c.sort.isAscending))
+          .toList(growable: false);
+
+      compare = (TrinaRow a, TrinaRow b) {
+        for (int i = 0; i < criteria.length; i++) {
+          final c = criteria[i];
+          final cellA = a.cells[c.field];
+          final cellB = b.cells[c.field];
+          if (cellA == null || cellB == null) {
+            if (cellA == null && cellB == null) continue;
+            return cellA == null ? -1 : 1;
+          }
+          final cmp = c.isAscending
+              ? c.type.compare(cellA.valueForSorting, cellB.valueForSorting)
+              : c.type.compare(cellB.valueForSorting, cellA.valueForSorting);
+          if (cmp != 0) return cmp;
         }
+        return a.sortIdx.compareTo(b.sortIdx);
+      };
+    }
 
-        final ascending = column.sort.sortOrder == TrinaColumnSort.ascending;
-        final comparison = column.type.compare(
-          a.cells[column.field]!.valueForSorting,
-          b.cells[column.field]!.valueForSorting,
-        );
-        if (comparison != 0) {
-          return ascending ? comparison : -comparison;
+    if (enabledRowGroups && targetColumn != null) {
+      sortRowGroup(column: targetColumn, compare: compare);
+    } else {
+      refRows.sort(compare);
+    }
+  }
+
+  @override
+  void sortDescending(
+      TrinaColumn column, {
+        bool notify = true,
+        bool append = false,
+      }) {
+    clearCurrentCell(notify: false);
+    clearCurrentSelecting(notify: false);
+
+    if (!append) {
+      for (var col in refColumns.originalList) {
+        if (col.field != column.field) {
+          col.sort = TrinaColumnSort.none;
+          col.sortPriority = 0;
         }
       }
-      return 0; // All columns are equal
+      column.sortPriority = 1;
+    } else if (column.sortPriority == 0) {
+      final maxPriority = refColumns.originalList
+          .map((c) => c.sortPriority)
+          .fold<int>(0, math.max);
+      column.sortPriority = maxPriority + 1;
     }
 
-    if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: multiColumnCompare);
-    } else {
-      refRows.sort(multiColumnCompare);
-    }
+    column.sort = TrinaColumnSort.descending;
+
+    _applyCompoundSort(primaryColumn: column);
 
     notifyListeners(notify, sortDescending.hashCode);
   }
 
   @override
   void sortBySortIdx(TrinaColumn column, {bool notify = true}) {
-    _updateBeforeColumnSort();
+    clearCurrentCell(notify: false);
+    clearCurrentSelecting(notify: false);
 
-    if (sortOnlyEvent) return;
+    column.sort = TrinaColumnSort.none;
+    column.sortPriority = 0;
 
-    int compare(a, b) {
-      if (a.sortIdx == null || b.sortIdx == null) {
-        if (a.sortIdx == null && b.sortIdx == null) {
-          return 0;
-        }
-
-        return a.sortIdx == null ? -1 : 1;
-      }
-
-      return a.sortIdx!.compareTo(b.sortIdx!);
+    final remaining = sortedColumns;
+    for (int i = 0; i < remaining.length; i++) {
+      remaining[i].sortPriority = i + 1;
     }
 
-    if (enabledRowGroups) {
-      sortRowGroup(column: column, compare: compare);
-    } else {
-      refRows.sort(compare);
-    }
+    _applyCompoundSort(primaryColumn: column);
 
     notifyListeners(notify, sortBySortIdx.hashCode);
+  }
+
+  @override
+  void clearSorting({bool notify = true}) {
+    clearCurrentCell(notify: false);
+    clearCurrentSelecting(notify: false);
+
+    for (var col in refColumns.originalList) {
+      col.sort = TrinaColumnSort.none;
+      col.sortPriority = 0;
+    }
+
+    _applyCompoundSort();
+
+    if (sortOnlyEvent) {
+      eventManager?.addEvent(
+        TrinaGridChangeColumnSortEvent(
+          column: refColumns.originalList.isNotEmpty
+              ? refColumns.originalList.first
+              : TrinaColumn(
+                  title: '',
+                  field: '',
+                  type: TrinaColumnType.text(),
+                ),
+          oldSort: TrinaColumnSort.none,
+          oldSortPriority: 0,
+        ),
+      );
+    }
+
+    notifyListeners(notify, clearSorting.hashCode);
   }
 
   @override
@@ -947,10 +1080,10 @@ mixin ColumnState implements ITrinaGridState {
       }
     }
 
-    // Use dark configuration if the current configuration is in dark mode
-    final baseConfiguration = configuration.style.isDarkStyle
-        ? const TrinaGridConfiguration.dark()
-        : const TrinaGridConfiguration();
+    // Inherit the grid's own configuration so the popup matches it, including
+    // custom and theme-derived styles. Rebuilding from a fresh const light or
+    // dark configuration here used to discard them.
+    final baseConfiguration = configuration;
 
     TrinaGridPopup(
       context: context,
@@ -1042,24 +1175,6 @@ mixin ColumnState implements ITrinaGridState {
 
     return !enoughFrozenColumnsWidth(maxWidth! - offsetWidth);
   }
-
-  void _updateBeforeColumnSort() {
-    clearCurrentCell(notify: false);
-
-    clearCurrentSelecting(notify: false);
-
-    // If shift is not pressed we set all columns to sort none
-    if (!keyPressed.shift) {
-      // Reset column sort to none.
-      for (var i = 0; i < refColumns.originalList.length; i += 1) {
-        refColumns.originalList[i].sort = const TrinaColumnSorting(
-          sortOrder: TrinaColumnSort.none,
-          sortPosition: null,
-        );
-      }
-    }
-  }
-
   List<int> _findIndexOfColumns(List<TrinaColumn> findColumns) {
     SplayTreeMap<int, int> found = SplayTreeMap();
 
@@ -1095,10 +1210,10 @@ mixin ColumnState implements ITrinaGridState {
   }
 
   /// [TrinaGrid.onSorted] Called when a callback is registered.
-  void _callOnSorted(TrinaColumn column, TrinaColumnSorting oldSort) {
+  void _callOnSorted(TrinaColumn column, TrinaColumnSort oldSort, int oldSortPriority) {
     if (sortOnlyEvent) {
       eventManager!.addEvent(
-        TrinaGridChangeColumnSortEvent(column: column, oldSort: oldSort),
+        TrinaGridChangeColumnSortEvent(column: column, oldSort: oldSort, oldSortPriority: oldSortPriority),
       );
     }
 
@@ -1106,7 +1221,7 @@ mixin ColumnState implements ITrinaGridState {
       return;
     }
 
-    onSorted!(TrinaGridOnSortedEvent(column: column, oldSort: oldSort));
+    onSorted!(TrinaGridOnSortedEvent(column: column, oldSort: oldSort, oldSortPriority: oldSortPriority,));
   }
 
   /// Add [TrinaCell] to the whole [TrinaRow.cells].

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -193,6 +194,8 @@ class TrinaGrid extends TrinaStatefulWidget {
     this.onValidationFailed,
     this.onLazyFetchCompleted,
     this.scrollPhysics,
+    this.horizontalScrollPhysics,
+    this.verticalScrollPhysics,
     this.fitContent = false,
   });
 
@@ -330,14 +333,15 @@ class TrinaGrid extends TrinaStatefulWidget {
   final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
 
   /// {@template trina_grid_property_onSelected}
-  /// [onSelected] can receive a response only if [TrinaGrid.mode] is set to [TrinaGridMode.select] .
+  /// Called when rows are selected. It fires in these modes:
   ///
-  /// When a row is tapped or the Enter key is pressed, the row information can be returned.
-  /// When [TrinaGrid] is used for row selection, you can use [TrinaGridMode.select] .
-  /// Basically, in [TrinaGridMode.select], the [onLoaded] callback works
-  /// when the current selected row is tapped or the Enter key is pressed.
-  /// This will require a double tap if no row is selected.
-  /// In [TrinaGridMode.selectWithOneTap], the [onLoaded] callback works when the unselected row is tapped once.
+  /// - [TrinaGridMode.select]: when the current row is tapped or the Enter
+  ///   key is pressed, so a row that is not current needs two taps.
+  /// - [TrinaGridMode.selectWithOneTap]: when a row is tapped once.
+  /// - [TrinaGridMode.multiSelect]: when rows are selected or unselected,
+  ///   with every selected row in [TrinaGridOnSelectedEvent.selectedRows].
+  /// - [TrinaGridMode.normal] with [TrinaGridSelectingMode.row]: when a row
+  ///   is tapped, or selected with a long press or Shift/Ctrl click.
   /// {@endtemplate}
   final TrinaOnSelectedEventCallback? onSelected;
 
@@ -652,6 +656,10 @@ class TrinaGrid extends TrinaStatefulWidget {
 
   /// Custom scroll physics to control scrolling behavior.
   ///
+  /// Applies to both axes. To control the axes separately, use
+  /// [horizontalScrollPhysics] and [verticalScrollPhysics], which take
+  /// precedence over this value on the axis they cover.
+  ///
   /// If null, uses platform-specific default scroll physics from [MaterialScrollBehavior].
   ///
   /// Example:
@@ -662,6 +670,40 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// )
   /// ```
   final ScrollPhysics? scrollPhysics;
+
+  /// Scroll physics applied only to horizontal scrolling.
+  ///
+  /// Takes precedence over [scrollPhysics] on this axis. When null, the axis
+  /// falls back to [scrollPhysics], then to the platform default.
+  ///
+  /// See [verticalScrollPhysics] for the typical use case.
+  final ScrollPhysics? horizontalScrollPhysics;
+
+  /// Scroll physics applied only to vertical scrolling.
+  ///
+  /// Takes precedence over [scrollPhysics] on this axis. When null, the axis
+  /// falls back to [scrollPhysics], then to the platform default.
+  ///
+  /// Use this to place the grid inside a scrolling page: the page owns vertical
+  /// scrolling while the grid keeps scrolling horizontally. Pair it with
+  /// [fitContent] so the grid sizes itself to its content instead of needing a
+  /// bounded height.
+  ///
+  /// ```dart
+  /// SingleChildScrollView(
+  ///   child: TrinaGrid(
+  ///     columns: columns,
+  ///     rows: rows,
+  ///     fitContent: true,
+  ///     verticalScrollPhysics: const NeverScrollableScrollPhysics(),
+  ///   ),
+  /// )
+  /// ```
+  ///
+  /// Note that fling and spring tuning still comes from [scrollPhysics] or the
+  /// platform default, since those values are not axis-specific. See
+  /// [TrinaAxisScrollPhysics].
+  final ScrollPhysics? verticalScrollPhysics;
 
   /// When `true`, the grid sizes its overall height to fit its content
   /// (header + columns + rows + footer + borders) instead of expanding to
@@ -726,6 +768,12 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
   bool _showFrozenColumn = false;
 
   bool _showLoading = false;
+
+  bool _isSidebarVisible = false;
+
+  TrinaGridSidebarMode _sidebarMode = TrinaGridSidebarMode.docked;
+
+  double _sidebarWidth = 320;
 
   bool _hasLeftFrozenColumns = false;
 
@@ -854,6 +902,18 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
     );
 
     _showLoading = update<bool>(_showLoading, stateManager.showLoading);
+
+    _isSidebarVisible = update<bool>(
+      _isSidebarVisible,
+      stateManager.isSidebarVisible,
+    );
+
+    _sidebarMode = update<TrinaGridSidebarMode>(
+      _sidebarMode,
+      stateManager.sidebarMode,
+    );
+
+    _sidebarWidth = update<double>(_sidebarWidth, stateManager.sidebarWidth);
 
     _hasLeftFrozenColumns = update<bool>(
       _hasLeftFrozenColumns,
@@ -1014,6 +1074,35 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
     _stateManager.setShowColumnIndex(widget.showColumnIndex, notify: true);
   }
 
+  void _handleGridFocusChange(bool hasFocus) {
+    // Focus entered the grid on a column filter field. setKeepFocus(true)
+    // would move the focus to the grid node and take it away from the filter
+    // that was just tapped, so the user had to tap it a second time (#437).
+    if (hasFocus && _isColumnFilterFocused()) {
+      return;
+    }
+
+    _stateManager.setKeepFocus(hasFocus);
+  }
+
+  bool _isColumnFilterFocused() {
+    final FocusNode? primaryFocus = FocusManager.instance.primaryFocus;
+
+    if (primaryFocus == null) {
+      return false;
+    }
+
+    // A builder filter may focus its own node instead of the provided one, so
+    // the descendants of the filter node count as well.
+    return _stateManager.refColumns.any((column) {
+      final filterFocusNode = column.filterFocusNode;
+
+      return filterFocusNode != null &&
+          (primaryFocus == filterFocusNode ||
+              primaryFocus.ancestors.contains(filterFocusNode));
+    });
+  }
+
   KeyEventResult _handleGridFocusOnKey(FocusNode focusNode, KeyEvent event) {
     // Get the current primary focus
     final FocusNode? primaryFocus = FocusManager.instance.primaryFocus;
@@ -1095,6 +1184,14 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       height += (row.height ?? defaultRowHeight) + cellHorizontalBorder;
     }
 
+    // The horizontal scrollbar is a sibling of the rows viewport rather than an
+    // overlay, so it takes height away from the rows. Without this the grid is
+    // left short by exactly that strip and the rows scroll by it.
+    final scrollbar = widget.configuration.scrollbar;
+    if (scrollbar.showHorizontal) {
+      height += scrollbar.effectiveThickness;
+    }
+
     if (_stateManager.showColumnFooter) {
       final double columnFooterHeight = _stateManager.columnFooterHeight > 0
           ? _stateManager.columnFooterHeight
@@ -1114,6 +1211,10 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
 
   @override
   Widget build(BuildContext context) {
+    // Set before setLayout below, which can fit the columns to their content
+    // and so has to measure text at the scale the cells are drawn with.
+    _stateManager.setTextScaler(MediaQuery.textScalerOf(context));
+
     Widget body = LayoutBuilder(
       builder: (c, size) {
         _stateManager.setLayout(size);
@@ -1142,6 +1243,14 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
             Directionality.of(context),
           ),
           children: [
+            /// Fill behind the whole column header. Painted first, so the
+            /// columns, groups and filters draw on top of it.
+            if (style.columnBackgroundColor != null)
+              LayoutId(
+                id: _StackName.columnsBackground,
+                child: ColoredBox(color: style.columnBackgroundColor!),
+              ),
+
             /// Body columns and rows.
             LayoutId(
               id: _StackName.bodyRows,
@@ -1308,14 +1417,101 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       }
     }
 
-    return FocusScope(
-      onFocusChange: _stateManager.setKeepFocus,
+    final Widget grid = _GridContainer(
+      stateManager: _stateManager,
+      scrollPhysics: widget.scrollPhysics,
+      horizontalScrollPhysics: widget.horizontalScrollPhysics,
+      verticalScrollPhysics: widget.verticalScrollPhysics,
+      child: body,
+    );
+
+    // The record sidebar stays inside the grid's FocusScope: its reused cell
+    // editors rely on the grid's keepFocus mechanics.
+    final Widget scope = FocusScope(
+      onFocusChange: _handleGridFocusChange,
       onKeyEvent: _handleGridFocusOnKey,
-      child: _GridContainer(
-        stateManager: _stateManager,
-        scrollPhysics: widget.scrollPhysics,
-        child: body,
-      ),
+      child: _wrapWithSidebar(grid),
+    );
+
+    // The cell editors and the filter row are Material widgets and assert a
+    // Material ancestor. Provide one when the host has none, e.g. an app on
+    // the standalone material_ui package, whose Material is a different type
+    // (#423). It keeps the ambient text style, so nothing changes visually.
+    if (Material.maybeOf(context) != null) {
+      return scope;
+    }
+
+    return Material(
+      type: MaterialType.transparency,
+      textStyle: DefaultTextStyle.of(context).style,
+      child: scope,
+    );
+  }
+
+  /// Wraps the grid with the record sidebar according to the current sidebar
+  /// state. Docked mode pushes the grid; floating mode slides a panel over it.
+  Widget _wrapWithSidebar(Widget grid) {
+    final sidebar = _stateManager.configuration.sidebar;
+    if (!sidebar.enabled) {
+      return grid;
+    }
+
+    Widget panel(bool floating) {
+      final content =
+          sidebar.contentBuilder?.call(context, _stateManager) ??
+          TrinaSidebar(stateManager: _stateManager, showCloseButton: floating);
+
+      // Reparent the sidebar's focus subtree under the grid's focus node
+      // (attached inside _GridContainer, of which the sidebar is a sibling).
+      // The reused cell editors check `gridFocusNode.hasFocus` (via
+      // stateManager.hasFocus) - e.g. tapping a text editor calls
+      // setKeepFocus(true), which requests focus on the grid node unless it
+      // already has focus. Without reparenting, a click inside a focused
+      // sidebar editor would move focus back to the grid.
+      return Focus(
+        parentNode: _stateManager.gridFocusNode,
+        skipTraversal: true,
+        canRequestFocus: false,
+        child: TrinaSidebarContainer(
+          stateManager: _stateManager,
+          child: content,
+        ),
+      );
+    }
+
+    if (_stateManager.sidebarMode.isFloating) {
+      final visible = _stateManager.isSidebarVisible;
+      final width = _stateManager.sidebarWidth;
+
+      // Animate the panel position so the Stack fully clips it when hidden
+      // (a paint-time transform would spill outside the Stack bounds).
+      return Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned.fill(child: grid),
+          AnimatedPositioned(
+            duration: sidebar.animationDuration,
+            curve: Curves.easeInOut,
+            top: 0,
+            bottom: 0,
+            width: width,
+            right: visible ? 0 : -width,
+            child: IgnorePointer(ignoring: !visible, child: panel(true)),
+          ),
+        ],
+      );
+    }
+
+    // Docked mode: keep the grid pinned in the same Expanded slot so toggling
+    // only adds or removes the trailing panel. Swapping the grid between a bare
+    // widget and a Row would reparent its gridKey subtree during the body
+    // LayoutBuilder's layout pass and crash (overlay re-attach mid-layout).
+    return Row(
+      children: [
+        Expanded(child: grid),
+        if (_stateManager.isSidebarVisible)
+          SizedBox(width: _stateManager.sidebarWidth, child: panel(false)),
+      ],
     );
   }
 }
@@ -1539,6 +1735,20 @@ class TrinaGridLayoutDelegate extends MultiChildLayoutDelegate {
       positionChild(_StackName.bodyColumns, Offset(posX, columnsTopOffset));
 
       bodyRowsTopOffset += s.height;
+
+      // Span the full width, so the band reserved for the vertical scrollbar
+      // and any space after the last column are filled too.
+      if (hasChild(_StackName.columnsBackground)) {
+        layoutChild(
+          _StackName.columnsBackground,
+          BoxConstraints.tight(Size(size.width, s.height)),
+        );
+
+        positionChild(
+          _StackName.columnsBackground,
+          Offset(0, columnsTopOffset),
+        );
+      }
     }
 
     if (hasChild(_StackName.bodyColumnFooters)) {
@@ -1780,11 +1990,15 @@ class _GridContainer extends StatelessWidget {
 
   final Widget child;
   final ScrollPhysics? scrollPhysics;
+  final ScrollPhysics? horizontalScrollPhysics;
+  final ScrollPhysics? verticalScrollPhysics;
 
   const _GridContainer({
     required this.stateManager,
     required this.child,
     required this.scrollPhysics,
+    required this.horizontalScrollPhysics,
+    required this.verticalScrollPhysics,
   });
 
   @override
@@ -1800,6 +2014,8 @@ class _GridContainer extends StatelessWidget {
           isMobile: PlatformHelper.isMobile,
           userDragDevices: stateManager.configuration.scrollbar.dragDevices,
           scrollPhysics: scrollPhysics,
+          horizontalScrollPhysics: horizontalScrollPhysics,
+          verticalScrollPhysics: verticalScrollPhysics,
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -1866,13 +2082,23 @@ class TrinaScrollBehavior extends MaterialScrollBehavior {
     required this.isMobile,
     Set<PointerDeviceKind>? userDragDevices,
     this.scrollPhysics,
+    this.horizontalScrollPhysics,
+    this.verticalScrollPhysics,
   }) : _dragDevices =
       userDragDevices ??
           (isMobile ? _mobileDragDevices : _desktopDragDevices),
         super();
 
   final bool isMobile;
+
+  /// Physics applied to both axes, unless overridden per axis.
   final ScrollPhysics? scrollPhysics;
+
+  /// Physics applied to horizontal scrolling only.
+  final ScrollPhysics? horizontalScrollPhysics;
+
+  /// Physics applied to vertical scrolling only.
+  final ScrollPhysics? verticalScrollPhysics;
 
   @override
   Set<PointerDeviceKind> get dragDevices => _dragDevices;
@@ -1901,9 +2127,41 @@ class TrinaScrollBehavior extends MaterialScrollBehavior {
     return child;
   }
 
+  /// [ScrollBehavior.shouldNotify] returns false by default, which would leave
+  /// every [Scrollable] below the [ScrollConfiguration] holding the physics it
+  /// resolved on its first build. Without this, changing any of the physics
+  /// after the grid is built has no effect.
+  @override
+  bool shouldNotify(TrinaScrollBehavior oldDelegate) {
+    return oldDelegate.isMobile != isMobile ||
+        oldDelegate.scrollPhysics != scrollPhysics ||
+        oldDelegate.horizontalScrollPhysics != horizontalScrollPhysics ||
+        oldDelegate.verticalScrollPhysics != verticalScrollPhysics ||
+        !setEquals(oldDelegate._dragDevices, _dragDevices);
+  }
+
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return scrollPhysics ?? super.getScrollPhysics(context);
+    final base = scrollPhysics ?? super.getScrollPhysics(context);
+
+    if (horizontalScrollPhysics == null && verticalScrollPhysics == null) {
+      return base;
+    }
+
+    // A ScrollBehavior resolves one physics for every Scrollable below it and
+    // is never told which axis it is resolving for. TrinaAxisScrollPhysics
+    // defers that decision to call time, where ScrollMetrics.axis is known.
+    //
+    // Each axis replaces [base] rather than layering onto it, the same way
+    // [scrollPhysics] replaces the platform default. Layering would let a
+    // blocking [scrollPhysics] override a per axis physics meant to re-enable
+    // that axis, since the behaviors a physics does not define defer to its
+    // parent.
+    return TrinaAxisScrollPhysics(
+      horizontal: horizontalScrollPhysics ?? base,
+      vertical: verticalScrollPhysics ?? base,
+      parent: base,
+    );
   }
 }
 
@@ -1915,6 +2173,7 @@ class TrinaOptional<T> {
 }
 
 enum _StackName {
+  columnsBackground,
   header,
   headerDivider,
   leftFrozenColumns,

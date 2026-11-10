@@ -97,6 +97,11 @@ abstract class ILayoutState {
 
   TextDirection get textDirection;
 
+  /// The ambient text scale the grid draws its text with, from
+  /// [MediaQuery.textScalerOf]. Used to measure text, e.g. when fitting a
+  /// column to its content.
+  TextScaler get textScaler;
+
   bool get isLTR;
 
   bool get isRTL;
@@ -134,6 +139,8 @@ abstract class ILayoutState {
 
   void setTextDirection(TextDirection textDirection);
 
+  void setTextScaler(TextScaler textScaler);
+
   @visibleForTesting
   void setGridGlobalOffset(Offset offset);
 }
@@ -168,6 +175,8 @@ class _State {
   TrinaGridLoadingLevel _loadingLevel = TrinaGridLoadingLevel.grid;
 
   TextDirection _textDirection = TextDirection.ltr;
+
+  TextScaler _textScaler = TextScaler.noScaling;
 }
 
 mixin LayoutState implements ITrinaGridState {
@@ -427,6 +436,9 @@ mixin LayoutState implements ITrinaGridState {
   TextDirection get textDirection => _state._textDirection;
 
   @override
+  TextScaler get textScaler => _state._textScaler;
+
+  @override
   bool get isLTR => textDirection == TextDirection.ltr;
 
   @override
@@ -497,6 +509,16 @@ mixin LayoutState implements ITrinaGridState {
 
     _state._showColumnFilter = flag;
 
+    // The filter fields are part of what fitContent sizes a column to, so
+    // showing or hiding them changes the answer. Callers commonly turn the
+    // filter row on from onLoaded, which is after the first sizing pass.
+    if (columnsAutoSizeMode.isFitContent &&
+        maxWidth != null &&
+        refColumns.isNotEmpty) {
+      activateColumnsAutoSize();
+      updateVisibilityLayout();
+    }
+
     notifyListeners(notify, setShowColumnFilter.hashCode);
   }
 
@@ -564,6 +586,11 @@ mixin LayoutState implements ITrinaGridState {
   @override
   void setTextDirection(TextDirection textDirection) {
     _state._textDirection = textDirection;
+  }
+
+  @override
+  void setTextScaler(TextScaler textScaler) {
+    _state._textScaler = textScaler;
   }
 
   @override
