@@ -16,7 +16,9 @@ class TrinaColumnIndex extends TrinaStatefulWidget {
 }
 
 class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
-  late final ScrollController _verticalScroll;
+  // Cantonada de la columna d'índex: no té cap llista, així que no ha
+  // d'afegir cap controlador al grup de scroll vertical ni registrar-se com a
+  // bodyRowsVertical (trencava el scroll amb teclat fins al final).
 
   @override
   TrinaGridStateManager get stateManager => widget.stateManager;
@@ -25,18 +27,7 @@ class TrinaColumnIndexState extends TrinaStateWithChange<TrinaColumnIndex> {
   void initState() {
     super.initState();
 
-    _verticalScroll = stateManager.scroll.vertical!.addAndGet();
-
-    stateManager.scroll.setBodyRowsVertical(_verticalScroll);
-
     updateState(TrinaNotifierEventForceUpdate.instance);
-  }
-
-  @override
-  void dispose() {
-    _verticalScroll.dispose();
-
-    super.dispose();
   }
 
   @override

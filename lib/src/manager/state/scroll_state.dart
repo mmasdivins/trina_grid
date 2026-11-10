@@ -208,10 +208,17 @@ mixin ScrollState implements ITrinaGridState {
     // can be scrolled clear of the overlay. Exclude that band here, otherwise
     // scrolling to the last column stops exactly one scrollbar width short of
     // maxScrollExtent and leaves the column hidden under the scrollbar.
+    //
+    // [fork] Prefer the live viewport width of the body rows: it already
+    // excludes the frozen columns and the row index column (showColumnIndex),
+    // which takes width on the leading side and is not part of maxWidth's
+    // computation below. The computed value is kept as a fallback for the
+    // frames before the list is laid out.
     final double screenOffset =
-        (showFrozenColumn == true
-            ? maxWidth! - leftFrozenColumnsWidth - rightFrozenColumnsWidth
-            : maxWidth!) -
+        (_laidOutPosition(scroll.bodyRowsHorizontal)?.viewportDimension ??
+            (showFrozenColumn == true
+                ? maxWidth! - leftFrozenColumnsWidth - rightFrozenColumnsWidth
+                : maxWidth!)) -
         configuration.scrollbar.verticalScrollBarReservedWidth;
 
     if (direction.isRight) {

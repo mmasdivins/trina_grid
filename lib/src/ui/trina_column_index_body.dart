@@ -33,13 +33,11 @@ class TrinaColumnIndexBodyState extends TrinaStateWithChange<TrinaColumnIndexBod
   void initState() {
     super.initState();
 
-    // _horizontalScroll = stateManager.scroll.horizontal!.addAndGet();
-    //
-    // stateManager.scroll.setBodyRowsHorizontal(_horizontalScroll);
-    //
+    // Només s'afegeix al grup de scroll vertical per moure's amb el cos.
+    // No s'ha de registrar com a bodyRowsVertical: aquest controlador ha de ser
+    // el de TrinaBodyRows, que és el que fa servir el càlcul del scroll amb
+    // teclat (moveScrollByRow) per saber l'alçada real visible.
     _verticalScroll = stateManager.scroll.vertical!.addAndGet();
-    //
-    stateManager.scroll.setBodyRowsVertical(_verticalScroll);
 
     updateState(TrinaNotifierEventForceUpdate.instance);
   }
@@ -72,6 +70,22 @@ class TrinaColumnIndexBodyState extends TrinaStateWithChange<TrinaColumnIndexBod
   Widget build(BuildContext context) {
     final style = stateManager.style;
 
+    return Column(
+      children: [
+        Expanded(child: _buildList(style)),
+        // Mateixa franja que la barra de scroll horitzontal del cos (igual que
+        // TrinaLeftFrozenRows). Totes les llistes del grup de scroll vertical
+        // han de tenir el mateix maxScrollExtent; si no, en arribar al final
+        // aquesta llista rebota i arrossega el cos amunt.
+        if (stateManager.configuration.scrollbar.showHorizontal)
+          SizedBox(
+            height: stateManager.configuration.scrollbar.effectiveThickness,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildList(TrinaGridStyleConfig style) {
     return ListView.builder(
       controller: _verticalScroll,
       scrollDirection: Axis.vertical,

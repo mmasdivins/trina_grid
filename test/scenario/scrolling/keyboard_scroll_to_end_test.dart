@@ -28,6 +28,7 @@ void main() {
     TrinaGridConfiguration configuration = const TrinaGridConfiguration(),
     List<TrinaColumnGroup>? columnGroups,
     void Function(List<TrinaColumn> columns)? beforeBuild,
+    bool showColumnIndex = false,
   }) async {
     await TestHelperUtil.changeWidth(
       tester: tester,
@@ -53,6 +54,7 @@ void main() {
             columnGroups: columnGroups,
             rows: rows,
             configuration: configuration,
+            showColumnIndex: showColumnIndex,
             onLoaded: (TrinaGridOnLoadedEvent event) {
               stateManager = event.stateManager;
               stateManager.setKeepFocus(true);
@@ -296,6 +298,76 @@ void main() {
 
       stateManager.setCurrentCell(
         stateManager.refRows.first.cells['column1'],
+        0,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.end);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(
+        verticalOffset(),
+        closeTo(stateManager.scroll.maxScrollVertical, 0.5),
+      );
+    });
+  });
+
+  // [fork] La columna d'índex (showColumnIndex) és una llista més del grup de
+  // scroll vertical i ocupa amplada a l'esquerra del cos. No ha de canviar
+  // el controlador bodyRowsVertical ni impedir arribar al final.
+  group('Keyboard scrolling with the row index column', () {
+    testWidgets(
+      'Scrolling to the last row should land on the maximum scroll extent.',
+      (tester) async {
+        await buildGrid(tester, showColumnIndex: true);
+
+        stateManager.moveScrollByRow(
+          TrinaMoveDirection.down,
+          stateManager.refRows.length - 2,
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          verticalOffset(),
+          closeTo(stateManager.scroll.maxScrollVertical, 0.5),
+        );
+      },
+    );
+
+    testWidgets(
+      'Moving to the last column with the arrow keys should land on the '
+      'maximum scroll extent.',
+      (tester) async {
+        final columns = await buildGrid(tester, showColumnIndex: true);
+
+        stateManager.setCurrentCell(
+          stateManager.refRows.first.cells['column0'],
+          0,
+        );
+        await tester.pumpAndSettle();
+
+        for (int i = 0; i < columns.length - 1; i += 1) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+          await tester.pumpAndSettle();
+        }
+
+        expect(stateManager.currentColumn?.field, 'column9');
+        expect(
+          horizontalOffset(),
+          closeTo(stateManager.scroll.maxScrollHorizontal, 0.5),
+        );
+      },
+    );
+
+    testWidgets('Ctrl + End should land on the maximum scroll extent.', (
+      tester,
+    ) async {
+      await buildGrid(tester, showColumnIndex: true);
+
+      stateManager.setCurrentCell(
+        stateManager.refRows.first.cells['column0'],
         0,
       );
       await tester.pumpAndSettle();
