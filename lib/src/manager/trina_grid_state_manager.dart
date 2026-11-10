@@ -85,6 +85,7 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
     this.onLastRowKeyUp,
     this.onRightClickCell,
     this.rightClickCellContextMenu,
+    this.rightClickColumnTitleContextMenu,
     this.onSelectedCellChanged,
     this.onSelected,
     this.onSorted,
@@ -185,6 +186,10 @@ class TrinaGridStateChangeNotifier extends TrinaChangeNotifier
 
   @override
   final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
+
+  @override
+  final TrinaRightClickColumnTitleContextMenuEventCallback?
+      rightClickColumnTitleContextMenu;
 
   @override
   final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
@@ -407,6 +412,7 @@ class TrinaGridStateManager extends TrinaGridStateChangeNotifier {
     super.onLastRowKeyUp,
     super.onRightClickCell,
     super.rightClickCellContextMenu,
+    super.rightClickColumnTitleContextMenu,
     super.onSelectedCellChanged,
     super.onSelected,
     super.onSorted,

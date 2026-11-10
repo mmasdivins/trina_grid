@@ -28,6 +28,9 @@ typedef TrinaOnRightClickCellEventCallback = Widget Function(
 typedef TrinaRightClickCellContextMenuEventCallback = Widget Function(
     TrinaGridRightClickCellContextMenuEvent event);
 
+typedef TrinaRightClickColumnTitleContextMenuEventCallback = Widget Function(
+    TrinaGridRightClickColumnTitleContextMenuEvent event);
+
 typedef TrinaOnSelectedCellChangedEventCallback = void Function(
     TrinaGridOnSelectedCellChangedEvent event);
 
@@ -153,6 +156,7 @@ class TrinaGrid extends TrinaStatefulWidget {
     this.onRightClickCell,
     this.onColumnTap,
     this.rightClickCellContextMenu,
+    this.rightClickColumnTitleContextMenu,
     this.onSelectedCellChanged,
     this.onSelected,
     this.onSorted,
@@ -313,6 +317,14 @@ class TrinaGrid extends TrinaStatefulWidget {
   /// pressed on a cell to build a context menu.
   /// {@endtemplate}
   final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
+
+  /// {@template trina_grid_property_rightClickColumnTitleContextMenu}
+  /// [rightClickColumnTitleContextMenu] embolcalla el títol de cada columna
+  /// (capçalera) per poder-hi construir un menú contextual amb el clic dret.
+  /// Rep la columna i el widget del títol, i ha de retornar el widget a pintar.
+  /// {@endtemplate}
+  final TrinaRightClickColumnTitleContextMenuEventCallback?
+      rightClickColumnTitleContextMenu;
 
   /// Event que és crida quan és canvia la cel·la seleccionada
   final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
@@ -893,6 +905,7 @@ class TrinaGridState extends TrinaStateWithChange<TrinaGrid> {
       onLastRowKeyUp: widget.onLastRowKeyUp,
       onRightClickCell: widget.onRightClickCell,
       rightClickCellContextMenu: widget.rightClickCellContextMenu,
+      rightClickColumnTitleContextMenu: widget.rightClickColumnTitleContextMenu,
       onSelectedCellChanged: widget.onSelectedCellChanged,
       onSelected: widget.onSelected,
       onSorted: widget.onSorted,

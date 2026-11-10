@@ -22,6 +22,9 @@ abstract class IGridState {
 
   TrinaRightClickCellContextMenuEventCallback? get rightClickCellContextMenu;
 
+  TrinaRightClickColumnTitleContextMenuEventCallback?
+      get rightClickColumnTitleContextMenu;
+
   TrinaOnSelectedCellChangedEventCallback? get onSelectedCellChanged;
 
   TrinaOnSelectedEventCallback? get onSelected;

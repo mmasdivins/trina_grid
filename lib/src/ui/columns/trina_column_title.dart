@@ -182,6 +182,17 @@ class TrinaColumnTitleState extends TrinaStateWithChange<TrinaColumnTitle> {
       );
     }
 
+    // Permet a l'usuari del grid afegir un menú contextual (clic dret) al
+    // títol de la columna.
+    if (stateManager.rightClickColumnTitleContextMenu != null) {
+      title = stateManager.rightClickColumnTitleContextMenu!(
+        TrinaGridRightClickColumnTitleContextMenuEvent(
+          column: widget.column,
+          child: title,
+        ),
+      );
+    }
+
     if (isCustom) {
       return title;
     }

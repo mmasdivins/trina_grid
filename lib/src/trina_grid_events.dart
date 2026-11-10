@@ -555,3 +555,23 @@ class TrinaGridOnKeyEvent {
     return out;
   }
 }
+/// Event per construir el menú contextual del títol (capçalera) d'una columna.
+///
+/// [child] és el widget del títol que s'ha d'embolcallar i retornar.
+class TrinaGridRightClickColumnTitleContextMenuEvent {
+  final TrinaColumn column;
+  final Widget child;
+
+  const TrinaGridRightClickColumnTitleContextMenuEvent({
+    required this.column,
+    required this.child,
+  });
+
+  @override
+  String toString() {
+    String out = '[TrinaGridRightClickColumnTitleContextMenuEvent] ';
+    out += 'Column : ${column.field}\n';
+    out += '::: child : $child';
+    return out;
+  }
+}

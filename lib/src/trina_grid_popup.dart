@@ -32,6 +32,10 @@ class TrinaGridPopup {
   /// {@macro trina_grid_property_rightClickCellContextMenu}
   final TrinaRightClickCellContextMenuEventCallback? rightClickCellContextMenu;
 
+  /// {@macro trina_grid_property_rightClickColumnTitleContextMenu}
+  final TrinaRightClickColumnTitleContextMenuEventCallback?
+      rightClickColumnTitleContextMenu;
+
   /// {@macro trina_grid_property_onSelectedCellChanged}
   final TrinaOnSelectedCellChangedEventCallback? onSelectedCellChanged;
 
@@ -127,6 +131,7 @@ class TrinaGridPopup {
     this.onLastRowKeyUp,
     this.onRightClickCell,
     this.rightClickCellContextMenu,
+    this.rightClickColumnTitleContextMenu,
     this.onSelectedCellChanged,
     this.onSelected,
     this.onSorted,
@@ -201,6 +206,7 @@ class TrinaGridPopup {
                         onLastRowKeyUp: onLastRowKeyUp,
                         onRightClickCell: onRightClickCell,
                         rightClickCellContextMenu: rightClickCellContextMenu,
+                        rightClickColumnTitleContextMenu: rightClickColumnTitleContextMenu,
                         onSelectedCellChanged: onSelectedCellChanged,
                         onSelected: (TrinaGridOnSelectedEvent event) {
                           Navigator.pop(ctx, event);
